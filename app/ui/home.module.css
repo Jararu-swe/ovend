@@ -1,7 +1,16 @@
 .shape {
-  height: 0;
-  width: 0;
-  border-bottom: 30px solid black;
-  border-left: 20px solid transparent;
-  border-right: 20px solid transparent;
+  position: absolute;
+  inset: auto;
+  top: -40px;
+  left: -40px;
+  height: 260px;
+  width: 260px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(45, 212, 191, 0.2), transparent 55%),
+    radial-gradient(circle at 80% 10%, rgba(56, 189, 248, 0.18), transparent 55%);
+  filter: blur(4px);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: -1;
 }
