@@ -216,3 +216,71 @@ export function InvoicesTableSkeleton() {
     </div>
   );
 }
+
+export function ProductCardSkeleton() {
+  return (
+    <div className={`${shimmer} relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm`}>
+      <div className="aspect-[4/3] w-full bg-slate-100" />
+      <div className="flex flex-col p-4">
+        <div className="mb-2 flex items-start justify-between">
+          <div className="h-5 w-32 rounded bg-slate-200" />
+          <div className="h-5 w-20 rounded bg-slate-200" />
+        </div>
+        <div className="h-4 w-full rounded bg-slate-100" />
+        <div className="mt-1 h-4 w-3/4 rounded bg-slate-100" />
+        <div className="mt-4 flex items-center justify-end gap-2 pt-4 border-t border-slate-50">
+          <div className="h-8 w-8 rounded-lg bg-slate-100" />
+          <div className="h-8 w-8 rounded-lg bg-slate-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ProductsGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ProductCardSkeleton />
+      <ProductCardSkeleton />
+      <ProductCardSkeleton />
+      <ProductCardSkeleton />
+      <ProductCardSkeleton />
+      <ProductCardSkeleton />
+    </div>
+  );
+}
+
+export function OrderRowSkeleton() {
+  return (
+    <div className={`${shimmer} relative overflow-hidden border-b border-slate-100 px-6 py-5`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-2.5 w-2.5 rounded-full bg-slate-200" />
+          <div>
+            <div className="h-5 w-32 rounded bg-slate-200" />
+            <div className="mt-1 h-3 w-24 rounded bg-slate-100" />
+          </div>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="text-right hidden sm:block">
+            <div className="h-5 w-20 rounded bg-slate-200 mb-1" />
+            <div className="h-4 w-16 rounded-full bg-slate-100" />
+          </div>
+          <div className="h-5 w-5 rounded bg-slate-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function OrdersListSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <OrderRowSkeleton />
+      <OrderRowSkeleton />
+      <OrderRowSkeleton />
+      <OrderRowSkeleton />
+      <OrderRowSkeleton />
+    </div>
+  );
+}

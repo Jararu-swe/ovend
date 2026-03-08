@@ -1,7 +1,9 @@
 import CardWrapper from '@/app/ui/dashboard/cards';
-import { fetchVendorStats, fetchUserById } from '@/app/lib/data';
+import { fetchVendorStats, fetchUserById, fetchWeeklyAnalytics } from '@/app/lib/data';
 import { auth } from '@/auth';
 import CopyLinkButton from '@/app/ui/dashboard/copy-link';
+import { ChartBarIcon } from '@heroicons/react/24/outline';
+import { formatCurrency } from '@/app/lib/utils';
 
 export default async function Page() {
   const session = await auth();
@@ -11,10 +13,13 @@ export default async function Page() {
     return null;
   }
 
-  const [stats, user] = await Promise.all([
+  const [stats, user, weeklyAnalytics] = await Promise.all([
     fetchVendorStats(userId),
     fetchUserById(userId),
+    fetchWeeklyAnalytics(userId),
   ]);
+
+  const totalWeeklyVisits = weeklyAnalytics.reduce((sum, day) => sum + Number(day.visits || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -63,6 +68,39 @@ export default async function Page() {
             </div>
         </div>
       </div>
+
+      {weeklyAnalytics.length > 0 && (
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <ChartBarIcon className="h-5 w-5 text-slate-400" />
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Last 7 Days</h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="rounded-xl bg-slate-50 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900">{totalWeeklyVisits}</p>
+              <p className="text-xs text-slate-500 mt-1">Store Visits</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900">
+                {weeklyAnalytics.reduce((sum, day) => sum + Number(day.orders_count || 0), 0)}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Orders</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900">
+                {formatCurrency(weeklyAnalytics.reduce((sum, day) => sum + Number(day.revenue || 0), 0))}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Revenue</p>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900">
+                {totalWeeklyVisits > 0 ? Math.round((weeklyAnalytics.reduce((sum, day) => sum + Number(day.orders_count || 0), 0) / totalWeeklyVisits) * 100) : 0}%
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Conversion</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

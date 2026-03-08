@@ -208,6 +208,16 @@ export async function createOrder(vendorId: string, items: any[], totalAmount: n
       RETURNING id
     `;
     
+    // Update analytics (non-blocking)
+    sql`
+      INSERT INTO store_analytics (vendor_id, date, orders_count, revenue)
+      VALUES (${vendorId}, CURRENT_DATE, 1, ${totalAmount})
+      ON CONFLICT (vendor_id, date)
+      DO UPDATE SET 
+        orders_count = store_analytics.orders_count + 1,
+        revenue = store_analytics.revenue + ${totalAmount}
+    `.catch(() => {});
+    
     revalidatePath('/dashboard/orders');
     return { id: result[0].id, success: true };
   } catch (error) {

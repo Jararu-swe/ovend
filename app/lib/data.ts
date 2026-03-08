@@ -326,7 +326,7 @@ export async function fetchVendorStats(vendorId: string) {
     const data = await Promise.all([
       sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId}`,
       sql`SELECT SUM(total_amount) FROM orders WHERE vendor_id = ${vendorId} AND status = 'fulfilled'`,
-      sql`SELECT COUNT(*) FROM products WHERE user_id = ${vendorId} AND status = 'active'`,
+      sql`SELECT COUNT(*) FROM products WHERE vendor_id = ${vendorId} AND status = 'active'`,
       sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId} AND status IN ('new', 'in_progress')`,
     ]);
 
@@ -344,5 +344,39 @@ export async function fetchVendorStats(vendorId: string) {
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch dashboard stats.');
+  }
+}
+
+export async function trackStoreVisit(vendorId: string) {
+  try {
+    await sql`
+      INSERT INTO store_analytics (vendor_id, date, visits)
+      VALUES (${vendorId}, CURRENT_DATE, 1)
+      ON CONFLICT (vendor_id, date)
+      DO UPDATE SET visits = store_analytics.visits + 1
+    `;
+  } catch (error) {
+    console.error('Analytics Error:', error);
+    // Don't throw - analytics shouldn't break the app
+  }
+}
+
+export async function fetchWeeklyAnalytics(vendorId: string) {
+  try {
+    const data = await sql`
+      SELECT 
+        date,
+        visits,
+        orders_count,
+        revenue
+      FROM store_analytics
+      WHERE vendor_id = ${vendorId}
+        AND date >= CURRENT_DATE - INTERVAL '7 days'
+      ORDER BY date DESC
+    `;
+    return data;
+  } catch (error) {
+    console.error('Database Error:', error);
+    return [];
   }
 }
