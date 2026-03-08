@@ -7,6 +7,9 @@ export type User = {
   name: string;
   email: string;
   password: string;
+  store_slug: string;
+  store_name: string;
+  whatsapp_number?: string;
 };
 
 export type Customer = {
@@ -86,3 +89,45 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+export type Product = {
+  id: string;
+  vendor_id: string;
+  name: string;
+  description: string;
+  price: number;
+  status: 'active' | 'inactive';
+  image_url: string | null;
+  created_at: string;
+};
+
+export type ProductForm = {
+  id: string;
+  vendor_id: string;
+  name: string;
+  description: string;
+  price: number;
+  status: 'active' | 'inactive';
+  image_url: string | null;
+};
+
+export type OrderItem = {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type Order = {
+  id: string;
+  vendor_id: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_address: string | null;
+  delivery_type: 'pickup' | 'delivery';
+  total_amount: number;
+  status: 'new' | 'in_progress' | 'fulfilled' | 'cancelled';
+  items: OrderItem[];
+  created_at: string;
+};
+

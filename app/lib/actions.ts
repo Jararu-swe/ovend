@@ -22,15 +22,81 @@ const FormSchema = z.object({
 const CreateProduct = FormSchema.omit({ id: true });
 const UpdateProduct = FormSchema.omit({ id: true });
 
+const ProfileSchema = z.object({
+  store_name: z.string().min(2, { message: 'Store name must be at least 2 characters.' }),
+  store_slug: z.string().min(2, { message: 'Slug must be at least 2 characters.' }).regex(/^[a-z0-9-]+$/, {
+    message: 'Slug can only contain lowercase letters, numbers, and hyphens.',
+  }),
+  whatsapp_number: z.string().optional().nullable(),
+});
+
 export type State = {
   errors?: {
     name?: string[];
     description?: string[];
     price?: string[];
     status?: string[];
+    store_name?: string[];
+    store_slug?: string[];
+    whatsapp_number?: string[];
+    customer_name?: string[];
+    customer_phone?: string[];
+    delivery_type?: string[];
   };
   message?: string | null;
 };
+
+export async function updateProfile(prevState: State | undefined, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { message: 'Unauthorized. Please log in.' };
+  }
+
+  const validatedFields = ProfileSchema.safeParse({
+    store_name: formData.get('store_name'),
+    store_slug: formData.get('store_slug'),
+    whatsapp_number: formData.get('whatsapp_number'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Profile.',
+    };
+  }
+
+  const { store_name, store_slug, whatsapp_number } = validatedFields.data;
+
+  try {
+    // Check if slug is already taken by another user
+    const existingUser = await sql`
+      SELECT id FROM users 
+      WHERE store_slug = ${store_slug} AND id != ${session.user.id}
+      LIMIT 1
+    `;
+
+    if (existingUser.length > 0) {
+      return {
+        errors: { store_slug: ['This slug is already in use. Please choose another one.'] },
+        message: 'Slug taken.',
+      };
+    }
+
+    await sql`
+      UPDATE users
+      SET store_name = ${store_name}, 
+          store_slug = ${store_slug}, 
+          whatsapp_number = ${whatsapp_number ?? null}
+      WHERE id = ${session.user.id}
+    `;
+    
+    revalidatePath('/dashboard/settings');
+    return { message: 'Success! Profile updated.' };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { message: 'Database Error: Failed to Update Profile.' };
+  }
+}
 
 export async function createProduct(prevState: State | undefined, formData: FormData) {
   const session = await auth();
@@ -122,5 +188,49 @@ export async function deleteProduct(id: string) {
     revalidatePath('/dashboard/products');
   } catch (error) {
     console.error('Database Error:', error);
+  }
+}
+
+export async function createOrder(vendorId: string, items: any[], totalAmount: number, formData: FormData) {
+  const customer_name = formData.get('customer_name') as string;
+  const customer_phone = formData.get('customer_phone') as string;
+  const customer_address = formData.get('customer_address') as string;
+  const delivery_type = formData.get('delivery_type') as string;
+
+  if (!customer_name || !customer_phone || !delivery_type) {
+    throw new Error('Missing required customer information.');
+  }
+
+  try {
+    const result = await sql`
+      INSERT INTO orders (vendor_id, customer_name, customer_phone, customer_address, delivery_type, total_amount, items, status)
+      VALUES (${vendorId}, ${customer_name}, ${customer_phone}, ${customer_address || null}, ${delivery_type}, ${totalAmount}, ${JSON.stringify(items)}, 'new')
+      RETURNING id
+    `;
+    
+    revalidatePath('/dashboard/orders');
+    return { id: result[0].id, success: true };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to create order.');
+  }
+}
+
+export async function updateOrderStatus(id: string, status: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized.');
+  }
+
+  try {
+    await sql`
+      UPDATE orders
+      SET status = ${status}
+      WHERE id = ${id} AND vendor_id = ${session.user.id}
+    `;
+    revalidatePath('/dashboard/orders');
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to update order status.');
   }
 }

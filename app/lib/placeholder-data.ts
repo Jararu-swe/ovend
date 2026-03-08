@@ -6,6 +6,8 @@ const users = [
     name: 'User',
     email: 'user@nextmail.com',
     password: '123456',
+    store_slug: 'user-store',
+    store_name: 'User Store',
   },
 ];
 

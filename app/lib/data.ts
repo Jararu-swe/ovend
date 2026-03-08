@@ -1,4 +1,5 @@
 import postgres from 'postgres';
+// Forced refresh
 import {
   CustomerField,
   CustomersTableType,
@@ -6,10 +7,50 @@ import {
   InvoicesTable,
   LatestInvoiceRaw,
   Revenue,
+  Product,
+  User,
+  Order,
 } from './definitions';
 import { formatCurrency } from './utils';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+
+export async function fetchProductsList(vendorId: string) {
+  console.log('fetchProductsList called with vendorId:', vendorId);
+  if (!vendorId) {
+    console.warn('fetchProductsList: vendorId is missing. Returning empty list.');
+    return [];
+  }
+  try {
+    const products = await sql<Product[]>`
+      SELECT * FROM products
+      WHERE vendor_id = ${vendorId}
+      ORDER BY created_at DESC
+    `;
+    return products;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch products.');
+  }
+}
+
+export async function fetchProductById(id: string) {
+  if (!id) {
+    console.warn('fetchProductById: id is missing.');
+    return undefined;
+  }
+  try {
+    const data = await sql<Product[]>`
+      SELECT * FROM products
+      WHERE id = ${id}
+    `;
+    return data[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch product.');
+  }
+}
+
 
 export async function fetchRevenue() {
   try {
@@ -214,5 +255,94 @@ export async function fetchFilteredCustomers(query: string) {
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch customer table.');
+  }
+}
+
+
+
+
+export async function fetchVendorBySlug(slug: string) {
+  try {
+    const data = await sql<User[]>`
+      SELECT id, name, store_slug, store_name, whatsapp_number
+      FROM users
+      WHERE store_slug = ${slug}
+      LIMIT 1
+    `;
+    return data[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    return null;
+  }
+}
+
+export async function fetchProducts(vendorId: string) {
+  return fetchProductsList(vendorId);
+}
+
+export async function fetchUserById(id: string) {
+  try {
+    const user = await sql<User[]>`
+      SELECT id, name, email, store_slug, store_name, whatsapp_number
+      FROM users
+      WHERE id = ${id}
+    `;
+    return user[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch user.');
+  }
+}
+
+export async function fetchOrdersList(vendorId: string) {
+  if (!vendorId) return [];
+  try {
+    const orders = await sql<Order[]>`
+      SELECT * FROM orders
+      WHERE vendor_id = ${vendorId}
+      ORDER BY created_at DESC
+    `;
+    return orders;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch orders.');
+  }
+}
+
+export async function fetchOrderById(id: string) {
+  try {
+    const data = await sql<Order[]>`
+      SELECT * FROM orders
+      WHERE id = ${id}
+    `;
+    return data[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch order.');
+  }
+}
+export async function fetchVendorStats(vendorId: string) {
+  try {
+    const data = await Promise.all([
+      sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId}`,
+      sql`SELECT SUM(total_amount) FROM orders WHERE vendor_id = ${vendorId} AND status = 'fulfilled'`,
+      sql`SELECT COUNT(*) FROM products WHERE user_id = ${vendorId} AND status = 'active'`,
+      sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId} AND status IN ('new', 'in_progress')`,
+    ]);
+
+    const numberOfOrders = Number(data[0][0].count ?? '0');
+    const totalRevenue = Number(data[1][0].sum ?? '0');
+    const numberOfProducts = Number(data[2][0].count ?? '0');
+    const numberOfPendingOrders = Number(data[3][0].count ?? '0');
+
+    return {
+      numberOfOrders,
+      totalRevenue,
+      numberOfProducts,
+      numberOfPendingOrders,
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch dashboard stats.');
   }
 }

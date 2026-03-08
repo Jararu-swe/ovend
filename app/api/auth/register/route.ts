@@ -36,9 +36,23 @@ export async function POST(req: NextRequest) {
 
     // Hash password and create user
     const hashedPassword = await bcrypt.hash(password, 10);
+    const id = crypto.randomUUID();
+    
+    // Generate initial slug from name
+    let storeSlug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    
+    // Check if slug exists, if so append short id
+    const existingSlug = await sql`SELECT id FROM users WHERE store_slug = ${storeSlug} LIMIT 1`;
+    if (existingSlug.length > 0) {
+      storeSlug = `${storeSlug}-${id.slice(0, 4)}`;
+    }
+
     await sql`
-      INSERT INTO users (id, name, email, password)
-      VALUES (gen_random_uuid(), ${name}, ${email}, ${hashedPassword})
+      INSERT INTO users (id, name, email, password, store_slug, store_name)
+      VALUES (${id}, ${name}, ${email}, ${hashedPassword}, ${storeSlug}, ${name})
     `;
 
     return NextResponse.json({ success: true }, { status: 201 });
