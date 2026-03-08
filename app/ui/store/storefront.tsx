@@ -62,10 +62,15 @@ export default function Storefront({ vendor, products }: { vendor: User; product
   };
 
   if (placedOrder) {
-    const message = `Hello ${vendor.name}, I just placed an order (ID: ${placedOrder.id.slice(0, 8)}) on your store for ${formatCurrency(placedOrder.total)}.`;
-    const encodedMessage = encodeURIComponent(message);
+    // Enhanced WhatsApp message with detailed order breakdown
+    const orderItemsList = cart.map(item => 
+      `• ${item.quantity}x ${item.name} - ${formatCurrency(item.price * item.quantity)}`
+    ).join('%0A');
+    
+    const message = `Hello *${vendor.store_name}*! 👋%0A%0AI just placed an order on your Ovend store:%0A%0A📦 *Order ID:* ${placedOrder.id.slice(0, 8)}%0A%0A*Items:*%0A${orderItemsList}%0A%0A💰 *Total:* ${formatCurrency(placedOrder.total)}%0A%0APlease confirm my order. Thank you!`;
+    
     const whatsappLink = vendor.whatsapp_number 
-      ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}?text=${encodedMessage}`
+      ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}?text=${message}`
       : null;
 
     return (

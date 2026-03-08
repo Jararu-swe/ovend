@@ -131,3 +131,33 @@ export type Order = {
   created_at: string;
 };
 
+export type DiscountCode = {
+  id: string;
+  vendor_id: string;
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  min_purchase: number;
+  max_uses: number | null;
+  uses_count: number;
+  active: boolean;
+  expires_at: string | null;
+  created_at: string;
+};
+
+export type TeamMember = {
+  id: string;
+  vendor_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'assistant';
+  permissions: {
+    products: boolean;
+    orders: boolean;
+    settings: boolean;
+  };
+  invited_by: string | null;
+  invited_at: string;
+  accepted_at: string | null;
+  status: 'pending' | 'active' | 'inactive';
+};
+

@@ -15,6 +15,22 @@ async function setupDatabase() {
   try {
     console.log('🚀 Starting database setup...\n');
 
+    // Create users table
+    console.log('👤 Creating users table...');
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        store_slug VARCHAR(255) UNIQUE NOT NULL,
+        store_name VARCHAR(255) NOT NULL,
+        whatsapp_number VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    console.log('✅ Users table created\n');
+
     // Create products table
     console.log('📦 Creating products table...');
     await sql`
@@ -74,9 +90,9 @@ async function setupDatabase() {
   } catch (err) {
     console.error('❌ Error setting up database:', err);
     console.log('\nTroubleshooting:');
-    console.log('- Check your POSTGRES_URL is correct');
-    console.log('- Ensure the users table exists (created by NextAuth)');
-    console.log('- Verify database connection and permissions\n');
+    console.log('- Check your database connection');
+    console.log('- Verify database credentials are correct');
+    console.log('- Ensure you have proper permissions\n');
     process.exit(1);
   }
 }
