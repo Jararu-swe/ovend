@@ -1,7 +1,8 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import postgres from 'postgres';
+import { z as zod } from 'zod';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -20,41 +21,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       authorize: async (credentials) => {
-        if (!credentials?.email || !credentials.password) {
-          return null;
-        }
+        const parsedCredentials = zod
+          .object({ email: zod.string().email(), password: zod.string().min(6) })
+          .safeParse(credentials);
 
-        const [user] =
-          await sql<{
-            id: string;
-            name: string;
-            email: string;
-            password: string;
-          }[]>`
+        if (parsedCredentials.success) {
+          const { email, password } = parsedCredentials.data;
+          const [user] = await sql<
+            {
+              id: string;
+              name: string;
+              email: string;
+              password: string;
+            }[]
+          >`
             SELECT id, name, email, password
             FROM users
-            WHERE email = ${credentials.email}
+            WHERE email = ${email}
             LIMIT 1
           `;
 
-        if (!user) {
-          return null;
+          if (!user) return null;
+
+          const passwordsMatch = await bcrypt.compare(password, user.password);
+
+          if (passwordsMatch) {
+            return {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+            };
+          }
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
-
-        if (!isValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
+        console.log('Invalid credentials');
+        return null;
       },
     }),
   ],
