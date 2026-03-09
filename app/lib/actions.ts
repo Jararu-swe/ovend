@@ -28,6 +28,9 @@ const ProfileSchema = z.object({
     message: 'Slug can only contain lowercase letters, numbers, and hyphens.',
   }),
   whatsapp_number: z.string().optional().nullable(),
+  bank_name: z.string().optional().nullable(),
+  account_number: z.string().optional().nullable(),
+  account_name: z.string().optional().nullable(),
 });
 
 export type State = {
@@ -56,6 +59,9 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     store_name: formData.get('store_name'),
     store_slug: formData.get('store_slug'),
     whatsapp_number: formData.get('whatsapp_number'),
+    bank_name: formData.get('bank_name'),
+    account_number: formData.get('account_number'),
+    account_name: formData.get('account_name'),
   });
 
   if (!validatedFields.success) {
@@ -65,7 +71,7 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     };
   }
 
-  const { store_name, store_slug, whatsapp_number } = validatedFields.data;
+  const { store_name, store_slug, whatsapp_number, bank_name, account_number, account_name } = validatedFields.data;
 
   try {
     // Check if slug is already taken by another user
@@ -86,7 +92,10 @@ export async function updateProfile(prevState: State | undefined, formData: Form
       UPDATE users
       SET store_name = ${store_name}, 
           store_slug = ${store_slug}, 
-          whatsapp_number = ${whatsapp_number ?? null}
+          whatsapp_number = ${whatsapp_number ?? null},
+          bank_name = ${bank_name ?? null},
+          account_number = ${account_number ?? null},
+          account_name = ${account_name ?? null}
       WHERE id = ${session.user.id}
     `;
     
@@ -191,7 +200,14 @@ export async function deleteProduct(id: string) {
   }
 }
 
-export async function createOrder(vendorId: string, items: any[], totalAmount: number, formData: FormData) {
+export async function createOrder(
+  vendorId: string,
+  items: any[],
+  totalAmount: number,
+  formData: FormData,
+  paymentMethod: 'cash' | 'card' | 'transfer' = 'cash',
+  paymentReference?: string
+) {
   const customer_name = formData.get('customer_name') as string;
   const customer_phone = formData.get('customer_phone') as string;
   const customer_address = formData.get('customer_address') as string;
@@ -202,9 +218,35 @@ export async function createOrder(vendorId: string, items: any[], totalAmount: n
   }
 
   try {
+    const paymentStatus = paymentMethod === 'card' && paymentReference ? 'paid' : 'pending';
+    
     const result = await sql`
-      INSERT INTO orders (vendor_id, customer_name, customer_phone, customer_address, delivery_type, total_amount, items, status)
-      VALUES (${vendorId}, ${customer_name}, ${customer_phone}, ${customer_address || null}, ${delivery_type}, ${totalAmount}, ${JSON.stringify(items)}, 'new')
+      INSERT INTO orders (
+        vendor_id, 
+        customer_name, 
+        customer_phone, 
+        customer_address, 
+        delivery_type, 
+        total_amount, 
+        items, 
+        status,
+        payment_method,
+        payment_reference,
+        payment_status
+      )
+      VALUES (
+        ${vendorId}, 
+        ${customer_name}, 
+        ${customer_phone}, 
+        ${customer_address || null}, 
+        ${delivery_type}, 
+        ${totalAmount}, 
+        ${JSON.stringify(items)}, 
+        'new',
+        ${paymentMethod},
+        ${paymentReference || null},
+        ${paymentStatus}
+      )
       RETURNING id
     `;
     

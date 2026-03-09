@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LinkIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 export default function CopyLinkButton({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
-  const storeUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/s/${slug}` 
-    : `https://ovend.app/s/${slug}`;
+  const [storeUrl, setStoreUrl] = useState(`/s/${slug}`);
+
+  useEffect(() => {
+    // Set the full URL only on the client side
+    setStoreUrl(`${window.location.origin}/s/${slug}`);
+  }, [slug]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(storeUrl);

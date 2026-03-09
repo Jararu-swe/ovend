@@ -325,7 +325,7 @@ export async function fetchVendorStats(vendorId: string) {
   try {
     const data = await Promise.all([
       sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId}`,
-      sql`SELECT SUM(total_amount) FROM orders WHERE vendor_id = ${vendorId} AND status = 'fulfilled'`,
+      sql`SELECT COALESCE(SUM(total_amount), 0) as sum FROM orders WHERE vendor_id = ${vendorId} AND status = 'fulfilled'`,
       sql`SELECT COUNT(*) FROM products WHERE vendor_id = ${vendorId} AND status = 'active'`,
       sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId} AND status IN ('new', 'in_progress')`,
     ]);
@@ -343,7 +343,13 @@ export async function fetchVendorStats(vendorId: string) {
     };
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch dashboard stats.');
+    // Return zeros instead of throwing to prevent page crash
+    return {
+      numberOfOrders: 0,
+      totalRevenue: 0,
+      numberOfProducts: 0,
+      numberOfPendingOrders: 0,
+    };
   }
 }
 

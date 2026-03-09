@@ -10,6 +10,9 @@ export type User = {
   store_slug: string;
   store_name: string;
   whatsapp_number?: string;
+  bank_name?: string;
+  account_number?: string;
+  account_name?: string;
 };
 
 export type Customer = {
@@ -128,6 +131,9 @@ export type Order = {
   total_amount: number;
   status: 'new' | 'in_progress' | 'fulfilled' | 'cancelled';
   items: OrderItem[];
+  payment_method: 'cash' | 'card' | 'transfer';
+  payment_reference: string | null;
+  payment_status: 'pending' | 'paid' | 'failed';
   created_at: string;
 };
 

@@ -68,6 +68,55 @@ export default function SettingsForm({ user }: { user: User }) {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Bank Account Section */}
+      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <h2 className="mb-2 text-base font-semibold text-slate-800">Bank Account Details</h2>
+        <p className="mb-4 text-xs text-slate-500">
+          For cash/transfer payments, customers will see these details to make payment
+        </p>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="bank_name" className="block text-sm font-medium text-slate-700 mb-1">
+              Bank Name
+            </label>
+            <input
+              id="bank_name"
+              name="bank_name"
+              type="text"
+              defaultValue={user.bank_name}
+              placeholder="e.g. GTBank, Access Bank, First Bank"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+            />
+          </div>
+          <div>
+            <label htmlFor="account_number" className="block text-sm font-medium text-slate-700 mb-1">
+              Account Number
+            </label>
+            <input
+              id="account_number"
+              name="account_number"
+              type="text"
+              defaultValue={user.account_number}
+              placeholder="0123456789"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+            />
+          </div>
+          <div>
+            <label htmlFor="account_name" className="block text-sm font-medium text-slate-700 mb-1">
+              Account Name
+            </label>
+            <input
+              id="account_name"
+              name="account_name"
+              type="text"
+              defaultValue={user.account_name}
+              placeholder="Name as it appears on your account"
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+            />
+          </div>
+        </div>
 
         {state.message && (
           <div className={`mt-4 flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm ${state.message.includes('Success') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>

@@ -12,7 +12,9 @@ export default function Storefront({ vendor, products }: { vendor: User; product
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [placedOrder, setPlacedOrder] = useState<{ id: string; total: number } | null>(null);
+  const [placedOrder, setPlacedOrder] = useState<{ id: string; total: number; paymentMethod: 'cash' | 'card' } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
+  const [customerEmail, setCustomerEmail] = useState('');
 
   const activeProducts = products.filter((p) => p.status === 'active');
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -48,15 +50,80 @@ export default function Storefront({ vendor, products }: { vendor: User; product
     const formData = new FormData(e.currentTarget);
     
     try {
-      const result = await createOrder(vendor.id, cart, cartTotal, formData);
-      if (result?.success) {
-        setPlacedOrder({ id: result.id, total: cartTotal });
-        setCart([]);
+      if (paymentMethod === 'card') {
+        // Handle card payment with Paystack
+        const publicKey = 'pk_test_8f134530cff345611052399d94a474253408ab3d';
+        
+        // Check if PaystackPop is loaded
+        if (typeof window === 'undefined' || !(window as any).PaystackPop) {
+          alert('Payment system is still loading. Please wait a moment and try again.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // @ts-ignore - PaystackPop is loaded via script
+        const handler = window.PaystackPop.setup({
+          key: publicKey,
+          email: customerEmail,
+          amount: cartTotal * 100, // Convert to kobo
+          currency: 'NGN',
+          ref: `OVD-${Date.now()}`,
+          onClose: function() {
+            setIsSubmitting(false);
+          },
+          callback: function(response: any) {
+            // Verify payment and create order
+            fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reference: response.reference }),
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                // Create order with payment reference
+                return createOrder(
+                  vendor.id,
+                  cart,
+                  cartTotal,
+                  formData,
+                  'card',
+                  response.reference
+                );
+              } else {
+                throw new Error('Payment verification failed');
+              }
+            })
+            .then(result => {
+              if (result?.success) {
+                setPlacedOrder({ id: result.id, total: cartTotal, paymentMethod: 'card' });
+                setCart([]);
+                setIsCheckingOut(false);
+              }
+              setIsSubmitting(false);
+            })
+            .catch(err => {
+              console.error('Payment error:', err);
+              alert('Payment verification failed. Please contact support.');
+              setIsSubmitting(false);
+            });
+          },
+        });
+
+        handler.openIframe();
+      } else {
+        // Handle cash/transfer payment
+        const result = await createOrder(vendor.id, cart, cartTotal, formData, 'cash');
+        if (result?.success) {
+          setPlacedOrder({ id: result.id, total: cartTotal, paymentMethod: 'cash' });
+          setCart([]);
+          setIsCheckingOut(false);
+        }
+        setIsSubmitting(false);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Payment error:', err);
       alert('Failed to place order. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -80,9 +147,47 @@ export default function Storefront({ vendor, products }: { vendor: User; product
         </div>
         <h2 className="text-3xl font-black text-slate-900">Order Placed!</h2>
         <p className="mt-4 text-slate-500 max-w-sm">
-          Your order has been sent to <strong>{vendor.name}</strong>. 
-          To speed up processing, you can notify them directly via WhatsApp.
+          Your order has been sent to <strong>{vendor.store_name}</strong>.
         </p>
+
+        {/* Show bank details for cash/transfer payments */}
+        {placedOrder.paymentMethod === 'cash' && vendor.bank_name && (
+          <div className="mt-6 w-full max-w-md rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-6">
+            <h3 className="text-sm font-bold text-emerald-900 uppercase tracking-wider mb-4">
+              💳 Payment Details
+            </h3>
+            <div className="space-y-3 text-left">
+              <div>
+                <p className="text-xs text-emerald-700 font-medium">Bank Name</p>
+                <p className="text-base font-bold text-emerald-900">{vendor.bank_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-emerald-700 font-medium">Account Number</p>
+                <p className="text-base font-bold text-emerald-900">{vendor.account_number}</p>
+              </div>
+              <div>
+                <p className="text-xs text-emerald-700 font-medium">Account Name</p>
+                <p className="text-base font-bold text-emerald-900">{vendor.account_name}</p>
+              </div>
+              <div className="pt-3 border-t border-emerald-200">
+                <p className="text-xs text-emerald-700 font-medium">Amount to Pay</p>
+                <p className="text-2xl font-black text-emerald-900">{formatCurrency(placedOrder.total)}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-xs text-emerald-700">
+              Please transfer the exact amount and notify the vendor via WhatsApp
+            </p>
+          </div>
+        )}
+
+        {placedOrder.paymentMethod === 'card' && (
+          <div className="mt-6 rounded-2xl bg-emerald-50 px-6 py-4 max-w-sm">
+            <p className="text-sm text-emerald-700">
+              ✓ Payment successful! Your order is confirmed.
+            </p>
+          </div>
+        )}
+        
         <div className="mt-8 flex flex-col w-full max-w-xs gap-3">
           {whatsappLink ? (
             <a
@@ -294,6 +399,18 @@ export default function Storefront({ vendor, products }: { vendor: User; product
                           />
                         </div>
                         <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-1 italic">Email Address</label>
+                          <input 
+                            name="customer_email" 
+                            type="email"
+                            required 
+                            value={customerEmail}
+                            onChange={(e) => setCustomerEmail(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
+                            placeholder="you@example.com"
+                          />
+                        </div>
+                        <div>
                           <label className="block text-sm font-bold text-slate-700 mb-1 italic">WhatsApp Number</label>
                           <input 
                             name="customer_phone" 
@@ -303,6 +420,36 @@ export default function Storefront({ vendor, products }: { vendor: User; product
                             placeholder="+234 801 234 5678"
                           />
                         </div>
+                        
+                        {/* Payment Method Selection */}
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 italic">Payment Method</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                              <input 
+                                type="radio" 
+                                name="payment_method" 
+                                value="cash" 
+                                checked={paymentMethod === 'cash'}
+                                onChange={() => setPaymentMethod('cash')}
+                                className="hidden sr-only" 
+                              />
+                              <span className="text-sm font-bold text-slate-700">Cash/Transfer</span>
+                            </label>
+                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                              <input 
+                                type="radio" 
+                                name="payment_method" 
+                                value="card"
+                                checked={paymentMethod === 'card'}
+                                onChange={() => setPaymentMethod('card')}
+                                className="hidden sr-only" 
+                              />
+                              <span className="text-sm font-bold text-slate-700">💳 Card</span>
+                            </label>
+                          </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-3">
                           <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
                             <input type="radio" name="delivery_type" value="delivery" defaultChecked className="hidden sr-only" />
@@ -335,7 +482,7 @@ export default function Storefront({ vendor, products }: { vendor: User; product
                             disabled={isSubmitting}
                             className="flex-[2] rounded-2xl bg-emerald-600 p-4 font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-95 disabled:opacity-50"
                            >
-                            {isSubmitting ? 'Placing Order...' : 'Confirm Order'}
+                            {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
                            </button>
                         </div>
                       </form>
