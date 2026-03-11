@@ -1,26 +1,40 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import {
   TagIcon,
   CurrencyDollarIcon,
   DocumentTextIcon,
-  PhotoIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
 import { updateProduct, State } from '@/app/lib/actions';
 import { ProductForm } from '@/app/lib/definitions';
+import ImageUpload from './image-upload';
 
 export default function EditProductForm({ product }: { product: ProductForm }) {
   const initialState: State = { message: null, errors: {} };
   const updateProductWithId = updateProduct.bind(null, product.id);
   const [state, formAction] = useActionState(updateProductWithId, initialState);
+  const [imageUrl, setImageUrl] = useState(product.image_url || '');
 
   return (
     <form action={formAction} className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="space-y-4">
+          {/* Product Image Upload */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Product Image
+            </label>
+            <ImageUpload
+              value={imageUrl}
+              onChange={(url) => setImageUrl(url)}
+              onRemove={() => setImageUrl('')}
+            />
+            <input type="hidden" name="image_url" value={imageUrl} />
+          </div>
+
           {/* Product Name */}
           <div>
             <label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-700">
@@ -148,26 +162,7 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
             )}
           </fieldset>
 
-          {/* Image URL Placeholder */}
-          <div>
-            <label htmlFor="image_url" className="mb-2 block text-sm font-medium text-slate-700">
-              Product Image URL
-            </label>
-            <div className="relative">
-              <input
-                id="image_url"
-                name="image_url"
-                type="text"
-                defaultValue={product.image_url}
-                placeholder="https://example.com/image.png"
-                className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-              />
-              <PhotoIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 peer-focus:text-emerald-500" />
-            </div>
-            <p className="mt-2 text-xs text-slate-400">
-              Optional for now. We&apos;ll add direct uploads later!
-            </p>
-          </div>
+
         </div>
       </div>
 

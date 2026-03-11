@@ -284,3 +284,136 @@ export function OrdersListSkeleton() {
     </div>
   );
 }
+
+export function DiscountCardSkeleton() {
+  return (
+    <div className={`${shimmer} relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm`}>
+      <div className="flex items-start justify-between mb-4">
+        <div className="h-8 w-24 rounded-lg bg-slate-200" />
+      </div>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="h-4 w-20 rounded bg-slate-100" />
+          <div className="h-4 w-16 rounded bg-slate-200" />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="h-4 w-16 rounded bg-slate-100" />
+          <div className="h-4 w-24 rounded bg-slate-200" />
+        </div>
+        <div className="pt-3 border-t border-slate-100">
+          <div className="h-10 w-full rounded-lg bg-slate-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function DiscountListSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2n />
+      <DiscountCardSkeleton />
+      <DiscountCardSkeleton />
+    </div>
+  );
+}
+ lg:grid-cols-3">
+      <DiscountCardSkeleto
+
+export function DiscountCardSkeleton() {
+  return (
+    <div className={`${shimmer} relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm`}>
+      <div className="flex items-start justify-between mb-4">
+        <div className="h-8 w-24 rounded-lg bg-slate-200" />
+      </div>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="h-4 w-20 rounded bg-slate-100" />
+          <div className="h-4 w-16 rounded bg-slate-200" />
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="h-4 w-16 rounded bg-slate-100" />
+          <div className="h-4 w-24 rounded bg-slate-200" />
+        </div>
+        <div className="pt-3 border-t border-slate-100">
+          <div className="h-10 w-full rounded-lg bg-slate-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function DiscountListSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <DiscountCardSkeleton />
+      <DiscountCardSkeleton />
+      <DiscountCardSkeleton />
+    </div>
+  );
+}
+
+export function TeamMemberRowSkeleton() {
+  return (
+    <tr className="hover:bg-slate-50">
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className={`${shimmer} relative overflow-hidden flex items-center`}>
+          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-200" />
+          <div className="ml-4 space-y-2">
+            <div className="h-4 w-32 rounded bg-slate-200" />
+            <div className="h-3 w-40 rounded bg-slate-100" />
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className={`${shimmer} relative overflow-hidden h-4 w-20 rounded bg-slate-200`} />
+      </td>
+      <td className="px-6 py-4">
+        <div className={`${shimmer} relative overflow-hidden flex gap-1`}>
+          <div className="h-5 w-16 rounded bg-slate-200" />
+          <div className="h-5 w-16 rounded bg-slate-200" />
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className={`${shimmer} relative overflow-hidden h-5 w-16 rounded-full bg-slate-200`} />
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right">
+        <div className={`${shimmer} relative overflow-hidden h-5 w-5 rounded bg-slate-200 ml-auto`} />
+      </td>
+    </tr>
+  );
+}
+
+export function TeamListSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Member
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Role
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Permissions
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-slate-200">
+            <TeamMemberRowSkeleton />
+            <TeamMemberRowSkeleton />
+            <TeamMemberRowSkeleton />
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

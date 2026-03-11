@@ -286,3 +286,159 @@ export async function updateOrderStatus(id: string, status: string) {
     throw new Error('Failed to update order status.');
   }
 }
+
+
+// Discount actions
+const DiscountSchema = z.object({
+  code: z.string().min(2, { message: 'Code must be at least 2 characters.' }).max(20),
+  discount_type: z.enum(['percentage', 'fixed']),
+  discount_value: z.coerce.number().gt(0, { message: 'Discount value must be greater than 0.' }),
+  min_purchase: z.coerce.number().optional(),
+  max_uses: z.coerce.number().optional(),
+  expires_at: z.string().optional(),
+});
+
+export async function createDiscountAction(
+  vendorId: string,
+  prevState: State | undefined,
+  formData: FormData
+) {
+  const validatedFields = DiscountSchema.safeParse({
+    code: formData.get('code'),
+    discount_type: formData.get('discount_type'),
+    discount_value: formData.get('discount_value'),
+    min_purchase: formData.get('min_purchase') || 0,
+    max_uses: formData.get('max_uses') || null,
+    expires_at: formData.get('expires_at') || null,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Failed to create discount code.',
+    };
+  }
+
+  const { code, discount_type, discount_value, min_purchase, max_uses, expires_at } = validatedFields.data;
+
+  try {
+    const valueInKobo = discount_type === 'fixed' ? Math.round(discount_value * 100) : discount_value;
+    const minPurchaseInKobo = min_purchase ? Math.round(min_purchase * 100) : 0;
+
+    await sql`
+      INSERT INTO discount_codes (vendor_id, code, discount_type, discount_value, min_purchase, max_uses, expires_at)
+      VALUES (${vendorId}, ${code.toUpperCase()}, ${discount_type}, ${valueInKobo}, ${minPurchaseInKobo}, ${max_uses || null}, ${expires_at || null})
+    `;
+  } catch (error) {
+    console.error('Database Error:', error);
+    return {
+      message: 'Database Error: Failed to create discount code.',
+    };
+  }
+
+  revalidatePath('/dashboard/discounts');
+  redirect('/dashboard/discounts');
+}
+
+export async function toggleDiscountAction(
+  discountId: string,
+  active: boolean,
+  prevState: State | undefined,
+  formData: FormData
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { message: 'Unauthorized' };
+  }
+
+  try {
+    await sql`
+      UPDATE discount_codes
+      SET active = ${active}
+      WHERE id = ${discountId} AND vendor_id = ${session.user.id}
+    `;
+  } catch (error) {
+    console.error('Database Error:', error);
+    return {
+      message: 'Database Error: Failed to update discount status.',
+    };
+  }
+
+  revalidatePath('/dashboard/discounts');
+  return { message: null, errors: {} };
+}
+
+
+// Team management actions
+export async function inviteTeamMemberAction(
+  vendorId: string,
+  prevState: State | undefined,
+  formData: FormData
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { message: 'Unauthorized' };
+  }
+
+  const email = formData.get('email') as string;
+  const role = formData.get('role') as 'admin' | 'assistant';
+  const permissions = JSON.parse(formData.get('permissions') as string);
+
+  if (!email || !role) {
+    return { message: 'Email and role are required.' };
+  }
+
+  try {
+    const [user] = await sql`
+      SELECT id FROM users WHERE email = ${email}
+    `;
+
+    if (!user) {
+      return { message: 'User not found. They need to sign up first.' };
+    }
+
+    const [existing] = await sql`
+      SELECT id FROM team_members 
+      WHERE vendor_id = ${vendorId} AND user_id = ${user.id}
+    `;
+
+    if (existing) {
+      return { message: 'This user is already on your team.' };
+    }
+
+    await sql`
+      INSERT INTO team_members (vendor_id, user_id, role, permissions, invited_by, status)
+      VALUES (${vendorId}, ${user.id}, ${role}, ${JSON.stringify(permissions)}, ${session.user.id}, 'active')
+    `;
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { message: 'Database Error: Failed to invite team member.' };
+  }
+
+  revalidatePath('/dashboard/team');
+  redirect('/dashboard/team');
+}
+
+export async function removeTeamMemberAction(
+  memberId: string,
+  prevState: State | undefined,
+  formData: FormData
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { message: 'Unauthorized' };
+  }
+
+  try {
+    await sql`
+      DELETE FROM team_members
+      WHERE id = ${memberId} AND vendor_id = ${session.user.id}
+    `;
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { message: 'Database Error: Failed to remove team member.' };
+  }
+
+  revalidatePath('/dashboard/team');
+  return { message: null, errors: {} };
+}
