@@ -51,6 +51,13 @@ export default function Storefront({ vendor, products }: { vendor: User; product
     
     try {
       if (paymentMethod === 'card') {
+        // Validate email for card payment
+        if (!customerEmail || !customerEmail.includes('@')) {
+          alert('Please enter a valid email address for card payment.');
+          setIsSubmitting(false);
+          return;
+        }
+
         // Handle card payment with Paystack
         const publicKey = 'pk_test_8f134530cff345611052399d94a474253408ab3d';
         

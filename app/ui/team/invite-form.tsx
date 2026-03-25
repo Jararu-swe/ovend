@@ -38,66 +38,6 @@ export default function InviteTeamForm({ vendorId }: { vendorId: string }) {
               They must have an account already. Ask them to sign up first.
             </p>
           </div>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-
-          <fieldset>
-            <legend className="mb-2 block text-sm font-medium text-slate-700">Role</legend>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <input
-                  id="admin"
-                  name="role"
-                  type="radio"
-                  value="admin"
-                  checked={role === 'admin'}
-                  onChange={() => setRole('admin')}
-                  className="h-4 w-4 border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <label htmlFor="admin" className="ml-3">
-                  <span className="block text-sm font-medium text-slate-900">Admin</span>
-                  <span className="block text-xs text-slate-500">Can manage products, orders, and team</span>
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  id="assistant"
-                  name="role"
-                  type="radio"
-                  value="assistant"
-                  checked={role === 'assistant'}
-                  onChange={() => setRole('assistant')}
-                  className="h-4 w-4 border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <label htmlFor="assistant" className="ml-3">
-                  <span className="block text-sm font-medium text-slate-900">Assistant</span>
-                  <span className="block text-xs text-slate-500">Limited access based on permissions</span>
-                </label>
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend className="mb-2 block text-sm font-medium text-slate-700">Permissions</legend>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <input
-                  id="products"
-                  name="products"
-                  type="checkbox"
-                  checked={permissions.products}
-                  onChange={(e) => setPermissions({ ...permissions, products: e.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <label htmlFor="products" className="ml-3 text-sm text-slate-700">
-                  Manage Products
-                </label>
-              </div>
-
 
           <fieldset>
             <legend className="mb-2 block text-sm font-medium text-slate-700">Role</legend>

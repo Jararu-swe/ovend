@@ -30,12 +30,6 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
               <TicketIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
-        </div>
-      </div>
-    </form>
-  );
-}
-
 
           <fieldset>
             <legend className="mb-2 block text-sm font-medium text-slate-700">Discount Type</legend>

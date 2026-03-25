@@ -34,15 +34,24 @@ export default async function DiscountList({ vendorId }: { vendorId: string }) {
                   <code className="rounded-lg bg-emerald-50 px-3 py-1.5 text-lg font-bold text-emerald-700">
                     {discount.code}
                   </code>
+                  {!discount.active && (
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                      Inactive
+                    </span>
+                  )}
+                  {isExpired && (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
+                      Expired
+                    </span>
+                  )}
+                  {isMaxedOut && (
+                    <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-600">
+                      Max uses
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
