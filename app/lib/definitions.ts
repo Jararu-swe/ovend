@@ -167,3 +167,29 @@ export type TeamMember = {
   status: 'pending' | 'active' | 'inactive';
 };
 
+
+
+export type StoreTheme = {
+  id: string;
+  vendor_id: string;
+  primary_color: string;
+  secondary_color: string;
+  background_color: string;
+  text_color: string;
+  accent_color: string;
+  font_family: string;
+  heading_font: string;
+  font_size: 'small' | 'medium' | 'large';
+  layout_style: 'grid' | 'list' | 'masonry';
+  card_style: 'modern' | 'classic' | 'minimal' | 'bold';
+  border_radius: 'sharp' | 'rounded' | 'pill';
+  show_logo: boolean;
+  logo_url: string | null;
+  header_style: 'sticky' | 'static' | 'transparent';
+  show_product_images: boolean;
+  image_aspect_ratio: 'square' | 'portrait' | 'landscape';
+  show_product_description: boolean;
+  spacing: 'compact' | 'comfortable' | 'spacious';
+  created_at: string;
+  updated_at: string;
+};

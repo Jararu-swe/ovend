@@ -442,3 +442,53 @@ export async function removeTeamMemberAction(
   revalidatePath('/dashboard/team');
   return { message: null, errors: {} };
 }
+
+
+// Theme customization action
+export async function updateThemeAction(
+  prevState: State | undefined,
+  formData: FormData
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { message: 'Unauthorized' };
+  }
+
+  try {
+    const themeData = {
+      primary_color: formData.get('primary_color') as string,
+      secondary_color: formData.get('secondary_color') as string,
+      background_color: formData.get('background_color') as string,
+      text_color: formData.get('text_color') as string,
+      layout_style: formData.get('layout_style') as string,
+      card_style: formData.get('card_style') as string,
+      border_radius: formData.get('border_radius') as string,
+      font_family: formData.get('font_family') as string,
+      font_size: formData.get('font_size') as string,
+    };
+
+    await sql`
+      UPDATE store_theme
+      SET 
+        primary_color = ${themeData.primary_color},
+        secondary_color = ${themeData.secondary_color},
+        background_color = ${themeData.background_color},
+        text_color = ${themeData.text_color},
+        layout_style = ${themeData.layout_style},
+        card_style = ${themeData.card_style},
+        border_radius = ${themeData.border_radius},
+        font_family = ${themeData.font_family},
+        font_size = ${themeData.font_size},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE vendor_id = ${session.user.id}
+    `;
+
+    revalidatePath('/dashboard/customize');
+    revalidatePath(`/s/${session.user.store_slug}`);
+    
+    return { message: 'Theme updated successfully!', errors: {} };
+  } catch (error) {
+    console.error('Database Error:', error);
+    return { message: 'Database Error: Failed to update theme.' };
+  }
+}

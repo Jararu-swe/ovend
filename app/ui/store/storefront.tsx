@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { User, Product, OrderItem } from '@/app/lib/definitions';
+import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
 import { createOrder } from '@/app/lib/actions';
 
-export default function Storefront({ vendor, products }: { vendor: User; products: Product[] }) {
+export default function Storefront({ vendor, products, theme }: { vendor: User; products: Product[]; theme: StoreTheme }) {
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -220,16 +220,30 @@ export default function Storefront({ vendor, products }: { vendor: User; product
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div 
+      className="min-h-screen"
+      style={{
+        '--color-primary': theme.primary_color,
+        '--color-secondary': theme.secondary_color,
+        '--color-background': theme.background_color,
+        '--color-text': theme.text_color,
+        '--color-accent': theme.accent_color,
+        backgroundColor: theme.background_color,
+        color: theme.text_color,
+      } as React.CSSProperties}
+    >
       {/* Store Header */}
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-lg font-bold text-white uppercase">
+            <div 
+              className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white uppercase"
+              style={{ backgroundColor: theme.primary_color }}
+            >
               {vendor.name.charAt(0)}
             </div>
             <div>
-              <h1 className="font-bold text-slate-900 leading-tight">{vendor.name}</h1>
+              <h1 className="font-bold leading-tight" style={{ color: theme.text_color }}>{vendor.name}</h1>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold font-mono">
                 ovend.app/s/{vendor.store_slug}
               </p>
@@ -237,11 +251,17 @@ export default function Storefront({ vendor, products }: { vendor: User; product
           </div>
           <button 
             onClick={() => setIsCartOpen(true)}
-            className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 hover:text-emerald-500 transition-colors"
+            className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 transition-colors"
+            style={{ '--hover-color': theme.primary_color } as React.CSSProperties}
+            onMouseEnter={(e) => e.currentTarget.style.color = theme.primary_color}
+            onMouseLeave={(e) => e.currentTarget.style.color = ''}
           >
             <ShoppingBagIcon className="h-6 w-6" />
             {cartCount > 0 && (
-              <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-emerald-500 text-[10px] font-bold text-white flex items-center justify-center">
+              <span 
+                className="absolute top-0 right-0 h-4 w-4 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
+                style={{ backgroundColor: theme.primary_color }}
+              >
                 {cartCount}
               </span>
             )}
@@ -269,11 +289,24 @@ export default function Storefront({ vendor, products }: { vendor: User; product
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className={`grid gap-6 ${
+            theme.layout_style === 'grid' ? 'grid-cols-1 sm:grid-cols-2' :
+            theme.layout_style === 'list' ? 'grid-cols-1' :
+            'grid-cols-1 sm:grid-cols-2'
+          }`}>
             {activeProducts.map((product) => (
               <div
                 key={product.id}
-                className="group flex flex-col overflow-hidden rounded-3xl bg-white border border-slate-100 shadow-sm transition-shadow hover:shadow-md"
+                className={`group flex flex-col overflow-hidden bg-white border shadow-sm transition-shadow hover:shadow-md ${
+                  theme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
+                  theme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
+                  theme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
+                  'rounded-2xl border-4'
+                }`}
+                style={theme.card_style === 'bold' ? { 
+                  borderColor: theme.primary_color,
+                  boxShadow: `4px 4px 0 ${theme.primary_color}40`
+                } : {}}
               >
                 <div className="aspect-square relative flex items-center justify-center bg-slate-50 text-slate-200 overflow-hidden">
                   {product.image_url ? (
@@ -288,17 +321,18 @@ export default function Storefront({ vendor, products }: { vendor: User; product
                   )}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  <h4 className="font-bold text-slate-900 leading-snug mb-1">{product.name}</h4>
+                  <h4 className="font-bold leading-snug mb-1" style={{ color: theme.text_color }}>{product.name}</h4>
                   <p className="text-xs text-slate-500 line-clamp-2 min-h-[2rem]">
                     {product.description}
                   </p>
                   <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-50">
-                    <p className="text-lg font-bold text-emerald-600">
+                    <p className="text-lg font-bold" style={{ color: theme.primary_color }}>
                       {formatCurrency(product.price)}
                     </p>
                     <button 
                       onClick={() => addToCart(product)}
-                      className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+                      className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+                      style={{ backgroundColor: theme.primary_color }}
                     >
                       <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
                     </button>
@@ -315,7 +349,8 @@ export default function Storefront({ vendor, products }: { vendor: User; product
         <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl p-4 z-10">
           <button 
             onClick={() => setIsCartOpen(true)}
-            className="flex w-full items-center justify-between rounded-3xl bg-emerald-600 p-4 font-bold text-white shadow-2xl transition hover:bg-emerald-500 active:scale-95"
+            className="flex w-full items-center justify-between rounded-3xl p-4 font-bold text-white shadow-2xl transition hover:opacity-90 active:scale-95"
+            style={{ backgroundColor: theme.primary_color }}
           >
             <span>{cartCount} items in cart</span>
             <span className="flex items-center gap-2">
@@ -390,7 +425,8 @@ export default function Storefront({ vendor, products }: { vendor: User; product
                     {!isCheckingOut ? (
                       <button 
                         onClick={() => setIsCheckingOut(true)}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 p-4 font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-95"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+                        style={{ backgroundColor: theme.primary_color }}
                       >
                         Checkout Order <ArrowRightIcon className="h-5 w-5" strokeWidth={2.5} />
                       </button>
@@ -487,7 +523,8 @@ export default function Storefront({ vendor, products }: { vendor: User; product
                            <button 
                             type="submit" 
                             disabled={isSubmitting}
-                            className="flex-[2] rounded-2xl bg-emerald-600 p-4 font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-95 disabled:opacity-50"
+                            className="flex-[2] rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 disabled:opacity-50"
+                            style={{ backgroundColor: theme.primary_color }}
                            >
                             {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
                            </button>
