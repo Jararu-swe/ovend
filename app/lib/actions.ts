@@ -33,6 +33,25 @@ const ProfileSchema = z.object({
   account_name: z.string().optional().nullable(),
 });
 
+const ThemeSchema = z.object({
+  primary_color: z.string(),
+  secondary_color: z.string(),
+  background_color: z.string(),
+  text_color: z.string(),
+  accent_color: z.string(),
+  layout_style: z.enum(['grid', 'list', 'masonry']),
+  card_style: z.enum(['modern', 'classic', 'minimal', 'bold']),
+  border_radius: z.enum(['sharp', 'rounded', 'pill']),
+  font_family: z.string(),
+  heading_font: z.string(),
+  font_size: z.enum(['small', 'medium', 'large']),
+  header_style: z.enum(['sticky', 'static', 'transparent']),
+  show_product_images: z.coerce.boolean(),
+  show_product_description: z.coerce.boolean(),
+  image_aspect_ratio: z.enum(['square', 'portrait', 'landscape']),
+  spacing: z.enum(['compact', 'comfortable', 'spacious']),
+});
+
 export type State = {
   errors?: {
     name?: string[];
@@ -455,17 +474,30 @@ export async function updateThemeAction(
   }
 
   try {
-    const themeData = {
+    const parsed = ThemeSchema.safeParse({
       primary_color: formData.get('primary_color') as string,
       secondary_color: formData.get('secondary_color') as string,
       background_color: formData.get('background_color') as string,
       text_color: formData.get('text_color') as string,
+      accent_color: formData.get('accent_color') as string,
       layout_style: formData.get('layout_style') as string,
       card_style: formData.get('card_style') as string,
       border_radius: formData.get('border_radius') as string,
       font_family: formData.get('font_family') as string,
+      heading_font: formData.get('heading_font') as string,
       font_size: formData.get('font_size') as string,
-    };
+      header_style: formData.get('header_style') as string,
+      show_product_images: formData.get('show_product_images') === 'true',
+      show_product_description: formData.get('show_product_description') === 'true',
+      image_aspect_ratio: formData.get('image_aspect_ratio') as string,
+      spacing: formData.get('spacing') as string,
+    });
+
+    if (!parsed.success) {
+      return { message: 'Invalid customization values submitted.', errors: {} };
+    }
+
+    const themeData = parsed.data;
 
     await sql`
       UPDATE store_theme
@@ -474,11 +506,18 @@ export async function updateThemeAction(
         secondary_color = ${themeData.secondary_color},
         background_color = ${themeData.background_color},
         text_color = ${themeData.text_color},
+        accent_color = ${themeData.accent_color},
         layout_style = ${themeData.layout_style},
         card_style = ${themeData.card_style},
         border_radius = ${themeData.border_radius},
         font_family = ${themeData.font_family},
+        heading_font = ${themeData.heading_font},
         font_size = ${themeData.font_size},
+        header_style = ${themeData.header_style},
+        show_product_images = ${themeData.show_product_images},
+        show_product_description = ${themeData.show_product_description},
+        image_aspect_ratio = ${themeData.image_aspect_ratio},
+        spacing = ${themeData.spacing},
         updated_at = CURRENT_TIMESTAMP
       WHERE vendor_id = ${session.user.id}
     `;

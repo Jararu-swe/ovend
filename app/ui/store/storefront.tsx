@@ -1,13 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
 import { createOrder } from '@/app/lib/actions';
+import { useSearchParams } from 'next/navigation';
 
 export default function Storefront({ vendor, products, theme }: { vendor: User; products: Product[]; theme: StoreTheme }) {
+  const searchParams = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
+  const [previewTheme, setPreviewTheme] = useState<StoreTheme | null>(null);
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -17,8 +21,52 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const [customerEmail, setCustomerEmail] = useState('');
 
   const activeProducts = products.filter((p) => p.status === 'active');
+  const activeTheme = useMemo(() => previewTheme ?? theme, [previewTheme, theme]);
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const fontSizeClass =
+    activeTheme.font_size === 'small'
+      ? 'text-sm'
+      : activeTheme.font_size === 'large'
+      ? 'text-lg'
+      : 'text-base';
+  const borderRadiusClass =
+    activeTheme.border_radius === 'sharp'
+      ? 'rounded-none'
+      : activeTheme.border_radius === 'pill'
+      ? 'rounded-3xl'
+      : 'rounded-2xl';
+  const spacingClass =
+    activeTheme.spacing === 'compact'
+      ? 'gap-3'
+      : activeTheme.spacing === 'spacious'
+      ? 'gap-8'
+      : 'gap-6';
+  const imageAspectClass =
+    activeTheme.image_aspect_ratio === 'portrait'
+      ? 'aspect-[3/4]'
+      : activeTheme.image_aspect_ratio === 'landscape'
+      ? 'aspect-[4/3]'
+      : 'aspect-square';
+  const headerClass =
+    activeTheme.header_style === 'static'
+      ? 'border-b border-slate-200 bg-white'
+      : activeTheme.header_style === 'transparent'
+      ? 'border-b border-transparent bg-transparent'
+      : 'sticky top-0 border-b border-slate-200 bg-white/80 backdrop-blur-md';
+
+  useEffect(() => {
+    if (!isPreview) return;
+
+    function handlePreviewMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'OVEND_PREVIEW_THEME_UPDATE') return;
+      setPreviewTheme(event.data.payload as StoreTheme);
+    }
+
+    window.addEventListener('message', handlePreviewMessage);
+    return () => window.removeEventListener('message', handlePreviewMessage);
+  }, [isPreview]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -221,29 +269,32 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
   return (
     <div 
-      className="min-h-screen"
+      className={`min-h-screen ${fontSizeClass}`}
       style={{
-        '--color-primary': theme.primary_color,
-        '--color-secondary': theme.secondary_color,
-        '--color-background': theme.background_color,
-        '--color-text': theme.text_color,
-        '--color-accent': theme.accent_color,
-        backgroundColor: theme.background_color,
-        color: theme.text_color,
+        '--color-primary': activeTheme.primary_color,
+        '--color-secondary': activeTheme.secondary_color,
+        '--color-background': activeTheme.background_color,
+        '--color-text': activeTheme.text_color,
+        '--color-accent': activeTheme.accent_color,
+        backgroundColor: activeTheme.background_color,
+        color: activeTheme.text_color,
+        fontFamily: activeTheme.font_family,
       } as React.CSSProperties}
     >
       {/* Store Header */}
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur-md">
+      <header className={`z-10 ${headerClass}`}>
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
             <div 
               className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white uppercase"
-              style={{ backgroundColor: theme.primary_color }}
+              style={{ backgroundColor: activeTheme.primary_color }}
             >
-              {vendor.name.charAt(0)}
+              {vendor.store_name?.charAt(0) || vendor.name.charAt(0)}
             </div>
             <div>
-              <h1 className="font-bold leading-tight" style={{ color: theme.text_color }}>{vendor.name}</h1>
+              <h1 className="font-bold leading-tight" style={{ color: activeTheme.text_color }}>
+                {vendor.store_name || vendor.name}
+              </h1>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold font-mono">
                 ovend.app/s/{vendor.store_slug}
               </p>
@@ -252,15 +303,15 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           <button 
             onClick={() => setIsCartOpen(true)}
             className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 transition-colors"
-            style={{ '--hover-color': theme.primary_color } as React.CSSProperties}
-            onMouseEnter={(e) => e.currentTarget.style.color = theme.primary_color}
+            style={{ '--hover-color': activeTheme.primary_color } as React.CSSProperties}
+            onMouseEnter={(e) => e.currentTarget.style.color = activeTheme.primary_color}
             onMouseLeave={(e) => e.currentTarget.style.color = ''}
           >
             <ShoppingBagIcon className="h-6 w-6" />
             {cartCount > 0 && (
               <span 
                 className="absolute top-0 right-0 h-4 w-4 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
-                style={{ backgroundColor: theme.primary_color }}
+                style={{ backgroundColor: activeTheme.primary_color }}
               >
                 {cartCount}
               </span>
@@ -270,15 +321,21 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-8 pb-32">
-        <div className="mb-8 overflow-hidden rounded-3xl bg-slate-900 p-8 text-white shadow-xl relative">
+        <div
+          className={`mb-8 overflow-hidden ${borderRadiusClass} p-8 text-white shadow-xl relative`}
+          style={{
+            background: `linear-gradient(135deg, ${activeTheme.primary_color}, ${activeTheme.secondary_color})`,
+            fontFamily: activeTheme.heading_font,
+          }}
+        >
           <div className="relative z-10">
             <h2 className="text-2xl font-bold tracking-tight">Welcome to our store</h2>
-            <p className="mt-2 text-slate-300 text-sm max-w-[240px]">
+            <p className="mt-2 text-white/80 text-sm max-w-[240px]">
               Browse our collection and order directly via WhatsApp.
             </p>
           </div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-          <div className="absolute bottom-0 right-0 w-24 h-24 bg-emerald-400/10 rounded-full mr-10 mb-10 blur-xl"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-10 -mt-10 blur-2xl" style={{ backgroundColor: `${activeTheme.accent_color}40` }} />
+          <div className="absolute bottom-0 right-0 w-24 h-24 rounded-full mr-10 mb-10 blur-xl" style={{ backgroundColor: `${activeTheme.accent_color}30` }} />
         </div>
 
         <section id="item-list">
@@ -289,50 +346,54 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
             </span>
           </div>
 
-          <div className={`grid gap-6 ${
-            theme.layout_style === 'grid' ? 'grid-cols-1 sm:grid-cols-2' :
-            theme.layout_style === 'list' ? 'grid-cols-1' :
+          <div className={`grid ${spacingClass} ${
+            activeTheme.layout_style === 'grid' ? 'grid-cols-1 sm:grid-cols-2' :
+            activeTheme.layout_style === 'list' ? 'grid-cols-1' :
             'grid-cols-1 sm:grid-cols-2'
           }`}>
             {activeProducts.map((product) => (
               <div
                 key={product.id}
                 className={`group flex flex-col overflow-hidden bg-white border shadow-sm transition-shadow hover:shadow-md ${
-                  theme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
-                  theme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
-                  theme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
+                  activeTheme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
+                  activeTheme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
+                  activeTheme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
                   'rounded-2xl border-4'
                 }`}
-                style={theme.card_style === 'bold' ? { 
-                  borderColor: theme.primary_color,
-                  boxShadow: `4px 4px 0 ${theme.primary_color}40`
+                style={activeTheme.card_style === 'bold' ? { 
+                  borderColor: activeTheme.primary_color,
+                  boxShadow: `4px 4px 0 ${activeTheme.primary_color}40`
                 } : {}}
               >
-                <div className="aspect-square relative flex items-center justify-center bg-slate-50 text-slate-200 overflow-hidden">
-                  {product.image_url ? (
-                    <Image
-                      src={product.image_url}
-                      alt={product.name}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-110 duration-500"
-                    />
-                  ) : (
-                    <ShoppingBagIcon className="h-16 w-16" />
-                  )}
-                </div>
+                {activeTheme.show_product_images && (
+                  <div className={`${imageAspectClass} relative flex items-center justify-center bg-slate-50 text-slate-200 overflow-hidden`}>
+                    {product.image_url ? (
+                      <Image
+                        src={product.image_url}
+                        alt={product.name}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-110 duration-500"
+                      />
+                    ) : (
+                      <ShoppingBagIcon className="h-16 w-16" />
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-1 flex-col p-5">
-                  <h4 className="font-bold leading-snug mb-1" style={{ color: theme.text_color }}>{product.name}</h4>
-                  <p className="text-xs text-slate-500 line-clamp-2 min-h-[2rem]">
-                    {product.description}
-                  </p>
+                  <h4 className="font-bold leading-snug mb-1" style={{ color: activeTheme.text_color, fontFamily: activeTheme.heading_font }}>{product.name}</h4>
+                  {activeTheme.show_product_description && (
+                    <p className="text-xs text-slate-500 line-clamp-2 min-h-[2rem]">
+                      {product.description}
+                    </p>
+                  )}
                   <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-50">
-                    <p className="text-lg font-bold" style={{ color: theme.primary_color }}>
+                    <p className="text-lg font-bold" style={{ color: activeTheme.primary_color }}>
                       {formatCurrency(product.price)}
                     </p>
                     <button 
                       onClick={() => addToCart(product)}
                       className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-                      style={{ backgroundColor: theme.primary_color }}
+                      style={{ backgroundColor: activeTheme.primary_color }}
                     >
                       <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
                     </button>
@@ -350,7 +411,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           <button 
             onClick={() => setIsCartOpen(true)}
             className="flex w-full items-center justify-between rounded-3xl p-4 font-bold text-white shadow-2xl transition hover:opacity-90 active:scale-95"
-            style={{ backgroundColor: theme.primary_color }}
+            style={{ backgroundColor: activeTheme.primary_color }}
           >
             <span>{cartCount} items in cart</span>
             <span className="flex items-center gap-2">
@@ -426,7 +487,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                       <button 
                         onClick={() => setIsCheckingOut(true)}
                         className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-                        style={{ backgroundColor: theme.primary_color }}
+                        style={{ backgroundColor: activeTheme.primary_color }}
                       >
                         Checkout Order <ArrowRightIcon className="h-5 w-5" strokeWidth={2.5} />
                       </button>
@@ -524,7 +585,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                             type="submit" 
                             disabled={isSubmitting}
                             className="flex-[2] rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 disabled:opacity-50"
-                            style={{ backgroundColor: theme.primary_color }}
+                            style={{ backgroundColor: activeTheme.primary_color }}
                            >
                             {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
                            </button>

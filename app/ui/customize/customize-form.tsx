@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StoreTheme } from '@/app/lib/definitions';
 import { updateThemeAction } from '@/app/lib/actions';
 import { useActionState } from 'react';
@@ -9,6 +9,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
   const [localTheme, setLocalTheme] = useState(theme);
   const [state, formAction] = useActionState(updateThemeAction, { message: null, errors: {} });
   const [isSaving, setIsSaving] = useState(false);
+  const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -21,6 +22,17 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
   const updateLocalTheme = (key: keyof StoreTheme, value: any) => {
     setLocalTheme(prev => ({ ...prev, [key]: value }));
   };
+
+  useEffect(() => {
+    if (!vendorSlug || !previewFrameRef.current?.contentWindow) return;
+    previewFrameRef.current.contentWindow.postMessage(
+      {
+        type: 'OVEND_PREVIEW_THEME_UPDATE',
+        payload: localTheme,
+      },
+      window.location.origin,
+    );
+  }, [localTheme, vendorSlug]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -55,6 +67,12 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                 value={localTheme.text_color}
                 onChange={(val) => updateLocalTheme('text_color', val)}
               />
+              <ColorInput
+                label="Accent Color"
+                name="accent_color"
+                value={localTheme.accent_color}
+                onChange={(val) => updateLocalTheme('accent_color', val)}
+              />
             </div>
           </div>
 
@@ -69,7 +87,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                 <select
                   name="layout_style"
                   value={localTheme.layout_style}
-                  onChange={(e) => updateLocalTheme('layout_style', e.target.value)}
+                  onChange={(e) => updateLocalTheme('layout_style', e.target.value as StoreTheme['layout_style'])}
                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
                 >
                   <option value="grid">Grid</option>
@@ -85,7 +103,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                 <select
                   name="card_style"
                   value={localTheme.card_style}
-                  onChange={(e) => updateLocalTheme('card_style', e.target.value)}
+                  onChange={(e) => updateLocalTheme('card_style', e.target.value as StoreTheme['card_style'])}
                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
                 >
                   <option value="modern">Modern</option>
@@ -102,12 +120,28 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                 <select
                   name="border_radius"
                   value={localTheme.border_radius}
-                  onChange={(e) => updateLocalTheme('border_radius', e.target.value)}
+                  onChange={(e) => updateLocalTheme('border_radius', e.target.value as StoreTheme['border_radius'])}
                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
                 >
                   <option value="sharp">Sharp</option>
                   <option value="rounded">Rounded</option>
                   <option value="pill">Pill</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Header Style
+                </label>
+                <select
+                  name="header_style"
+                  value={localTheme.header_style}
+                  onChange={(e) => updateLocalTheme('header_style', e.target.value as StoreTheme['header_style'])}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                >
+                  <option value="sticky">Sticky</option>
+                  <option value="static">Static</option>
+                  <option value="transparent">Transparent</option>
                 </select>
               </div>
             </div>
@@ -137,17 +171,86 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Heading Font
+                </label>
+                <select
+                  name="heading_font"
+                  value={localTheme.heading_font}
+                  onChange={(e) => updateLocalTheme('heading_font', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                >
+                  <option value="inter">Inter</option>
+                  <option value="poppins">Poppins</option>
+                  <option value="roboto">Roboto</option>
+                  <option value="playfair">Playfair Display</option>
+                  <option value="montserrat">Montserrat</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Font Size
                 </label>
                 <select
                   name="font_size"
                   value={localTheme.font_size}
-                  onChange={(e) => updateLocalTheme('font_size', e.target.value)}
+                  onChange={(e) => updateLocalTheme('font_size', e.target.value as StoreTheme['font_size'])}
                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
                 >
                   <option value="small">Small</option>
                   <option value="medium">Medium</option>
                   <option value="large">Large</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Display Section */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900 mb-4">Product Display</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <ToggleField
+                  label="Show Product Images"
+                  name="show_product_images"
+                  value={localTheme.show_product_images}
+                  onChange={(value) => updateLocalTheme('show_product_images', value)}
+                />
+                <ToggleField
+                  label="Show Descriptions"
+                  name="show_product_description"
+                  value={localTheme.show_product_description}
+                  onChange={(value) => updateLocalTheme('show_product_description', value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Image Aspect Ratio
+                </label>
+                <select
+                  name="image_aspect_ratio"
+                  value={localTheme.image_aspect_ratio}
+                  onChange={(e) => updateLocalTheme('image_aspect_ratio', e.target.value as StoreTheme['image_aspect_ratio'])}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                >
+                  <option value="square">Square</option>
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Spacing
+                </label>
+                <select
+                  name="spacing"
+                  value={localTheme.spacing}
+                  onChange={(e) => updateLocalTheme('spacing', e.target.value as StoreTheme['spacing'])}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                >
+                  <option value="compact">Compact</option>
+                  <option value="comfortable">Comfortable</option>
+                  <option value="spacious">Spacious</option>
                 </select>
               </div>
             </div>
@@ -158,16 +261,25 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
         <div className="lg:col-span-1">
           <div className="sticky top-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Preview</h2>
-            <div className="aspect-[9/16] rounded-xl border-2 border-slate-200 overflow-hidden">
-              <iframe
-                src={`/s/${vendorSlug}?preview=true`}
-                className="w-full h-full"
-                title="Store Preview"
-              />
-            </div>
-            <p className="text-xs text-slate-500 mt-2 text-center">
-              Live preview of your store
-            </p>
+            {vendorSlug ? (
+              <>
+                <div className="aspect-[9/16] rounded-xl border-2 border-slate-200 overflow-hidden">
+                  <iframe
+                    ref={previewFrameRef}
+                    src={`/s/${vendorSlug}?preview=true`}
+                    className="w-full h-full"
+                    title="Store Preview"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2 text-center">
+                  Live preview of your store
+                </p>
+              </>
+            ) : (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Set your store slug in Settings to enable live preview.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -220,5 +332,31 @@ function ColorInput({ label, name, value, onChange }: { label: string; name: str
         />
       </div>
     </div>
+  );
+}
+
+function ToggleField({
+  label,
+  name,
+  value,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between rounded-xl border border-slate-200 p-3">
+      <span className="text-sm text-slate-700">{label}</span>
+      <input
+        type="checkbox"
+        name={name}
+        checked={value}
+        value={value ? 'true' : 'false'}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 accent-emerald-500"
+      />
+    </label>
   );
 }

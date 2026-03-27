@@ -1,8 +1,8 @@
-import { Suspense } from 'react';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import CustomizeForm from '@/app/ui/customize/customize-form';
 import { getOrCreateVendorTheme } from '@/app/lib/theme';
+import { fetchUserById } from '@/app/lib/data';
 
 export default async function CustomizePage() {
   const session = await auth();
@@ -10,7 +10,10 @@ export default async function CustomizePage() {
     redirect('/login');
   }
 
-  const theme = await getOrCreateVendorTheme(session.user.id);
+  const [theme, user] = await Promise.all([
+    getOrCreateVendorTheme(session.user.id),
+    fetchUserById(session.user.id),
+  ]);
 
   return (
     <div className="w-full">
@@ -20,7 +23,7 @@ export default async function CustomizePage() {
           Personalize your storefront with colors, fonts, and layout options
         </p>
       </div>
-      <CustomizeForm theme={theme} vendorSlug={session.user.store_slug || ''} />
+      <CustomizeForm theme={theme} vendorSlug={user?.store_slug || ''} />
     </div>
   );
 }
