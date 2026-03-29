@@ -185,6 +185,10 @@ export type StoreTheme = {
   border_radius: 'sharp' | 'rounded' | 'pill';
   show_logo: boolean;
   logo_url: string | null;
+  /** Where the logo + store title sit in the header bar */
+  logo_position: 'left' | 'center' | 'right';
+  /** How the logo image (or letter mark) is framed */
+  logo_frame: 'plain' | 'profile' | 'rounded' | 'minimal';
   header_style: 'sticky' | 'static' | 'transparent';
   show_product_images: boolean;
   image_aspect_ratio: 'square' | 'portrait' | 'landscape';

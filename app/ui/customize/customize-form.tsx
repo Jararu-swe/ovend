@@ -4,9 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { StoreTheme } from '@/app/lib/definitions';
 import { updateThemeAction } from '@/app/lib/actions';
 import { useActionState } from 'react';
+import LogoDropzone from '@/app/ui/customize/logo-dropzone';
 
 export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme; vendorSlug: string }) {
-  const [localTheme, setLocalTheme] = useState(theme);
+  const [localTheme, setLocalTheme] = useState<StoreTheme>(() => ({
+    ...theme,
+    logo_position: theme.logo_position ?? 'left',
+    logo_frame: theme.logo_frame ?? 'profile',
+  }));
   const [state, formAction] = useActionState(updateThemeAction, { message: null, errors: {} });
   const [isSaving, setIsSaving] = useState(false);
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
@@ -72,6 +77,63 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                 name="accent_color"
                 value={localTheme.accent_color}
                 onChange={(val) => updateLocalTheme('accent_color', val)}
+              />
+            </div>
+          </div>
+
+          {/* Brand & logo */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900 mb-1">Brand &amp; logo</h2>
+            <p className="mb-4 text-sm text-slate-500">
+              Upload a logo for your store header, or paste an image URL. Drag and drop is fastest.
+            </p>
+            <div className="space-y-4">
+              <ToggleField
+                label="Show logo in store header"
+                name="show_logo"
+                value={localTheme.show_logo}
+                onChange={(value) => updateLocalTheme('show_logo', value)}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Logo position
+                  </label>
+                  <select
+                    name="logo_position"
+                    value={localTheme.logo_position}
+                    onChange={(e) =>
+                      updateLocalTheme('logo_position', e.target.value as StoreTheme['logo_position'])
+                    }
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                  >
+                    <option value="left">Left — logo beside store name</option>
+                    <option value="center">Center — logo above name (cart top-right)</option>
+                    <option value="right">Right — name left, logo beside cart</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Logo style
+                  </label>
+                  <select
+                    name="logo_frame"
+                    value={localTheme.logo_frame}
+                    onChange={(e) =>
+                      updateLocalTheme('logo_frame', e.target.value as StoreTheme['logo_frame'])
+                    }
+                    className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                  >
+                    <option value="profile">Profile — circular (avatar)</option>
+                    <option value="rounded">Rounded square</option>
+                    <option value="plain">Plain — light corners, no ring</option>
+                    <option value="minimal">Minimal — smaller, compact</option>
+                  </select>
+                </div>
+              </div>
+              <LogoDropzone
+                logoUrl={localTheme.logo_url}
+                onLogoUrlChange={(url) => updateLocalTheme('logo_url', url)}
               />
             </div>
           </div>

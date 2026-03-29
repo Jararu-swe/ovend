@@ -3,6 +3,29 @@ import { StoreTheme } from './definitions';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
+let ensureLogoLayoutColumnsPromise: Promise<void> | null = null;
+
+/** Adds logo layout columns on existing DBs (idempotent). */
+export async function ensureLogoLayoutColumns() {
+  if (!ensureLogoLayoutColumnsPromise) {
+    ensureLogoLayoutColumnsPromise = (async () => {
+      try {
+        await sql`
+          ALTER TABLE store_theme
+          ADD COLUMN IF NOT EXISTS logo_position VARCHAR(20) DEFAULT 'left'
+        `;
+        await sql`
+          ALTER TABLE store_theme
+          ADD COLUMN IF NOT EXISTS logo_frame VARCHAR(20) DEFAULT 'profile'
+        `;
+      } catch (e) {
+        console.error('ensureLogoLayoutColumns:', e);
+      }
+    })();
+  }
+  await ensureLogoLayoutColumnsPromise;
+}
+
 export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'created_at' | 'updated_at'> {
   return {
     primary_color: '#10b981',
@@ -18,6 +41,8 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     border_radius: 'rounded',
     show_logo: true,
     logo_url: null,
+    logo_position: 'left',
+    logo_frame: 'profile',
     header_style: 'sticky',
     show_product_images: true,
     image_aspect_ratio: 'square',
@@ -27,13 +52,19 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
 }
 
 export async function fetchVendorTheme(vendorId: string): Promise<StoreTheme | null> {
+  await ensureLogoLayoutColumns();
   try {
     const [theme] = await sql<StoreTheme[]>`
       SELECT * FROM store_theme
       WHERE vendor_id = ${vendorId}
       LIMIT 1
     `;
-    return theme || null;
+    if (!theme) return null;
+    return {
+      ...theme,
+      logo_position: theme.logo_position ?? 'left',
+      logo_frame: theme.logo_frame ?? 'profile',
+    };
   } catch (error) {
     console.error('Database Error:', error);
     return null;
@@ -41,6 +72,7 @@ export async function fetchVendorTheme(vendorId: string): Promise<StoreTheme | n
 }
 
 export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
+  await ensureLogoLayoutColumns();
   const defaultTheme = getDefaultTheme();
   const [theme] = await sql<StoreTheme[]>`
     INSERT INTO store_theme (
@@ -58,6 +90,8 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       border_radius,
       show_logo,
       logo_url,
+      logo_position,
+      logo_frame,
       header_style,
       show_product_images,
       image_aspect_ratio,
@@ -78,6 +112,8 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       ${defaultTheme.border_radius},
       ${defaultTheme.show_logo},
       ${defaultTheme.logo_url},
+      ${defaultTheme.logo_position},
+      ${defaultTheme.logo_frame},
       ${defaultTheme.header_style},
       ${defaultTheme.show_product_images},
       ${defaultTheme.image_aspect_ratio},

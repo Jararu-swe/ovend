@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Vendor-uploaded logos (keep folder via .gitkeep)
+public/uploads/logos/*
+!public/uploads/logos/.gitkeep

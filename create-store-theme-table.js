@@ -38,6 +38,8 @@ async function createTable() {
         -- Header
         show_logo BOOLEAN DEFAULT true,
         logo_url TEXT,
+        logo_position VARCHAR(20) DEFAULT 'left',
+        logo_frame VARCHAR(20) DEFAULT 'profile',
         header_style VARCHAR(20) DEFAULT 'sticky',
         
         -- Product Cards

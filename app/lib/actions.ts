@@ -5,6 +5,7 @@ import postgres from 'postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import { ensureLogoLayoutColumns } from '@/app/lib/theme';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -50,6 +51,21 @@ const ThemeSchema = z.object({
   show_product_description: z.coerce.boolean(),
   image_aspect_ratio: z.enum(['square', 'portrait', 'landscape']),
   spacing: z.enum(['compact', 'comfortable', 'spacious']),
+  show_logo: z.preprocess((v) => v === 'true' || v === true, z.boolean()),
+  logo_position: z.enum(['left', 'center', 'right']),
+  logo_frame: z.enum(['plain', 'profile', 'rounded', 'minimal']),
+  logo_url: z.preprocess(
+    (v) => {
+      if (v === null || v === undefined) return null;
+      const s = String(v).trim();
+      return s === '' ? null : s;
+    },
+    z.union([
+      z.null(),
+      z.string().url(),
+      z.string().regex(/^\/uploads\//, 'Must be an uploaded file path or https URL'),
+    ]),
+  ),
 });
 
 export type State = {
@@ -474,6 +490,7 @@ export async function updateThemeAction(
   }
 
   try {
+    await ensureLogoLayoutColumns();
     const parsed = ThemeSchema.safeParse({
       primary_color: formData.get('primary_color') as string,
       secondary_color: formData.get('secondary_color') as string,
@@ -491,6 +508,10 @@ export async function updateThemeAction(
       show_product_description: formData.get('show_product_description') === 'true',
       image_aspect_ratio: formData.get('image_aspect_ratio') as string,
       spacing: formData.get('spacing') as string,
+      show_logo: formData.get('show_logo'),
+      logo_position: formData.get('logo_position'),
+      logo_frame: formData.get('logo_frame'),
+      logo_url: formData.get('logo_url'),
     });
 
     if (!parsed.success) {
@@ -518,13 +539,22 @@ export async function updateThemeAction(
         show_product_description = ${themeData.show_product_description},
         image_aspect_ratio = ${themeData.image_aspect_ratio},
         spacing = ${themeData.spacing},
+        show_logo = ${themeData.show_logo},
+        logo_position = ${themeData.logo_position},
+        logo_frame = ${themeData.logo_frame},
+        logo_url = ${themeData.logo_url},
         updated_at = CURRENT_TIMESTAMP
       WHERE vendor_id = ${session.user.id}
     `;
 
     revalidatePath('/dashboard/customize');
-    revalidatePath(`/s/${session.user.store_slug}`);
-    
+    const [slugRow] = await sql<{ store_slug: string }[]>`
+      SELECT store_slug FROM users WHERE id = ${session.user.id} LIMIT 1
+    `;
+    if (slugRow?.store_slug) {
+      revalidatePath(`/s/${slugRow.store_slug}`);
+    }
+
     return { message: 'Theme updated successfully!', errors: {} };
   } catch (error) {
     console.error('Database Error:', error);

@@ -55,6 +55,72 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       ? 'border-b border-transparent bg-transparent'
       : 'sticky top-0 border-b border-slate-200 bg-white/80 backdrop-blur-md';
 
+  const logoPos = activeTheme.logo_position ?? 'left';
+  const logoFrame = activeTheme.logo_frame ?? 'profile';
+
+  const logoMarkSize = logoFrame === 'minimal' ? 'h-8 w-8' : 'h-10 w-10';
+  const logoFrameClass =
+    logoFrame === 'profile'
+      ? `${logoMarkSize} shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-slate-200`
+      : logoFrame === 'rounded'
+        ? `${logoMarkSize} shrink-0 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200`
+        : logoFrame === 'minimal'
+          ? `${logoMarkSize} shrink-0 overflow-hidden rounded-md bg-slate-50 ring-1 ring-slate-100`
+          : `${logoMarkSize} shrink-0 overflow-hidden rounded-lg bg-white`;
+
+  const initialLetter = vendor.store_name?.charAt(0) || vendor.name.charAt(0);
+
+  const cartButton = (
+    <button
+      type="button"
+      onClick={() => setIsCartOpen(true)}
+      className="relative rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50"
+      style={{ '--hover-color': activeTheme.primary_color } as React.CSSProperties}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = activeTheme.primary_color;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = '';
+      }}
+    >
+      <ShoppingBagIcon className="h-6 w-6" />
+      {cartCount > 0 && (
+        <span
+          className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white"
+          style={{ backgroundColor: activeTheme.primary_color }}
+        >
+          {cartCount}
+        </span>
+      )}
+    </button>
+  );
+
+  const logoOrInitial =
+    !activeTheme.show_logo ? null : activeTheme.logo_url ? (
+      <div className={logoFrameClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={activeTheme.logo_url} alt="" className="h-full w-full object-contain p-1" />
+      </div>
+    ) : (
+      <div
+        className={`${logoFrameClass} flex items-center justify-center text-lg font-bold uppercase text-white`}
+        style={{ backgroundColor: activeTheme.primary_color }}
+      >
+        {initialLetter}
+      </div>
+    );
+
+  const titleBlock = (
+    <div className={logoPos === 'center' ? 'text-center' : 'min-w-0'}>
+      <h1 className="font-bold leading-tight" style={{ color: activeTheme.text_color }}>
+        {vendor.store_name || vendor.name}
+      </h1>
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+        ovend.app/s/{vendor.store_slug}
+      </p>
+    </div>
+  );
+
   useEffect(() => {
     if (!isPreview) return;
 
@@ -281,42 +347,34 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         fontFamily: activeTheme.font_family,
       } as React.CSSProperties}
     >
-      {/* Store Header */}
+      {/* Store Header — layout driven by logo_position / logo_frame */}
       <header className={`z-10 ${headerClass}`}>
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div 
-              className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white uppercase"
-              style={{ backgroundColor: activeTheme.primary_color }}
-            >
-              {vendor.store_name?.charAt(0) || vendor.name.charAt(0)}
+        <div className="mx-auto max-w-2xl px-4 py-4">
+          {logoPos === 'center' ? (
+            <div className="relative flex min-h-[4.5rem] flex-col items-center pt-1">
+              <div className="absolute right-0 top-0 z-10">{cartButton}</div>
+              <div className="flex flex-col items-center gap-2">
+                {logoOrInitial}
+                {titleBlock}
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold leading-tight" style={{ color: activeTheme.text_color }}>
-                {vendor.store_name || vendor.name}
-              </h1>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold font-mono">
-                ovend.app/s/{vendor.store_slug}
-              </p>
+          ) : logoPos === 'right' ? (
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">{titleBlock}</div>
+              <div className="flex shrink-0 items-center gap-2">
+                {logoOrInitial}
+                {cartButton}
+              </div>
             </div>
-          </div>
-          <button 
-            onClick={() => setIsCartOpen(true)}
-            className="relative rounded-full p-2 text-slate-400 hover:bg-slate-50 transition-colors"
-            style={{ '--hover-color': activeTheme.primary_color } as React.CSSProperties}
-            onMouseEnter={(e) => e.currentTarget.style.color = activeTheme.primary_color}
-            onMouseLeave={(e) => e.currentTarget.style.color = ''}
-          >
-            <ShoppingBagIcon className="h-6 w-6" />
-            {cartCount > 0 && (
-              <span 
-                className="absolute top-0 right-0 h-4 w-4 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
-                style={{ backgroundColor: activeTheme.primary_color }}
-              >
-                {cartCount}
-              </span>
-            )}
-          </button>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                {logoOrInitial}
+                {titleBlock}
+              </div>
+              {cartButton}
+            </div>
+          )}
         </div>
       </header>
 
