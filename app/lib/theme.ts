@@ -1,44 +1,59 @@
 import postgres from 'postgres';
 import { StoreTheme } from './definitions';
+import { getDefaultSections, getDefaultSectionContent } from './template-presets';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
-let ensureLogoLayoutColumnsPromise: Promise<void> | null = null;
+let ensureNewColumnsPromise: Promise<void> | null = null;
 
-/** Adds logo layout columns on existing DBs (idempotent). */
-export async function ensureLogoLayoutColumns() {
-  if (!ensureLogoLayoutColumnsPromise) {
-    ensureLogoLayoutColumnsPromise = (async () => {
+/** Idempotently adds all new columns to store_theme (safe to call repeatedly). */
+export async function ensureNewColumns() {
+  if (!ensureNewColumnsPromise) {
+    ensureNewColumnsPromise = (async () => {
+      const alters = [
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS logo_position VARCHAR(20) DEFAULT 'left'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS logo_frame VARCHAR(20) DEFAULT 'profile'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS template_id VARCHAR(50) DEFAULT 'fresh-market'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS surface_color VARCHAR(7) DEFAULT '#ffffff'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS heading_color VARCHAR(7) DEFAULT '#0f172a'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS border_color VARCHAR(7) DEFAULT '#e2e8f0'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS card_shadow VARCHAR(20) DEFAULT 'soft'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS sections JSONB DEFAULT '[]'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS section_content JSONB DEFAULT '{}'`,
+      ];
       try {
-        await sql`
-          ALTER TABLE store_theme
-          ADD COLUMN IF NOT EXISTS logo_position VARCHAR(20) DEFAULT 'left'
-        `;
-        await sql`
-          ALTER TABLE store_theme
-          ADD COLUMN IF NOT EXISTS logo_frame VARCHAR(20) DEFAULT 'profile'
-        `;
+        for (const stmt of alters) {
+          await sql.unsafe(stmt);
+        }
       } catch (e) {
-        console.error('ensureLogoLayoutColumns:', e);
+        console.error('ensureNewColumns:', e);
       }
     })();
   }
-  await ensureLogoLayoutColumnsPromise;
+  await ensureNewColumnsPromise;
 }
+
+// Keep backward-compat alias
+export const ensureLogoLayoutColumns = ensureNewColumns;
 
 export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'created_at' | 'updated_at'> {
   return {
+    template_id: 'fresh-market',
     primary_color: '#10b981',
     secondary_color: '#059669',
     background_color: '#f8fafc',
     text_color: '#0f172a',
     accent_color: '#f59e0b',
+    surface_color: '#ffffff',
+    heading_color: '#0f172a',
+    border_color: '#e2e8f0',
     font_family: 'inter',
     heading_font: 'inter',
     font_size: 'medium',
     layout_style: 'grid',
     card_style: 'modern',
     border_radius: 'rounded',
+    card_shadow: 'soft',
     show_logo: true,
     logo_url: null,
     logo_position: 'left',
@@ -48,11 +63,50 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     image_aspect_ratio: 'square',
     show_product_description: true,
     spacing: 'comfortable',
+    sections: JSON.stringify(getDefaultSections()),
+    section_content: JSON.stringify(getDefaultSectionContent()),
+  };
+}
+
+/** Fill any missing fields on a row with safe defaults. */
+function normalizeTheme(row: any): StoreTheme {
+  // JSONB columns arrive as parsed JS objects, not strings.
+  // Empty array [] or empty object {} should fall back to defaults.
+  const rawSections = row.sections;
+  const rawContent = row.section_content;
+
+  const hasSections =
+    rawSections &&
+    (typeof rawSections === 'string'
+      ? rawSections.length > 2 // not just "[]"
+      : Array.isArray(rawSections) && rawSections.length > 0);
+
+  const hasContent =
+    rawContent &&
+    (typeof rawContent === 'string'
+      ? rawContent.length > 2 // not just "{}"
+      : typeof rawContent === 'object' && Object.keys(rawContent).length > 0);
+
+  return {
+    ...row,
+    template_id: row.template_id ?? 'fresh-market',
+    logo_position: row.logo_position ?? 'left',
+    logo_frame: row.logo_frame ?? 'profile',
+    surface_color: row.surface_color ?? '#ffffff',
+    heading_color: row.heading_color ?? '#0f172a',
+    border_color: row.border_color ?? '#e2e8f0',
+    card_shadow: row.card_shadow ?? 'soft',
+    sections: hasSections
+      ? (typeof rawSections === 'string' ? rawSections : JSON.stringify(rawSections))
+      : JSON.stringify(getDefaultSections()),
+    section_content: hasContent
+      ? (typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent))
+      : JSON.stringify(getDefaultSectionContent()),
   };
 }
 
 export async function fetchVendorTheme(vendorId: string): Promise<StoreTheme | null> {
-  await ensureLogoLayoutColumns();
+  await ensureNewColumns();
   try {
     const [theme] = await sql<StoreTheme[]>`
       SELECT * FROM store_theme
@@ -60,11 +114,7 @@ export async function fetchVendorTheme(vendorId: string): Promise<StoreTheme | n
       LIMIT 1
     `;
     if (!theme) return null;
-    return {
-      ...theme,
-      logo_position: theme.logo_position ?? 'left',
-      logo_frame: theme.logo_frame ?? 'profile',
-    };
+    return normalizeTheme(theme);
   } catch (error) {
     console.error('Database Error:', error);
     return null;
@@ -72,22 +122,27 @@ export async function fetchVendorTheme(vendorId: string): Promise<StoreTheme | n
 }
 
 export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
-  await ensureLogoLayoutColumns();
-  const defaultTheme = getDefaultTheme();
+  await ensureNewColumns();
+  const d = getDefaultTheme();
   const [theme] = await sql<StoreTheme[]>`
     INSERT INTO store_theme (
       vendor_id,
+      template_id,
       primary_color,
       secondary_color,
       background_color,
       text_color,
       accent_color,
+      surface_color,
+      heading_color,
+      border_color,
       font_family,
       heading_font,
       font_size,
       layout_style,
       card_style,
       border_radius,
+      card_shadow,
       show_logo,
       logo_url,
       logo_position,
@@ -96,33 +151,42 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       show_product_images,
       image_aspect_ratio,
       show_product_description,
-      spacing
+      spacing,
+      sections,
+      section_content
     ) VALUES (
       ${vendorId},
-      ${defaultTheme.primary_color},
-      ${defaultTheme.secondary_color},
-      ${defaultTheme.background_color},
-      ${defaultTheme.text_color},
-      ${defaultTheme.accent_color},
-      ${defaultTheme.font_family},
-      ${defaultTheme.heading_font},
-      ${defaultTheme.font_size},
-      ${defaultTheme.layout_style},
-      ${defaultTheme.card_style},
-      ${defaultTheme.border_radius},
-      ${defaultTheme.show_logo},
-      ${defaultTheme.logo_url},
-      ${defaultTheme.logo_position},
-      ${defaultTheme.logo_frame},
-      ${defaultTheme.header_style},
-      ${defaultTheme.show_product_images},
-      ${defaultTheme.image_aspect_ratio},
-      ${defaultTheme.show_product_description},
-      ${defaultTheme.spacing}
+      ${d.template_id},
+      ${d.primary_color},
+      ${d.secondary_color},
+      ${d.background_color},
+      ${d.text_color},
+      ${d.accent_color},
+      ${d.surface_color},
+      ${d.heading_color},
+      ${d.border_color},
+      ${d.font_family},
+      ${d.heading_font},
+      ${d.font_size},
+      ${d.layout_style},
+      ${d.card_style},
+      ${d.border_radius},
+      ${d.card_shadow},
+      ${d.show_logo},
+      ${d.logo_url},
+      ${d.logo_position},
+      ${d.logo_frame},
+      ${d.header_style},
+      ${d.show_product_images},
+      ${d.image_aspect_ratio},
+      ${d.show_product_description},
+      ${d.spacing},
+      ${d.sections},
+      ${d.section_content}
     )
     RETURNING *
   `;
-  return theme;
+  return normalizeTheme(theme);
 }
 
 export async function updateVendorTheme(

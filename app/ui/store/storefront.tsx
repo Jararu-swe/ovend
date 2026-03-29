@@ -7,6 +7,26 @@ import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
 import { createOrder } from '@/app/lib/actions';
 import { useSearchParams } from 'next/navigation';
+import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent } from '@/app/lib/template-presets';
+import SectionRenderer from '@/app/ui/store/section-renderer';
+
+/** Safely parse JSON with a fallback. */
+function safeParse<T>(json: string | null | undefined, fallback: T): T {
+  if (!json) return fallback;
+  try {
+    return typeof json === 'string' ? JSON.parse(json) : json;
+  } catch {
+    return fallback;
+  }
+}
+
+const FONT_MAP: Record<string, string> = {
+  inter: "'Inter', sans-serif",
+  poppins: "'Poppins', sans-serif",
+  roboto: "'Roboto', sans-serif",
+  playfair: "'Playfair Display', serif",
+  montserrat: "'Montserrat', sans-serif",
+};
 
 export default function Storefront({ vendor, products, theme }: { vendor: User; products: Product[]; theme: StoreTheme }) {
   const searchParams = useSearchParams();
@@ -22,38 +42,46 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
   const activeProducts = products.filter((p) => p.status === 'active');
   const activeTheme = useMemo(() => previewTheme ?? theme, [previewTheme, theme]);
+
+  const sections: TemplateSection[] = useMemo(
+    () => safeParse(activeTheme.sections, getDefaultSections()),
+    [activeTheme.sections],
+  );
+  const sectionContent: TemplateSectionContent = useMemo(
+    () => safeParse(activeTheme.section_content, getDefaultSectionContent()),
+    [activeTheme.section_content],
+  );
+
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
   const fontSizeClass =
-    activeTheme.font_size === 'small'
-      ? 'text-sm'
-      : activeTheme.font_size === 'large'
-      ? 'text-lg'
-      : 'text-base';
+    activeTheme.font_size === 'small' ? 'text-sm'
+    : activeTheme.font_size === 'large' ? 'text-lg'
+    : 'text-base';
   const borderRadiusClass =
-    activeTheme.border_radius === 'sharp'
-      ? 'rounded-none'
-      : activeTheme.border_radius === 'pill'
-      ? 'rounded-3xl'
-      : 'rounded-2xl';
+    activeTheme.border_radius === 'sharp' ? 'rounded-none'
+    : activeTheme.border_radius === 'pill' ? 'rounded-3xl'
+    : 'rounded-2xl';
   const spacingClass =
-    activeTheme.spacing === 'compact'
-      ? 'gap-3'
-      : activeTheme.spacing === 'spacious'
-      ? 'gap-8'
-      : 'gap-6';
+    activeTheme.spacing === 'compact' ? 'gap-3'
+    : activeTheme.spacing === 'spacious' ? 'gap-8'
+    : 'gap-6';
   const imageAspectClass =
-    activeTheme.image_aspect_ratio === 'portrait'
-      ? 'aspect-[3/4]'
-      : activeTheme.image_aspect_ratio === 'landscape'
-      ? 'aspect-[4/3]'
-      : 'aspect-square';
+    activeTheme.image_aspect_ratio === 'portrait' ? 'aspect-[3/4]'
+    : activeTheme.image_aspect_ratio === 'landscape' ? 'aspect-[4/3]'
+    : 'aspect-square';
   const headerClass =
-    activeTheme.header_style === 'static'
-      ? 'border-b border-slate-200 bg-white'
-      : activeTheme.header_style === 'transparent'
-      ? 'border-b border-transparent bg-transparent'
-      : 'sticky top-0 border-b border-slate-200 bg-white/80 backdrop-blur-md';
+    activeTheme.header_style === 'static' ? 'border-b border-slate-200 bg-white'
+    : activeTheme.header_style === 'transparent' ? 'border-b border-transparent bg-transparent'
+    : 'sticky top-0 border-b border-slate-200 bg-white/80 backdrop-blur-md';
+
+  const cardShadow = activeTheme.card_shadow ?? 'soft';
+  const cardShadowStyle =
+    cardShadow === 'none' ? 'shadow-none'
+    : cardShadow === 'elevated' ? 'shadow-lg'
+    : cardShadow === 'hard' ? 'shadow-[4px_4px_0px_rgba(0,0,0,0.1)]'
+    : 'shadow-sm';
 
   const logoPos = activeTheme.logo_position ?? 'left';
   const logoFrame = activeTheme.logo_frame ?? 'profile';
@@ -70,18 +98,33 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
   const initialLetter = vendor.store_name?.charAt(0) || vendor.name.charAt(0);
 
+  // ─── Dynamic font loading ───────────────────────────────────
+  useEffect(() => {
+    const fonts = new Set([activeTheme.font_family, activeTheme.heading_font]);
+    fonts.forEach((f) => {
+      if (f && f !== 'inter') {
+        const fontName = f.charAt(0).toUpperCase() + f.slice(1);
+        const family = fontName === 'Playfair' ? 'Playfair+Display' : fontName;
+        const id = `gfont-${f}`;
+        if (!document.getElementById(id)) {
+          const link = document.createElement('link');
+          link.id = id;
+          link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@400;500;600;700&display=swap`;
+          link.rel = 'stylesheet';
+          document.head.appendChild(link);
+        }
+      }
+    });
+  }, [activeTheme.font_family, activeTheme.heading_font]);
+
   const cartButton = (
     <button
       type="button"
       onClick={() => setIsCartOpen(true)}
       className="relative rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50"
       style={{ '--hover-color': activeTheme.primary_color } as React.CSSProperties}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = activeTheme.primary_color;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = '';
-      }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.primary_color; }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
     >
       <ShoppingBagIcon className="h-6 w-6" />
       {cartCount > 0 && (
@@ -112,7 +155,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
   const titleBlock = (
     <div className={logoPos === 'center' ? 'text-center' : 'min-w-0'}>
-      <h1 className="font-bold leading-tight" style={{ color: activeTheme.text_color }}>
+      <h1 className="font-bold leading-tight" style={{ color: activeTheme.heading_color || activeTheme.text_color }}>
         {vendor.store_name || vendor.name}
       </h1>
       <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-slate-500">
@@ -165,35 +208,31 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     
     try {
       if (paymentMethod === 'card') {
-        // Validate email for card payment
         if (!customerEmail || !customerEmail.includes('@')) {
           alert('Please enter a valid email address for card payment.');
           setIsSubmitting(false);
           return;
         }
 
-        // Handle card payment with Paystack
         const publicKey = 'pk_test_8f134530cff345611052399d94a474253408ab3d';
         
-        // Check if PaystackPop is loaded
         if (typeof window === 'undefined' || !(window as any).PaystackPop) {
           alert('Payment system is still loading. Please wait a moment and try again.');
           setIsSubmitting(false);
           return;
         }
 
-        // @ts-ignore - PaystackPop is loaded via script
+        // @ts-ignore
         const handler = window.PaystackPop.setup({
           key: publicKey,
           email: customerEmail,
-          amount: cartTotal * 100, // Convert to kobo
+          amount: cartTotal * 100,
           currency: 'NGN',
           ref: `OVD-${Date.now()}`,
           onClose: function() {
             setIsSubmitting(false);
           },
           callback: function(response: any) {
-            // Verify payment and create order
             fetch('/api/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -202,15 +241,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
             .then(res => res.json())
             .then(data => {
               if (data.success) {
-                // Create order with payment reference
-                return createOrder(
-                  vendor.id,
-                  cart,
-                  cartTotal,
-                  formData,
-                  'card',
-                  response.reference
-                );
+                return createOrder(vendor.id, cart, cartTotal, formData, 'card', response.reference);
               } else {
                 throw new Error('Payment verification failed');
               }
@@ -233,7 +264,6 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
         handler.openIframe();
       } else {
-        // Handle cash/transfer payment
         const result = await createOrder(vendor.id, cart, cartTotal, formData, 'cash');
         if (result?.success) {
           setPlacedOrder({ id: result.id, total: cartTotal, paymentMethod: 'cash' });
@@ -249,8 +279,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     }
   };
 
+  // ─── Order confirmation screen ──────────────────────────────
   if (placedOrder) {
-    // Enhanced WhatsApp message with detailed order breakdown
     const orderItemsList = cart.map(item => 
       `• ${item.quantity}x ${item.name} - ${formatCurrency(item.price * item.quantity)}`
     ).join('%0A');
@@ -271,7 +301,6 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           Your order has been sent to <strong>{vendor.store_name}</strong>.
         </p>
 
-        {/* Show bank details for cash/transfer payments */}
         {placedOrder.paymentMethod === 'cash' && vendor.bank_name && (
           <div className="mt-6 w-full max-w-md rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-6">
             <h3 className="text-sm font-bold text-emerald-900 uppercase tracking-wider mb-4">
@@ -333,6 +362,82 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     );
   }
 
+  // ─── Product grid renderer (passed to SectionRenderer) ──────
+  const renderProductGrid = () => (
+    <section id="item-list">
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="text-lg font-bold" style={{ color: activeTheme.heading_color || activeTheme.text_color }}>Products</h3>
+        <span className="text-xs text-slate-500 font-medium bg-white px-3 py-1 rounded-full border border-slate-100 italic">
+          {activeProducts.length} items available
+        </span>
+      </div>
+
+      <div className={`grid ${spacingClass} ${
+        activeTheme.layout_style === 'grid' ? 'grid-cols-1 sm:grid-cols-2' :
+        activeTheme.layout_style === 'list' ? 'grid-cols-1' :
+        'grid-cols-1 sm:grid-cols-2'
+      }`}>
+        {activeProducts.map((product) => (
+          <div
+            key={product.id}
+            className={`group flex flex-col overflow-hidden bg-white border transition-shadow hover:shadow-md ${cardShadowStyle} ${
+              activeTheme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
+              activeTheme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
+              activeTheme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
+              'rounded-2xl border-4'
+            }`}
+            style={activeTheme.card_style === 'bold' ? { 
+              borderColor: activeTheme.primary_color,
+              boxShadow: `4px 4px 0 ${activeTheme.primary_color}40`
+            } : {
+              borderColor: activeTheme.border_color || undefined,
+            }}
+          >
+            {activeTheme.show_product_images && (
+              <div className={`${imageAspectClass} relative flex items-center justify-center bg-slate-50 text-slate-200 overflow-hidden`}>
+                {product.image_url ? (
+                  <Image
+                    src={product.image_url}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform group-hover:scale-110 duration-500"
+                  />
+                ) : (
+                  <ShoppingBagIcon className="h-16 w-16" />
+                )}
+              </div>
+            )}
+            <div className="flex flex-1 flex-col p-5">
+              <h4
+                className="font-bold leading-snug mb-1"
+                style={{ color: activeTheme.heading_color || activeTheme.text_color, fontFamily: FONT_MAP[activeTheme.heading_font] || undefined }}
+              >
+                {product.name}
+              </h4>
+              {activeTheme.show_product_description && (
+                <p className="text-xs text-slate-500 line-clamp-2 min-h-[2rem]">
+                  {product.description}
+                </p>
+              )}
+              <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-50">
+                <p className="text-lg font-bold" style={{ color: activeTheme.primary_color }}>
+                  {formatCurrency(product.price)}
+                </p>
+                <button 
+                  onClick={() => addToCart(product)}
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
+                  style={{ backgroundColor: activeTheme.primary_color }}
+                >
+                  <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
   return (
     <div 
       className={`min-h-screen ${fontSizeClass}`}
@@ -344,10 +449,10 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         '--color-accent': activeTheme.accent_color,
         backgroundColor: activeTheme.background_color,
         color: activeTheme.text_color,
-        fontFamily: activeTheme.font_family,
+        fontFamily: FONT_MAP[activeTheme.font_family] || activeTheme.font_family,
       } as React.CSSProperties}
     >
-      {/* Store Header — layout driven by logo_position / logo_frame */}
+      {/* Store Header */}
       <header className={`z-10 ${headerClass}`}>
         <div className="mx-auto max-w-2xl px-4 py-4">
           {logoPos === 'center' ? (
@@ -379,88 +484,15 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-8 pb-32">
-        <div
-          className={`mb-8 overflow-hidden ${borderRadiusClass} p-8 text-white shadow-xl relative`}
-          style={{
-            background: `linear-gradient(135deg, ${activeTheme.primary_color}, ${activeTheme.secondary_color})`,
-            fontFamily: activeTheme.heading_font,
-          }}
-        >
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold tracking-tight">Welcome to our store</h2>
-            <p className="mt-2 text-white/80 text-sm max-w-[240px]">
-              Browse our collection and order directly via WhatsApp.
-            </p>
-          </div>
-          <div className="absolute top-0 right-0 w-32 h-32 rounded-full -mr-10 -mt-10 blur-2xl" style={{ backgroundColor: `${activeTheme.accent_color}40` }} />
-          <div className="absolute bottom-0 right-0 w-24 h-24 rounded-full mr-10 mb-10 blur-xl" style={{ backgroundColor: `${activeTheme.accent_color}30` }} />
-        </div>
-
-        <section id="item-list">
-          <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-slate-900">Products</h3>
-            <span className="text-xs text-slate-500 font-medium bg-white px-3 py-1 rounded-full border border-slate-100 italic">
-              {activeProducts.length} items available
-            </span>
-          </div>
-
-          <div className={`grid ${spacingClass} ${
-            activeTheme.layout_style === 'grid' ? 'grid-cols-1 sm:grid-cols-2' :
-            activeTheme.layout_style === 'list' ? 'grid-cols-1' :
-            'grid-cols-1 sm:grid-cols-2'
-          }`}>
-            {activeProducts.map((product) => (
-              <div
-                key={product.id}
-                className={`group flex flex-col overflow-hidden bg-white border shadow-sm transition-shadow hover:shadow-md ${
-                  activeTheme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
-                  activeTheme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
-                  activeTheme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
-                  'rounded-2xl border-4'
-                }`}
-                style={activeTheme.card_style === 'bold' ? { 
-                  borderColor: activeTheme.primary_color,
-                  boxShadow: `4px 4px 0 ${activeTheme.primary_color}40`
-                } : {}}
-              >
-                {activeTheme.show_product_images && (
-                  <div className={`${imageAspectClass} relative flex items-center justify-center bg-slate-50 text-slate-200 overflow-hidden`}>
-                    {product.image_url ? (
-                      <Image
-                        src={product.image_url}
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-110 duration-500"
-                      />
-                    ) : (
-                      <ShoppingBagIcon className="h-16 w-16" />
-                    )}
-                  </div>
-                )}
-                <div className="flex flex-1 flex-col p-5">
-                  <h4 className="font-bold leading-snug mb-1" style={{ color: activeTheme.text_color, fontFamily: activeTheme.heading_font }}>{product.name}</h4>
-                  {activeTheme.show_product_description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 min-h-[2rem]">
-                      {product.description}
-                    </p>
-                  )}
-                  <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-50">
-                    <p className="text-lg font-bold" style={{ color: activeTheme.primary_color }}>
-                      {formatCurrency(product.price)}
-                    </p>
-                    <button 
-                      onClick={() => addToCart(product)}
-                      className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-                      style={{ backgroundColor: activeTheme.primary_color }}
-                    >
-                      <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <SectionRenderer
+          sections={sections}
+          content={sectionContent}
+          vendor={vendor}
+          products={products}
+          theme={activeTheme}
+          onAddToCart={addToCart}
+          renderProductGrid={renderProductGrid}
+        />
       </main>
 
       {/* Floating Cart Button */}
@@ -511,7 +543,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                         <li key={item.productId} className="flex items-center justify-between gap-4">
                           <div className="flex-1">
                             <h4 className="font-bold text-slate-900">{item.name}</h4>
-                            <p className="text-sm font-semibold text-emerald-600">{formatCurrency(item.price)}</p>
+                            <p className="text-sm font-semibold" style={{ color: activeTheme.primary_color }}>{formatCurrency(item.price)}</p>
                           </div>
                           <div className="flex items-center gap-3">
                             <button 
@@ -583,30 +615,16 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                           />
                         </div>
                         
-                        {/* Payment Method Selection */}
+                        {/* Payment Method */}
                         <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2 italic">Payment Method</label>
                           <div className="grid grid-cols-2 gap-3">
                             <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
-                              <input 
-                                type="radio" 
-                                name="payment_method" 
-                                value="cash" 
-                                checked={paymentMethod === 'cash'}
-                                onChange={() => setPaymentMethod('cash')}
-                                className="hidden sr-only" 
-                              />
+                              <input type="radio" name="payment_method" value="cash" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} className="hidden sr-only" />
                               <span className="text-sm font-bold text-slate-700">Cash/Transfer</span>
                             </label>
                             <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
-                              <input 
-                                type="radio" 
-                                name="payment_method" 
-                                value="card"
-                                checked={paymentMethod === 'card'}
-                                onChange={() => setPaymentMethod('card')}
-                                className="hidden sr-only" 
-                              />
+                              <input type="radio" name="payment_method" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="hidden sr-only" />
                               <span className="text-sm font-bold text-slate-700">💳 Card</span>
                             </label>
                           </div>

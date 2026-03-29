@@ -172,28 +172,48 @@ export type TeamMember = {
 export type StoreTheme = {
   id: string;
   vendor_id: string;
+
+  // Template
+  template_id: string;
+
+  // Colors
   primary_color: string;
   secondary_color: string;
   background_color: string;
   text_color: string;
   accent_color: string;
+  surface_color: string;
+  heading_color: string;
+  border_color: string;
+
+  // Typography
   font_family: string;
   heading_font: string;
   font_size: 'small' | 'medium' | 'large';
+
+  // Layout
   layout_style: 'grid' | 'list' | 'masonry';
   card_style: 'modern' | 'classic' | 'minimal' | 'bold';
   border_radius: 'sharp' | 'rounded' | 'pill';
+  card_shadow: 'none' | 'soft' | 'elevated' | 'hard';
+  spacing: 'compact' | 'comfortable' | 'spacious';
+
+  // Logo & header
   show_logo: boolean;
   logo_url: string | null;
-  /** Where the logo + store title sit in the header bar */
   logo_position: 'left' | 'center' | 'right';
-  /** How the logo image (or letter mark) is framed */
   logo_frame: 'plain' | 'profile' | 'rounded' | 'minimal';
   header_style: 'sticky' | 'static' | 'transparent';
+
+  // Product display
   show_product_images: boolean;
   image_aspect_ratio: 'square' | 'portrait' | 'landscape';
   show_product_description: boolean;
-  spacing: 'compact' | 'comfortable' | 'spacious';
+
+  // Sections (JSON)
+  sections: string; // JSON stringified TemplateSection[]
+  section_content: string; // JSON stringified TemplateSectionContent
+
   created_at: string;
   updated_at: string;
 };

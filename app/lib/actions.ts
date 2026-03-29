@@ -35,14 +35,19 @@ const ProfileSchema = z.object({
 });
 
 const ThemeSchema = z.object({
+  template_id: z.string().optional(),
   primary_color: z.string(),
   secondary_color: z.string(),
   background_color: z.string(),
   text_color: z.string(),
   accent_color: z.string(),
+  surface_color: z.string().optional(),
+  heading_color: z.string().optional(),
+  border_color: z.string().optional(),
   layout_style: z.enum(['grid', 'list', 'masonry']),
   card_style: z.enum(['modern', 'classic', 'minimal', 'bold']),
   border_radius: z.enum(['sharp', 'rounded', 'pill']),
+  card_shadow: z.enum(['none', 'soft', 'elevated', 'hard']).optional(),
   font_family: z.string(),
   heading_font: z.string(),
   font_size: z.enum(['small', 'medium', 'large']),
@@ -66,6 +71,8 @@ const ThemeSchema = z.object({
       z.string().regex(/^\/uploads\//, 'Must be an uploaded file path or https URL'),
     ]),
   ),
+  sections: z.string().optional(),        // JSON string
+  section_content: z.string().optional(),  // JSON string
 });
 
 export type State = {
@@ -492,14 +499,19 @@ export async function updateThemeAction(
   try {
     await ensureLogoLayoutColumns();
     const parsed = ThemeSchema.safeParse({
+      template_id: formData.get('template_id') as string,
       primary_color: formData.get('primary_color') as string,
       secondary_color: formData.get('secondary_color') as string,
       background_color: formData.get('background_color') as string,
       text_color: formData.get('text_color') as string,
       accent_color: formData.get('accent_color') as string,
+      surface_color: formData.get('surface_color') as string,
+      heading_color: formData.get('heading_color') as string,
+      border_color: formData.get('border_color') as string,
       layout_style: formData.get('layout_style') as string,
       card_style: formData.get('card_style') as string,
       border_radius: formData.get('border_radius') as string,
+      card_shadow: formData.get('card_shadow') as string,
       font_family: formData.get('font_family') as string,
       heading_font: formData.get('heading_font') as string,
       font_size: formData.get('font_size') as string,
@@ -512,9 +524,12 @@ export async function updateThemeAction(
       logo_position: formData.get('logo_position'),
       logo_frame: formData.get('logo_frame'),
       logo_url: formData.get('logo_url'),
+      sections: formData.get('sections') as string,
+      section_content: formData.get('section_content') as string,
     });
 
     if (!parsed.success) {
+      console.error('Theme validation error:', parsed.error.flatten());
       return { message: 'Invalid customization values submitted.', errors: {} };
     }
 
@@ -523,14 +538,19 @@ export async function updateThemeAction(
     await sql`
       UPDATE store_theme
       SET 
+        template_id = ${themeData.template_id ?? 'fresh-market'},
         primary_color = ${themeData.primary_color},
         secondary_color = ${themeData.secondary_color},
         background_color = ${themeData.background_color},
         text_color = ${themeData.text_color},
         accent_color = ${themeData.accent_color},
+        surface_color = ${themeData.surface_color ?? '#ffffff'},
+        heading_color = ${themeData.heading_color ?? '#0f172a'},
+        border_color = ${themeData.border_color ?? '#e2e8f0'},
         layout_style = ${themeData.layout_style},
         card_style = ${themeData.card_style},
         border_radius = ${themeData.border_radius},
+        card_shadow = ${themeData.card_shadow ?? 'soft'},
         font_family = ${themeData.font_family},
         heading_font = ${themeData.heading_font},
         font_size = ${themeData.font_size},
@@ -543,6 +563,8 @@ export async function updateThemeAction(
         logo_position = ${themeData.logo_position},
         logo_frame = ${themeData.logo_frame},
         logo_url = ${themeData.logo_url},
+        sections = ${themeData.sections ?? '[]'},
+        section_content = ${themeData.section_content ?? '{}'},
         updated_at = CURRENT_TIMESTAMP
       WHERE vendor_id = ${session.user.id}
     `;
