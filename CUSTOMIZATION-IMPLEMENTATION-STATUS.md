@@ -1,139 +1,40 @@
-# Store Customization - Implementation Status
+# Store Customization - Limitless Implementation Status
 
-## ✅ Completed (MVP)
+## ✅ Completed (Limitless Customization Architecture)
 
-### Backend
-- [x] Database table `store_theme` created
-- [x] Type definitions added to `definitions.ts`
-- [x] Theme library created (`app/lib/theme.ts`)
-- [x] Server action `updateThemeAction` added
-- [x] CRUD functions for theme management
+### 1. Template Presets & UI
+- [x] Create `app/lib/template-presets.ts`
+- [x] Define `Template`, `TemplateSection`, and `TemplateSectionContent` types
+- [x] Create 6 pre-built templates covering different industries (Fresh Market, Luxe Boutique, Tech Store, Beauty & Glow, Quick Bites, Handmade & Craft)
+- [x] Build `TemplatePicker` component (`app/ui/customize/template-picker.tsx`)
 
-### Frontend
-- [x] "Customize" navigation link added
-- [x] Customize page created (`/dashboard/customize`)
-- [x] Customize form with sections:
-  - Colors (primary, secondary, background, text)
-  - Layout (grid/list/masonry, card style, border radius)
-  - Typography (font family, font size)
-- [x] Live preview iframe
-- [x] Save and Reset functionality
+### 2. Dashboard Real-time Editor
+- [x] Refactor `/dashboard/customize` to use a tabbed interface (Templates, Colors, Layout, Sections, Brand)
+- [x] Add extended tokens to `StoreTheme` (surface_color, heading_color, border_color, card_shadow)
+- [x] Maintain sub-second live preview via `postMessage` syncing with the iframe rendering route `/?preview=true`
 
-## 🚧 Next Steps (To Complete Full Feature)
+### 3. Section Builder & Data Model
+- [x] Extend `store_theme` DB table with new columns: `template_id`, `surface_color`, `heading_color`, `border_color`, `card_shadow`, `sections` (JSONB), and `section_content` (JSONB)
+- [x] Write and run idempotent migration script `migrate-store-theme-v2.js`
+- [x] Create `SectionEditor` for toggling sections, reordering them, and inline content editing
 
-### 1. Apply Theme to Storefront (CRITICAL)
-**File:** `app/s/[slug]/page.tsx` and `app/ui/store/storefront.tsx`
+### 4. Storefront Rendering Engine
+- [x] Implement `SectionRenderer` (`app/ui/store/section-renderer.tsx`) that dynamically maps section IDs to React components (HeroBanner, AnnouncementBar, FeaturedProducts, etc.)
+- [x] Refactor `storefront.tsx` to handle the new `sections` and `section_content` payload
+- [x] Add safe JSON fallback parsing (`safeParse`) to gracefully handle empty DB defaults
 
-Need to:
-- Fetch theme data in `[slug]/page.tsx`
-- Pass theme to storefront component
-- Apply CSS custom properties
-- Add conditional classes for layout/card styles
+## 🚧 Next Steps (UX Polish & Refinements)
 
-### 2. Run Database Migration
-```bash
-node create-store-theme-table.js
-```
+### Outstanding Tasks
+- [ ] **Accessibility:** Add a WCAG contrast checker utility to warn vendors if their chosen text colors clash with background tokens.
+- [ ] **Undo/Redo:** Implement an undo stack locally in the editor before hitting save.
+- [ ] **Empty States:** Build an inviting empty state for the Product Grid section if the vendor has 0 active products.
+- [ ] **Section Extensions:** Add a "FAQs" section type and an "Image Gallery" section type.
+- [ ] **Loading Polish:** Add smooth fade-in transitions for dynamically loaded Google Fonts.
 
-### 3. Test & Polish
-- Test color changes
-- Test layout switches
-- Test on mobile
-- Add loading states
-- Add success messages
+## 📝 Key Technical Decisions
 
-## 📝 Quick Implementation Guide
-
-### To Apply Theme to Storefront:
-
-1. **Modify `app/s/[slug]/page.tsx`:**
-```typescript
-import { getOrCreateVendorTheme } from '@/app/lib/theme';
-
-// In the page component:
-const theme = await getOrCreateVendorTheme(vendor.id);
-
-// Pass to Storefront:
-<Storefront vendor={vendor} products={products} theme={theme} />
-```
-
-2. **Modify `app/ui/store/storefront.tsx`:**
-```typescript
-export default function Storefront({ 
-  vendor, 
-  products, 
-  theme 
-}: { 
-  vendor: User; 
-  products: Product[];
-  theme: StoreTheme;
-}) {
-  // Add style prop to main container:
-  <div 
-    style={{
-      '--color-primary': theme.primary_color,
-      '--color-secondary': theme.secondary_color,
-      '--color-background': theme.background_color,
-      '--color-text': theme.text_color,
-    } as React.CSSProperties}
-    className={`layout-${theme.layout_style} card-${theme.card_style}`}
-  >
-```
-
-3. **Add CSS for theme variables** (in `global.css` or component):
-```css
-.btn-primary {
-  background-color: var(--color-primary);
-}
-
-.layout-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-}
-
-.layout-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-modern {
-  border-radius: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.card-minimal {
-  border: none;
-  box-shadow: none;
-}
-```
-
-## 🎨 Features Implemented
-
-- **Colors:** Primary, Secondary, Background, Text
-- **Layout:** Grid, List, Masonry
-- **Card Styles:** Modern, Classic, Minimal, Bold
-- **Border Radius:** Sharp, Rounded, Pill
-- **Typography:** 5 font families, 3 sizes
-- **Live Preview:** Iframe showing storefront
-- **Persistence:** Saves to database
-
-## ⏱️ Time Spent
-
-- Database & Backend: ~30 mins
-- UI Components: ~45 mins
-- **Total:** ~1.5 hours
-
-## 🚀 To Complete (Estimated 30-45 mins)
-
-1. Run database migration (2 mins)
-2. Apply theme to storefront (20 mins)
-3. Add CSS for theme variables (10 mins)
-4. Test and fix issues (15 mins)
-
-## 📊 Current Status
-
-**MVP Complete:** 70%
-- Backend: 100% ✅
-- UI: 100% ✅
-- Storefront Integration: 0% ⏳
-- Testing: 0% ⏳
+1. **JSONB Section Storage:** The `sections` and `section_content` state is saved directly as `JSONB` in the Postgres table. This pattern allows us to iterate rapidly and add entirely new section types without ever needing to run new database migrations. Postgres natively handles the JSON blocks, and Zod validates them as strings at the server action level.
+2. **PostMessage Previews:** React state within the dashboard continuously sends a `postMessage` payload to the iframe, allowing real-time previews strictly on the client without database polling or round-trips.
+3. **Graceful Fallbacks:** The storefront relies heavily on `zod` defaults and fallback functions (`safeParse`, `normalizeTheme`) to ensure that previously created stores (prior to this implementation) don't crash when passing undefined objects to the renderer. 
+4. **Idempotent Migrations:** Running database patches using `ALTER TABLE... IF NOT EXISTS` natively on node startup or via one-off scripts ensures deploying to production environments won't cause unique constraint errors.

@@ -117,6 +117,33 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     });
   }, [activeTheme.font_family, activeTheme.heading_font]);
 
+  // ─── Interactive token mappings ─────────────────────────────
+  const buttonRadiusClass = 
+    activeTheme.button_radius === 'sharp' ? 'rounded-none' :
+    activeTheme.button_radius === 'pill' ? 'rounded-full' : 'rounded-lg';
+
+  const getButtonStyle = () => {
+    switch (activeTheme.button_style) {
+      case 'outline': return { border: `2px solid ${activeTheme.primary_color}`, color: activeTheme.primary_color, backgroundColor: 'transparent' };
+      case 'soft': return { backgroundColor: `${activeTheme.primary_color}20`, color: activeTheme.primary_color, border: 'none' };
+      case 'glass': return { backgroundColor: activeTheme.surface_color || '#ffffff', backdropFilter: 'blur(8px)', border: `1px solid ${activeTheme.border_color || '#e2e8f0'}`, color: activeTheme.primary_color };
+      default: return { backgroundColor: activeTheme.primary_color, color: '#ffffff', border: 'none' }; // solid
+    }
+  };
+
+  const getHoverAnimation = () => {
+    switch (activeTheme.animation_style) {
+      case 'zoom': return 'transition-transform hover:scale-110 active:scale-95 duration-300';
+      case 'slide': return 'transition-transform hover:-translate-y-1 active:translate-y-0 duration-300';
+      case 'bounce': return 'transition-transform hover:-translate-y-2 hover:scale-105 active:scale-95 duration-500 ease-bounce';
+      case 'fade': return 'transition-opacity hover:opacity-80 active:opacity-60 duration-300';
+      default: return 'transition-opacity hover:opacity-90';
+    }
+  };
+  
+  const interactionAnimationStyle = getHoverAnimation();
+  const dynamicBtnStyle = getButtonStyle();
+
   const cartButton = (
     <button
       type="button"
@@ -425,8 +452,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                 </p>
                 <button 
                   onClick={() => addToCart(product)}
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-lg transition-transform hover:scale-105 active:scale-95"
-                  style={{ backgroundColor: activeTheme.primary_color }}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center text-white shadow-lg ${buttonRadiusClass} ${interactionAnimationStyle}`}
+                  style={dynamicBtnStyle}
                 >
                   <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
                 </button>
@@ -500,8 +527,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl p-4 z-10">
           <button 
             onClick={() => setIsCartOpen(true)}
-            className="flex w-full items-center justify-between rounded-3xl p-4 font-bold text-white shadow-2xl transition hover:opacity-90 active:scale-95"
-            style={{ backgroundColor: activeTheme.primary_color }}
+            className={`flex w-full items-center justify-between p-4 font-bold text-white shadow-2xl ${buttonRadiusClass} ${interactionAnimationStyle}`}
+            style={dynamicBtnStyle}
           >
             <span>{cartCount} items in cart</span>
             <span className="flex items-center gap-2">
@@ -660,8 +687,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                            <button 
                             type="submit" 
                             disabled={isSubmitting}
-                            className="flex-[2] rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 disabled:opacity-50"
-                            style={{ backgroundColor: activeTheme.primary_color }}
+                            className={`flex-[2] p-4 font-bold text-white shadow-lg disabled:opacity-50 ${buttonRadiusClass} ${interactionAnimationStyle}`}
+                            style={dynamicBtnStyle}
                            >
                             {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
                            </button>

@@ -141,6 +141,32 @@ function FeaturedProducts({
 
   if (featured.length === 0) return null;
 
+  const buttonRadiusClass = 
+    theme.button_radius === 'sharp' ? 'rounded-none' :
+    theme.button_radius === 'pill' ? 'rounded-full' : 'rounded-lg';
+
+  const getButtonStyle = () => {
+    switch (theme.button_style) {
+      case 'outline': return { border: `2px solid ${theme.primary_color}`, color: theme.primary_color, backgroundColor: 'transparent' };
+      case 'soft': return { backgroundColor: `${theme.primary_color}20`, color: theme.primary_color, border: 'none' };
+      case 'glass': return { backgroundColor: theme.surface_color || '#ffffff', backdropFilter: 'blur(8px)', border: `1px solid ${theme.border_color || '#e2e8f0'}`, color: theme.primary_color };
+      default: return { backgroundColor: theme.primary_color, color: '#ffffff', border: 'none' }; // solid
+    }
+  };
+
+  const getHoverAnimation = () => {
+    switch (theme.animation_style) {
+      case 'zoom': return 'transition-transform hover:scale-110 active:scale-95 duration-300';
+      case 'slide': return 'transition-transform hover:-translate-y-1 active:translate-y-0 duration-300';
+      case 'bounce': return 'transition-transform hover:-translate-y-2 hover:scale-105 active:scale-95 duration-500 ease-bounce';
+      case 'fade': return 'transition-opacity hover:opacity-80 active:opacity-60 duration-300';
+      default: return 'transition-opacity hover:opacity-90';
+    }
+  };
+
+  const dynamicBtnStyle = getButtonStyle();
+  const interactionAnimationStyle = getHoverAnimation();
+
   return (
     <div className="mb-8">
       <h3 className="text-lg font-bold mb-4" style={{ color: theme.heading_color || theme.text_color }}>
@@ -172,8 +198,8 @@ function FeaturedProducts({
                 </span>
                 <button
                   onClick={() => onAddToCart(product)}
-                  className="h-7 w-7 flex items-center justify-center rounded-full text-white"
-                  style={{ backgroundColor: theme.primary_color }}
+                  className={`h-7 w-7 flex items-center justify-center text-white ${buttonRadiusClass} ${interactionAnimationStyle}`}
+                  style={dynamicBtnStyle}
                 >
                   <PlusIcon className="h-4 w-4" strokeWidth={2.5} />
                 </button>
@@ -251,6 +277,29 @@ function ContactCta({ content, vendor, theme }: { content: Record<string, any>; 
     ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}`
     : null;
 
+  const buttonRadiusClass = 
+    theme.button_radius === 'sharp' ? 'rounded-none' :
+    theme.button_radius === 'pill' ? 'rounded-full' : 'rounded-lg';
+
+  const getButtonStyle = () => {
+    switch (theme.button_style) {
+      case 'outline': return { border: `2px solid ${theme.primary_color}`, color: theme.primary_color, backgroundColor: 'transparent' };
+      case 'soft': return { backgroundColor: `${theme.primary_color}20`, color: theme.primary_color, border: 'none' };
+      case 'glass': return { backgroundColor: theme.surface_color || '#ffffff', backdropFilter: 'blur(8px)', border: `1px solid ${theme.border_color || '#e2e8f0'}`, color: theme.primary_color };
+      default: return { backgroundColor: theme.primary_color, color: '#ffffff', border: 'none' }; // solid
+    }
+  };
+
+  const getHoverAnimation = () => {
+    switch (theme.animation_style) {
+      case 'zoom': return 'transition-transform hover:scale-105 active:scale-95 duration-300';
+      case 'slide': return 'transition-transform hover:-translate-y-1 active:translate-y-0 duration-300';
+      case 'bounce': return 'transition-transform hover:-translate-y-1 hover:scale-102 active:scale-95 duration-500 ease-bounce';
+      case 'fade': return 'transition-opacity hover:opacity-80 active:opacity-60 duration-300';
+      default: return 'transition-opacity hover:opacity-90';
+    }
+  };
+
   return (
     <div
       className="mb-8 rounded-2xl p-6 text-center"
@@ -270,7 +319,8 @@ function ContactCta({ content, vendor, theme }: { content: Record<string, any>; 
           href={whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-2xl bg-[#25D366] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+          className={`inline-flex items-center gap-2 px-6 py-3 text-sm font-bold shadow-lg ${buttonRadiusClass} ${getHoverAnimation()}`}
+          style={getButtonStyle()}
         >
           {content.button_text || 'Chat on WhatsApp'}
         </a>

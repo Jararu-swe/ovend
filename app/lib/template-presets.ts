@@ -33,6 +33,9 @@ export type Template = {
     card_style: 'modern' | 'classic' | 'minimal' | 'bold';
     border_radius: 'sharp' | 'rounded' | 'pill';
     card_shadow: 'none' | 'soft' | 'elevated' | 'hard';
+    button_style: 'solid' | 'outline' | 'soft' | 'glass';
+    button_radius: 'sharp' | 'rounded' | 'pill';
+    animation_style: 'none' | 'fade' | 'slide' | 'zoom' | 'bounce';
     spacing: 'compact' | 'comfortable' | 'spacious';
     header_style: 'sticky' | 'static' | 'transparent';
     image_aspect_ratio: 'square' | 'portrait' | 'landscape';
@@ -117,6 +120,9 @@ export const TEMPLATES: Template[] = [
       card_style: 'modern',
       border_radius: 'rounded',
       card_shadow: 'soft',
+      button_style: 'solid',
+      button_radius: 'pill',
+      animation_style: 'bounce',
       spacing: 'comfortable',
       header_style: 'sticky',
       image_aspect_ratio: 'square',
@@ -163,6 +169,9 @@ export const TEMPLATES: Template[] = [
       card_style: 'minimal',
       border_radius: 'sharp',
       card_shadow: 'none',
+      button_style: 'outline',
+      button_radius: 'sharp',
+      animation_style: 'fade',
       spacing: 'spacious',
       header_style: 'transparent',
       image_aspect_ratio: 'portrait',
@@ -210,6 +219,9 @@ export const TEMPLATES: Template[] = [
       card_style: 'modern',
       border_radius: 'rounded',
       card_shadow: 'elevated',
+      button_style: 'glass',
+      button_radius: 'rounded',
+      animation_style: 'slide',
       spacing: 'comfortable',
       header_style: 'sticky',
       image_aspect_ratio: 'landscape',
@@ -255,6 +267,9 @@ export const TEMPLATES: Template[] = [
       card_style: 'modern',
       border_radius: 'pill',
       card_shadow: 'soft',
+      button_style: 'soft',
+      button_radius: 'pill',
+      animation_style: 'zoom',
       spacing: 'spacious',
       header_style: 'sticky',
       image_aspect_ratio: 'square',
@@ -301,6 +316,9 @@ export const TEMPLATES: Template[] = [
       card_style: 'bold',
       border_radius: 'rounded',
       card_shadow: 'hard',
+      button_style: 'solid',
+      button_radius: 'rounded',
+      animation_style: 'bounce',
       spacing: 'compact',
       header_style: 'sticky',
       image_aspect_ratio: 'landscape',
@@ -347,6 +365,9 @@ export const TEMPLATES: Template[] = [
       card_style: 'classic',
       border_radius: 'rounded',
       card_shadow: 'soft',
+      button_style: 'outline',
+      button_radius: 'rounded',
+      animation_style: 'fade',
       spacing: 'spacious',
       header_style: 'static',
       image_aspect_ratio: 'square',

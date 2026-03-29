@@ -274,6 +274,36 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                 </div>
               </div>
 
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm mt-6">
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Interaction & Buttons</h2>
+                <div className="space-y-4">
+                  <SelectField label="Button Style" value={localTheme.button_style} onChange={(v) => updateLocalTheme('button_style', v as any)}
+                    options={[
+                      { value: 'solid', label: 'Solid' },
+                      { value: 'outline', label: 'Outline' },
+                      { value: 'soft', label: 'Soft' },
+                      { value: 'glass', label: 'Glassmorphism' },
+                    ]}
+                  />
+                  <SelectField label="Button Radius" value={localTheme.button_radius} onChange={(v) => updateLocalTheme('button_radius', v as any)}
+                    options={[
+                      { value: 'sharp', label: 'Sharp' },
+                      { value: 'rounded', label: 'Rounded' },
+                      { value: 'pill', label: 'Pill' },
+                    ]}
+                  />
+                  <SelectField label="Micro-Animations" value={localTheme.animation_style} onChange={(v) => updateLocalTheme('animation_style', v as any)}
+                    options={[
+                      { value: 'none', label: 'None' },
+                      { value: 'fade', label: 'Soft Fade' },
+                      { value: 'slide', label: 'Slide In' },
+                      { value: 'zoom', label: 'Zoom' },
+                      { value: 'bounce', label: 'Playful Bounce' },
+                    ]}
+                  />
+                </div>
+              </div>
+
               {/* Product Display */}
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Product Display</h2>

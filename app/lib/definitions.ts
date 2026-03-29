@@ -191,12 +191,17 @@ export type StoreTheme = {
   heading_font: string;
   font_size: 'small' | 'medium' | 'large';
 
-  // Layout
+  // Layout & Cards
   layout_style: 'grid' | 'list' | 'masonry';
   card_style: 'modern' | 'classic' | 'minimal' | 'bold';
   border_radius: 'sharp' | 'rounded' | 'pill';
   card_shadow: 'none' | 'soft' | 'elevated' | 'hard';
   spacing: 'compact' | 'comfortable' | 'spacious';
+
+  // Buttons & Interactions
+  button_style: 'solid' | 'outline' | 'soft' | 'glass';
+  button_radius: 'sharp' | 'rounded' | 'pill';
+  animation_style: 'none' | 'fade' | 'slide' | 'zoom' | 'bounce';
 
   // Logo & header
   show_logo: boolean;
