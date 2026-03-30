@@ -15,12 +15,36 @@ import { formatCurrency } from './utils';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
+let ensureProductColumnsPromise: Promise<void> | null = null;
+export async function ensureProductColumns() {
+  if (!ensureProductColumnsPromise) {
+    ensureProductColumnsPromise = (async () => {
+      const alters = [
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS compare_at_price INTEGER DEFAULT NULL`,
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL`,
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT NULL`,
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS gallery_images JSONB DEFAULT '[]'`,
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS options JSONB DEFAULT '[]'`,
+      ];
+      try {
+        for (const stmt of alters) {
+          await sql.unsafe(stmt);
+        }
+      } catch (e) {
+        console.error('ensureProductColumns error:', e);
+      }
+    })();
+  }
+  await ensureProductColumnsPromise;
+}
+
 export async function fetchProductsList(vendorId: string) {
   console.log('fetchProductsList called with vendorId:', vendorId);
   if (!vendorId) {
     console.warn('fetchProductsList: vendorId is missing. Returning empty list.');
     return [];
   }
+  await ensureProductColumns();
   try {
     const products = await sql<Product[]>`
       SELECT * FROM products
@@ -39,6 +63,7 @@ export async function fetchProductById(id: string) {
     console.warn('fetchProductById: id is missing.');
     return undefined;
   }
+  await ensureProductColumns();
   try {
     const data = await sql<Product[]>`
       SELECT * FROM products

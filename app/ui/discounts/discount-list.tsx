@@ -1,18 +1,28 @@
 import { fetchVendorDiscounts } from '@/app/lib/discounts';
-import { TicketIcon } from '@heroicons/react/24/outline';
+import { TicketIcon, PlusIcon } from '@heroicons/react/24/outline';
 import ToggleDiscountButton from './toggle-discount-button';
+import Link from 'next/link';
 
 export default async function DiscountList({ vendorId }: { vendorId: string }) {
   const discounts = await fetchVendorDiscounts(vendorId);
 
   if (discounts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center">
-        <TicketIcon className="h-12 w-12 text-slate-300 mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">No discount codes yet</h3>
+      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center py-24">
+        <div className="h-16 w-16 rounded-full bg-slate-100 flex flex-col items-center justify-center mb-6">
+          <TicketIcon className="h-8 w-8 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 mb-2">No discount codes yet</h3>
         <p className="text-sm text-slate-500 mb-6 max-w-sm">
-          Create discount codes to offer promotions and attract more customers to your store.
+          Create promo codes to offer sales and attract more customers to your storefront. Share them exclusively on WhatsApp!
         </p>
+        <Link
+          href="/dashboard/discounts/create"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
+        >
+          <PlusIcon className="h-4 w-4" />
+          Create Discount
+        </Link>
       </div>
     );
   }
@@ -93,7 +103,7 @@ export default async function DiscountList({ vendorId }: { vendorId: string }) {
                 <ToggleDiscountButton
                   discountId={discount.id}
                   currentStatus={discount.active}
-                  disabled={isExpired || isMaxedOut}
+                  disabled={Boolean(isExpired || isMaxedOut)}
                 />
               </div>
             </div>

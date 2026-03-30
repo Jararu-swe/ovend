@@ -99,8 +99,13 @@ export type Product = {
   name: string;
   description: string;
   price: number;
+  compare_at_price: number | null;
   status: 'active' | 'inactive';
+  category: string | null;
+  stock_quantity: number | null;
   image_url: string | null;
+  gallery_images: string; // JSON stringified array of URLs
+  options: string; // JSON stringified array of variant options
   created_at: string;
 };
 
@@ -110,8 +115,13 @@ export type ProductForm = {
   name: string;
   description: string;
   price: number;
+  compare_at_price: number | null;
   status: 'active' | 'inactive';
+  category: string | null;
+  stock_quantity: number | null;
   image_url: string | null;
+  gallery_images: string;
+  options: string;
 };
 
 export type OrderItem = {
@@ -218,6 +228,9 @@ export type StoreTheme = {
   // Sections (JSON)
   sections: string; // JSON stringified TemplateSection[]
   section_content: string; // JSON stringified TemplateSectionContent
+
+  // Advanced
+  custom_css: string | null;
 
   created_at: string;
   updated_at: string;

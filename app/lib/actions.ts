@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ensureLogoLayoutColumns } from '@/app/lib/theme';
+import { ensureProductColumns } from '@/app/lib/data';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -17,7 +18,12 @@ const FormSchema = z.object({
   status: z.enum(['active', 'inactive'], {
     invalid_type_error: 'Please select a product status.',
   }),
-  image_url: z.string().optional(),
+  category: z.string().optional().nullable(),
+  compare_at_price: z.coerce.number().optional().nullable(),
+  stock_quantity: z.coerce.number().optional().nullable(),
+  gallery_images: z.string().optional().default('[]'),
+  options: z.string().optional().default('[]'),
+  image_url: z.string().optional().nullable(),
 });
 
 const CreateProduct = FormSchema.omit({ id: true });
@@ -59,6 +65,7 @@ const ThemeSchema = z.object({
   show_product_description: z.coerce.boolean(),
   image_aspect_ratio: z.enum(['square', 'portrait', 'landscape']),
   spacing: z.enum(['compact', 'comfortable', 'spacious']),
+  custom_css: z.string().optional().nullable(),
   show_logo: z.preprocess((v) => v === 'true' || v === true, z.boolean()),
   logo_position: z.enum(['left', 'center', 'right']),
   logo_frame: z.enum(['plain', 'profile', 'rounded', 'minimal']),
@@ -162,8 +169,13 @@ export async function createProduct(prevState: State | undefined, formData: Form
     name: formData.get('name'),
     description: formData.get('description'),
     price: formData.get('price'),
+    compare_at_price: formData.get('compare_at_price') || null,
     status: formData.get('status'),
+    category: formData.get('category') || null,
+    stock_quantity: formData.get('stock_quantity') || null,
     image_url: formData.get('image_url') || '',
+    gallery_images: formData.get('gallery_images') || '[]',
+    options: formData.get('options') || '[]',
   });
 
   if (!validatedFields.success) {
@@ -173,12 +185,13 @@ export async function createProduct(prevState: State | undefined, formData: Form
     };
   }
 
-  const { name, description, price, status, image_url } = validatedFields.data;
+  const { name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options } = validatedFields.data;
 
   try {
+    await ensureProductColumns();
     await sql`
-      INSERT INTO products (vendor_id, name, description, price, status, image_url)
-      VALUES (${session.user.id}, ${name}, ${description}, ${price}, ${status}, ${image_url || null})
+      INSERT INTO products (vendor_id, name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options)
+      VALUES (${session.user.id}, ${name}, ${description}, ${price}, ${compare_at_price ?? null}, ${status}, ${category ?? null}, ${stock_quantity ?? null}, ${image_url || null}, ${gallery_images}, ${options})
     `;
   } catch (error) {
     console.error('Database Error:', error);
@@ -203,8 +216,13 @@ export async function updateProduct(
     name: formData.get('name'),
     description: formData.get('description'),
     price: formData.get('price'),
+    compare_at_price: formData.get('compare_at_price') || null,
     status: formData.get('status'),
+    category: formData.get('category') || null,
+    stock_quantity: formData.get('stock_quantity') || null,
     image_url: formData.get('image_url') || '',
+    gallery_images: formData.get('gallery_images') || '[]',
+    options: formData.get('options') || '[]',
   });
 
   if (!validatedFields.success) {
@@ -214,12 +232,14 @@ export async function updateProduct(
     };
   }
 
-  const { name, description, price, status, image_url } = validatedFields.data;
+  const { name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options } = validatedFields.data;
 
   try {
+    await ensureProductColumns();
     await sql`
       UPDATE products
-      SET name = ${name}, description = ${description}, price = ${price}, status = ${status}, image_url = ${image_url || null}
+      SET name = ${name}, description = ${description}, price = ${price}, compare_at_price = ${compare_at_price ?? null}, status = ${status}, 
+          category = ${category ?? null}, stock_quantity = ${stock_quantity ?? null}, image_url = ${image_url || null}, gallery_images = ${gallery_images}, options = ${options}
       WHERE id = ${id} AND vendor_id = ${session.user.id}
     `;
   } catch (error) {
@@ -304,6 +324,17 @@ export async function createOrder(
         orders_count = store_analytics.orders_count + 1,
         revenue = store_analytics.revenue + ${totalAmount}
     `.catch(() => {});
+    
+    // Auto-decrement Stock
+    for (const item of items) {
+      if (item.productId && item.quantity) {
+        sql`
+          UPDATE products
+          SET stock_quantity = stock_quantity - ${item.quantity}
+          WHERE id = ${item.productId} AND stock_quantity IS NOT NULL
+        `.catch((err) => console.error("Error decrementing stock:", err));
+      }
+    }
     
     revalidatePath('/dashboard/orders');
     return { id: result[0].id, success: true };
@@ -530,6 +561,7 @@ export async function updateThemeAction(
       logo_position: formData.get('logo_position'),
       logo_frame: formData.get('logo_frame'),
       logo_url: formData.get('logo_url'),
+      custom_css: formData.get('custom_css') as string,
       sections: formData.get('sections') as string,
       section_content: formData.get('section_content') as string,
     });
@@ -572,6 +604,7 @@ export async function updateThemeAction(
         logo_position = ${themeData.logo_position},
         logo_frame = ${themeData.logo_frame},
         logo_url = ${themeData.logo_url},
+        custom_css = ${themeData.custom_css ?? null},
         sections = ${themeData.sections ?? '[]'},
         section_content = ${themeData.section_content ?? '{}'},
         updated_at = CURRENT_TIMESTAMP

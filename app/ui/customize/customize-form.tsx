@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { StoreTheme } from '@/app/lib/definitions';
 import { updateThemeAction } from '@/app/lib/actions';
 import { useActionState } from 'react';
@@ -8,6 +8,35 @@ import LogoDropzone from '@/app/ui/customize/logo-dropzone';
 import TemplatePicker from '@/app/ui/customize/template-picker';
 import SectionEditor from '@/app/ui/customize/section-editor';
 import { Template, TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent } from '@/app/lib/template-presets';
+
+// ─── WCAG Contrast Ratio Calculator ──────────────────────────
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+function luminance([r, g, b]: [number, number, number]): number {
+  const [rs, gs, bs] = [r, g, b].map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+function contrastRatio(c1: string, c2: string): number {
+  const l1 = luminance(hexToRgb(c1));
+  const l2 = luminance(hexToRgb(c2));
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+function contrastBadge(fg: string, bg: string): { label: string; color: string } {
+  const ratio = contrastRatio(fg, bg);
+  if (ratio >= 7) return { label: `✅ AAA (${ratio.toFixed(1)})`, color: 'text-green-600' };
+  if (ratio >= 4.5) return { label: `✅ AA (${ratio.toFixed(1)})`, color: 'text-green-600' };
+  if (ratio >= 3) return { label: `⚠️ AA-Large (${ratio.toFixed(1)})`, color: 'text-amber-600' };
+  return { label: `🔴 Fail (${ratio.toFixed(1)})`, color: 'text-red-500' };
+}
+
+type HistoryEntry = { theme: StoreTheme; sections: TemplateSection[]; sectionContent: TemplateSectionContent };
 
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
@@ -38,10 +67,72 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
     safeParse(theme.section_content, getDefaultSectionContent())
   );
 
-  const [state, formAction] = useActionState(updateThemeAction, { message: null, errors: {} });
+  const [state, formAction] = useActionState(updateThemeAction, { message: '', errors: {} });
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'templates' | 'colors' | 'layout' | 'sections' | 'brand'>('templates');
+  const [activeTab, setActiveTab] = useState<'templates' | 'colors' | 'layout' | 'sections' | 'brand' | 'advanced'>('templates');
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
+
+  // ─── Undo / Redo ────────────────────────────────────────────
+  const MAX_HISTORY = 20;
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [future, setFuture] = useState<HistoryEntry[]>([]);
+
+  const pushHistory = useCallback(() => {
+    setHistory((prev) => [
+      ...prev.slice(-MAX_HISTORY + 1),
+      { theme: { ...localTheme }, sections: [...sections], sectionContent: { ...sectionContent } },
+    ]);
+    setFuture([]);
+  }, [localTheme, sections, sectionContent]);
+
+  const undo = useCallback(() => {
+    setHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      setFuture((f) => [{ theme: { ...localTheme }, sections: [...sections], sectionContent: { ...sectionContent } }, ...f]);
+      setLocalTheme(last.theme);
+      setSections(last.sections);
+      setSectionContent(last.sectionContent);
+      return prev.slice(0, -1);
+    });
+  }, [localTheme, sections, sectionContent]);
+
+  const redo = useCallback(() => {
+    setFuture((prev) => {
+      if (prev.length === 0) return prev;
+      const next = prev[0];
+      setHistory((h) => [...h, { theme: { ...localTheme }, sections: [...sections], sectionContent: { ...sectionContent } }]);
+      setLocalTheme(next.theme);
+      setSections(next.sections);
+      setSectionContent(next.sectionContent);
+      return prev.slice(1);
+    });
+  }, [localTheme, sections, sectionContent]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [undo, redo]);
+
+  // ─── Unsaved changes detection ──────────────────────────────
+  const hasUnsavedChanges = useMemo(() => {
+    const keys: (keyof StoreTheme)[] = [
+      'primary_color', 'secondary_color', 'background_color', 'text_color',
+      'accent_color', 'surface_color', 'heading_color', 'border_color',
+      'font_family', 'heading_font', 'font_size', 'layout_style',
+      'card_style', 'border_radius', 'spacing', 'header_style',
+      'image_aspect_ratio', 'template_id', 'card_shadow',
+      'show_product_images', 'show_product_description',
+      'show_logo', 'logo_position', 'logo_frame', 'logo_url',
+      'button_style', 'button_radius', 'animation_style', 'custom_css',
+    ];
+    return keys.some((k) => String(localTheme[k] ?? '') !== String(theme[k] ?? ''));
+  }, [localTheme, theme]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -52,8 +143,9 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
   };
 
   const updateLocalTheme = useCallback((key: keyof StoreTheme, value: any) => {
+    pushHistory();
     setLocalTheme(prev => ({ ...prev, [key]: value }));
-  }, []);
+  }, [pushHistory]);
 
   // Apply a template
   const applyTemplate = useCallback((template: Template) => {
@@ -106,6 +198,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
     { id: 'layout' as const, label: '📐 Layout' },
     { id: 'sections' as const, label: '📦 Sections' },
     { id: 'brand' as const, label: '🏷️ Brand' },
+    { id: 'advanced' as const, label: '⚙️ Advanced' },
   ];
 
   return (
@@ -140,6 +233,32 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
       <input type="hidden" name="logo_position" value={localTheme.logo_position} />
       <input type="hidden" name="logo_frame" value={localTheme.logo_frame} />
       <input type="hidden" name="logo_url" value={localTheme.logo_url ?? ''} />
+      <input type="hidden" name="button_style" value={localTheme.button_style ?? 'solid'} />
+      <input type="hidden" name="button_radius" value={localTheme.button_radius ?? 'rounded'} />
+      <input type="hidden" name="animation_style" value={localTheme.animation_style ?? 'none'} />
+      <input type="hidden" name="custom_css" value={localTheme.custom_css ?? ''} />
+
+      {/* Unsaved Changes Banner */}
+      {hasUnsavedChanges && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+            <p className="text-sm font-medium text-amber-800">You have unsaved changes</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {history.length > 0 && (
+              <button type="button" onClick={undo} className="text-xs font-semibold text-amber-700 hover:text-amber-900 transition" title="Ctrl+Z">
+                ↩ Undo
+              </button>
+            )}
+            {future.length > 0 && (
+              <button type="button" onClick={redo} className="text-xs font-semibold text-amber-700 hover:text-amber-900 transition" title="Ctrl+Y">
+                ↪ Redo
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column — Editor */}
@@ -176,13 +295,13 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Colors</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  <ColorInput label="Primary" value={localTheme.primary_color} onChange={(v) => updateLocalTheme('primary_color', v)} />
-                  <ColorInput label="Secondary" value={localTheme.secondary_color} onChange={(v) => updateLocalTheme('secondary_color', v)} />
+                  <ColorInput label="Primary" value={localTheme.primary_color} onChange={(v) => updateLocalTheme('primary_color', v)} contrastAgainst={localTheme.background_color} />
+                  <ColorInput label="Secondary" value={localTheme.secondary_color} onChange={(v) => updateLocalTheme('secondary_color', v)} contrastAgainst={localTheme.background_color} />
                   <ColorInput label="Background" value={localTheme.background_color} onChange={(v) => updateLocalTheme('background_color', v)} />
                   <ColorInput label="Surface" value={localTheme.surface_color} onChange={(v) => updateLocalTheme('surface_color', v)} />
-                  <ColorInput label="Text" value={localTheme.text_color} onChange={(v) => updateLocalTheme('text_color', v)} />
-                  <ColorInput label="Headings" value={localTheme.heading_color} onChange={(v) => updateLocalTheme('heading_color', v)} />
-                  <ColorInput label="Accent" value={localTheme.accent_color} onChange={(v) => updateLocalTheme('accent_color', v)} />
+                  <ColorInput label="Text" value={localTheme.text_color} onChange={(v) => updateLocalTheme('text_color', v)} contrastAgainst={localTheme.background_color} />
+                  <ColorInput label="Headings" value={localTheme.heading_color} onChange={(v) => updateLocalTheme('heading_color', v)} contrastAgainst={localTheme.surface_color} />
+                  <ColorInput label="Accent" value={localTheme.accent_color} onChange={(v) => updateLocalTheme('accent_color', v)} contrastAgainst={localTheme.background_color} />
                   <ColorInput label="Borders" value={localTheme.border_color} onChange={(v) => updateLocalTheme('border_color', v)} />
                 </div>
               </div>
@@ -371,6 +490,67 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
               </div>
             </div>
           )}
+
+          {/* ─── Advanced Tab ─── */}
+          {activeTab === 'advanced' && (
+            <div className="space-y-6">
+              {/* Custom CSS */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-bold text-slate-900 mb-1">Custom CSS</h2>
+                <p className="text-sm text-slate-500 mb-4">Add custom CSS that only applies to your storefront. Use with caution.</p>
+                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center justify-between bg-slate-50 px-3 py-2 border-b border-slate-200">
+                    <span className="text-xs font-mono text-slate-500">styles.css</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">Advanced</span>
+                  </div>
+                  <textarea
+                    value={localTheme.custom_css || ''}
+                    onChange={(e) => updateLocalTheme('custom_css', e.target.value)}
+                    placeholder={`/* Your custom CSS here */\n.ovd-hero { background: linear-gradient(135deg, #667eea, #764ba2); }\n.ovd-product-card { border: 2px solid gold; }`}
+                    rows={12}
+                    className="w-full px-4 py-3 font-mono text-xs text-slate-700 bg-slate-900 text-green-300 outline-none resize-none"
+                    spellCheck={false}
+                  />
+                </div>
+                <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-xs text-amber-700">
+                    ⚠️ Custom CSS is scoped to your storefront only. Avoid using <code className="bg-amber-100 px-1 rounded">!important</code> unless necessary.
+                    Malicious code like <code className="bg-amber-100 px-1 rounded">{`<script>`}</code> will be stripped.
+                  </p>
+                </div>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+                <h2 className="text-lg font-bold text-red-600 mb-1">Danger Zone</h2>
+                <p className="text-sm text-slate-500 mb-4">These actions are irreversible.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('Reset everything to the default template? This cannot be undone.')) {
+                      pushHistory();
+                      setLocalTheme({
+                        ...theme,
+                        template_id: 'fresh-market',
+                        logo_position: 'left',
+                        logo_frame: 'profile',
+                        surface_color: '#ffffff',
+                        heading_color: '#0f172a',
+                        border_color: '#e2e8f0',
+                        card_shadow: 'soft',
+                        custom_css: '',
+                      } as StoreTheme);
+                      setSections(getDefaultSections());
+                      setSectionContent(getDefaultSectionContent());
+                    }
+                  }}
+                  className="rounded-xl border-2 border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                >
+                  🗑️ Reset to Factory Defaults
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column — Preview */}
@@ -402,17 +582,39 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
 
       {/* Actions */}
       <div className="flex items-center justify-between gap-3 pt-2">
-        <div>
+        <div className="flex items-center gap-3">
           {state.message && (
             <p className={`text-sm font-medium ${state.message.includes('success') || state.message.includes('Success') ? 'text-green-600' : 'text-red-500'}`}>
               {state.message}
             </p>
           )}
+          {/* Undo/Redo buttons */}
+          <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={history.length === 0}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+              title="Undo (Ctrl+Z)"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+            </button>
+            <button
+              type="button"
+              onClick={redo}
+              disabled={future.length === 0}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+              title="Redo (Ctrl+Y)"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" /></svg>
+            </button>
+          </div>
         </div>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => {
+              pushHistory();
               setLocalTheme({
                 ...theme,
                 template_id: theme.template_id ?? 'fresh-market',
@@ -432,10 +634,12 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
           </button>
           <button
             type="submit"
-            disabled={isSaving}
-            className="rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-50"
+            disabled={isSaving || !hasUnsavedChanges}
+            className={`rounded-xl px-6 py-2.5 text-sm font-medium text-white shadow-sm transition disabled:opacity-50 ${
+              hasUnsavedChanges ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-slate-400'
+            }`}
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : 'Saved ✓'}
           </button>
         </div>
       </div>
@@ -445,10 +649,16 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
 
 // ─── Shared sub-components ────────────────────────────────────
 
-function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (val: string) => void }) {
+function ColorInput({ label, value, onChange, contrastAgainst }: { label: string; value: string; onChange: (val: string) => void; contrastAgainst?: string }) {
+  const badge = contrastAgainst && value.match(/^#[0-9a-fA-F]{6}$/) && contrastAgainst.match(/^#[0-9a-fA-F]{6}$/)
+    ? contrastBadge(value, contrastAgainst)
+    : null;
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-slate-700">{label}</label>
+        {badge && <span className={`text-[10px] font-semibold ${badge.color}`}>{badge.label}</span>}
+      </div>
       <div className="flex gap-2">
         <input
           type="color"

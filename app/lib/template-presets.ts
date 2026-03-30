@@ -1,6 +1,14 @@
 // Premade template presets that vendors can pick with one click
 // Each template provides a full "design recipe" — colors, fonts, layouts, and sections.
 
+// ─── Shared font family map ──────────────────────────────────
+export const FONT_MAP: Record<string, string> = {
+  inter: "'Inter', sans-serif",
+  poppins: "'Poppins', sans-serif",
+  roboto: "'Roboto', sans-serif",
+  playfair: "'Playfair Display', serif",
+  montserrat: "'Montserrat', sans-serif",
+};
 export type TemplateSection = {
   id: string;
   enabled: boolean;
@@ -47,9 +55,11 @@ export type Template = {
 // ─── Available section types ─────────────────────────────────
 export const SECTION_TYPES = [
   { id: 'hero-banner',       label: 'Hero Banner',       icon: '🖼️', description: 'Full-width banner with store name and tagline', removable: true },
-  { id: 'announcement-bar',  label: 'Announcement Bar',  icon: '📢', description: 'Scrolling promo text bar', removable: true },
+  { id: 'announcement-bar',  label: 'Announcement Bar',  icon: '📢', description: 'Scrolling promo text marquee', removable: true },
   { id: 'featured-products', label: 'Featured Products', icon: '⭐', description: 'Hand-picked product highlights', removable: true },
   { id: 'product-grid',      label: 'Product Grid',      icon: '📦', description: 'Main product listing', removable: false },
+  { id: 'trust-badges',      label: 'Trust Badges',      icon: '🛡️', description: 'Secure checkout, fast delivery badges', removable: true },
+  { id: 'image-gallery',     label: 'Image Gallery',     icon: '🎨', description: 'Photo gallery with lightbox', removable: true },
   { id: 'testimonials',      label: 'Testimonials',      icon: '💬', description: 'Customer quotes and reviews', removable: true },
   { id: 'about-section',     label: 'About Us',          icon: '🏪', description: 'Your store\'s story', removable: true },
   { id: 'contact-cta',       label: 'Contact / CTA',     icon: '📲', description: '"Order on WhatsApp" call-to-action', removable: true },
@@ -61,15 +71,20 @@ const DEFAULT_SECTIONS: TemplateSection[] = [
   { id: 'announcement-bar',  enabled: false, order: 1 },
   { id: 'featured-products', enabled: false, order: 2 },
   { id: 'product-grid',      enabled: true,  order: 3 },
-  { id: 'testimonials',      enabled: false, order: 4 },
-  { id: 'about-section',     enabled: false, order: 5 },
-  { id: 'contact-cta',       enabled: true,  order: 6 },
+  { id: 'trust-badges',      enabled: true,  order: 4 },
+  { id: 'image-gallery',     enabled: false, order: 5 },
+  { id: 'testimonials',      enabled: false, order: 6 },
+  { id: 'about-section',     enabled: false, order: 7 },
+  { id: 'contact-cta',       enabled: true,  order: 8 },
 ];
 
 const DEFAULT_SECTION_CONTENT: TemplateSectionContent = {
   'hero-banner': {
     title: 'Welcome to our store',
     subtitle: 'Browse our collection and order directly via WhatsApp.',
+    cta_text: 'Shop Now',
+    cta_link: '#item-list',
+    text_align: 'left',
   },
   'announcement-bar': {
     text: '🎉 Free delivery on orders over ₦5,000!',
@@ -77,8 +92,26 @@ const DEFAULT_SECTION_CONTENT: TemplateSectionContent = {
     text_color: '#ffffff',
   },
   'featured-products': {
-    title: 'Featured',
+    title: '⭐ Featured',
     product_ids: [],
+  },
+  'trust-badges': {
+    badges: [
+      { icon: '🔒', label: 'Secure Checkout' },
+      { icon: '🚚', label: 'Fast Delivery' },
+      { icon: '↩️', label: 'Easy Returns' },
+      { icon: '💬', label: 'WhatsApp Support' },
+    ],
+  },
+  'image-gallery': {
+    title: '📸 Gallery',
+    images: [
+      { url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=600&fit=crop', caption: 'Our Store' },
+      { url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=400&fit=crop', caption: 'Shopping Experience' },
+      { url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&h=400&fit=crop', caption: 'New Arrivals' },
+      { url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&h=400&fit=crop', caption: 'Fashion Forward' },
+      { url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=600&h=600&fit=crop', caption: 'Premium Collection' },
+    ],
   },
   'testimonials': {
     quotes: [
@@ -131,13 +164,17 @@ export const TEMPLATES: Template[] = [
       { id: 'hero-banner',       enabled: true,  order: 0 },
       { id: 'announcement-bar',  enabled: true,  order: 1 },
       { id: 'product-grid',      enabled: true,  order: 2 },
-      { id: 'contact-cta',       enabled: true,  order: 3 },
+      { id: 'trust-badges',      enabled: true,  order: 3 },
+      { id: 'contact-cta',       enabled: true,  order: 4 },
     ],
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
         title: 'Fresh picks, delivered fast 🚀',
         subtitle: 'Farm-fresh groceries and produce at your fingertips.',
+        cta_text: 'Browse Products',
+        cta_link: '#item-list',
+        text_align: 'left',
       },
       'announcement-bar': {
         text: '🥬 New stock just arrived — order before it\'s gone!',
@@ -179,14 +216,27 @@ export const TEMPLATES: Template[] = [
     sections: [
       { id: 'hero-banner',       enabled: true,  order: 0 },
       { id: 'product-grid',      enabled: true,  order: 1 },
-      { id: 'testimonials',      enabled: true,  order: 2 },
-      { id: 'contact-cta',       enabled: true,  order: 3 },
+      { id: 'image-gallery',     enabled: true,  order: 2 },
+      { id: 'trust-badges',      enabled: true,  order: 3 },
+      { id: 'testimonials',      enabled: true,  order: 4 },
+      { id: 'contact-cta',       enabled: true,  order: 5 },
     ],
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
         title: 'Curated for you',
         subtitle: 'Discover exclusive pieces handpicked with care.',
+        cta_text: 'Explore Collection',
+        cta_link: '#item-list',
+        text_align: 'center',
+      },
+      'trust-badges': {
+        badges: [
+          { icon: '✨', label: 'Authentic Products' },
+          { icon: '🎁', label: 'Premium Packaging' },
+          { icon: '🚚', label: 'Express Delivery' },
+          { icon: '💬', label: '24/7 Support' },
+        ],
       },
       'testimonials': {
         quotes: [
@@ -326,19 +376,36 @@ export const TEMPLATES: Template[] = [
     sections: [
       { id: 'hero-banner',       enabled: true,  order: 0 },
       { id: 'announcement-bar',  enabled: true,  order: 1 },
-      { id: 'product-grid',      enabled: true,  order: 2 },
-      { id: 'contact-cta',       enabled: true,  order: 3 },
+      { id: 'featured-products', enabled: true,  order: 2 },
+      { id: 'product-grid',      enabled: true,  order: 3 },
+      { id: 'trust-badges',      enabled: true,  order: 4 },
+      { id: 'contact-cta',       enabled: true,  order: 5 },
     ],
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
         title: 'Hungry? Order now 🍔',
         subtitle: 'Delicious meals ready in minutes.',
+        cta_text: 'See Menu',
+        cta_link: '#item-list',
+        text_align: 'left',
+      },
+      'featured-products': {
+        title: '🔥 Most Popular',
+        product_ids: [],
       },
       'announcement-bar': {
         text: '🔥 Free delivery for orders above ₦3,000 today!',
         bg_color: '#ef4444',
         text_color: '#ffffff',
+      },
+      'trust-badges': {
+        badges: [
+          { icon: '⏱️', label: '30min Delivery' },
+          { icon: '🍽️', label: 'Fresh Daily' },
+          { icon: '💸', label: 'Best Prices' },
+          { icon: '📲', label: 'Order via WhatsApp' },
+        ],
       },
     },
   },

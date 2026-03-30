@@ -21,6 +21,7 @@ export async function ensureNewColumns() {
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS button_style VARCHAR(20) DEFAULT 'solid'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS button_radius VARCHAR(20) DEFAULT 'rounded'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS animation_style VARCHAR(20) DEFAULT 'fade'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS custom_css TEXT`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS sections JSONB DEFAULT '[]'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS section_content JSONB DEFAULT '{}'`,
       ];
@@ -69,6 +70,7 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     image_aspect_ratio: 'square',
     show_product_description: true,
     spacing: 'comfortable',
+    custom_css: null,
     sections: JSON.stringify(getDefaultSections()),
     section_content: JSON.stringify(getDefaultSectionContent()),
   };
@@ -105,6 +107,7 @@ function normalizeTheme(row: any): StoreTheme {
     button_style: row.button_style ?? 'solid',
     button_radius: row.button_radius ?? 'rounded',
     animation_style: row.animation_style ?? 'fade',
+    custom_css: row.custom_css ?? null,
     sections: hasSections
       ? (typeof rawSections === 'string' ? rawSections : JSON.stringify(rawSections))
       : JSON.stringify(getDefaultSections()),
@@ -164,6 +167,7 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       image_aspect_ratio,
       show_product_description,
       spacing,
+      custom_css,
       sections,
       section_content
     ) VALUES (
@@ -196,6 +200,7 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       ${d.image_aspect_ratio},
       ${d.show_product_description},
       ${d.spacing},
+      ${d.custom_css},
       ${d.sections},
       ${d.section_content}
     )

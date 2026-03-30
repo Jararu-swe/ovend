@@ -49,10 +49,20 @@ export default async function ProductsPage() {
       ) : (
         /* Product list */
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
+          {products.map((product) => {
+            const hasStockLimit = product.stock_quantity !== null;
+            const isOutOfStock = hasStockLimit && product.stock_quantity! <= 0;
+            const isLowStock = hasStockLimit && product.stock_quantity! > 0 && product.stock_quantity! <= 5;
+            
+            let parsedOptions = [];
+            try {
+              if (product.options) parsedOptions = JSON.parse(product.options);
+            } catch (e) {}
+
+            return (
             <div
               key={product.id}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-shadow hover:shadow-md"
+              className={`group relative flex flex-col overflow-hidden rounded-2xl border ${isOutOfStock ? 'border-red-200 bg-red-50/10' : 'border-slate-100 bg-white'} shadow-sm transition-shadow hover:shadow-md`}
             >
               {/* Product Image Placeholder */}
               <div className="aspect-[4/3] w-full bg-slate-100 flex items-center justify-center text-slate-300 overflow-hidden relative">
@@ -61,12 +71,12 @@ export default async function ProductsPage() {
                     src={product.image_url}
                     alt={product.name}
                     fill
-                    className="object-cover transition-transform group-hover:scale-105"
+                    className={`object-cover transition-transform group-hover:scale-105 ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
                   />
                 ) : (
                   <ShoppingBagIcon className="h-12 w-12" />
                 )}
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                       product.status === 'active'
@@ -76,21 +86,48 @@ export default async function ProductsPage() {
                   >
                     {product.status}
                   </span>
+                  {product.category && (
+                    <span className="rounded-full bg-slate-800/80 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+                      {product.category}
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Product Info */}
               <div className="flex flex-1 flex-col p-4">
-                <div className="mb-2 flex items-start justify-between">
-                  <h3 className="font-semibold text-slate-900 line-clamp-1">{product.name}</h3>
-                  <p className="font-bold text-emerald-600">{formatCurrency(product.price)}</p>
+                <div className="mb-2 flex flex-col items-start justify-between">
+                  <h3 className={`font-semibold line-clamp-1 ${isOutOfStock ? 'text-slate-400' : 'text-slate-900'}`}>{product.name}</h3>
+                  <div className="flex items-end gap-2 mt-1">
+                    <p className={`font-bold ${isOutOfStock ? 'text-slate-400' : 'text-emerald-600'}`}>{formatCurrency(product.price)}</p>
+                    {product.compare_at_price && product.compare_at_price > product.price && (
+                       <p className="text-xs text-slate-400 line-through mb-0.5">{formatCurrency(product.compare_at_price)}</p>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 line-clamp-2 min-h-[2rem]">
-                  {product.description}
-                </p>
+
+                <div className="flex flex-col gap-1 mt-1 mb-2">
+                  {/* Stock Indicator */}
+                  {hasStockLimit ? (
+                    isOutOfStock ? (
+                      <span className="text-xs font-semibold text-red-500">Out of Stock</span>
+                    ) : isLowStock ? (
+                      <span className="text-xs font-semibold text-orange-500">Only {product.stock_quantity} left</span>
+                    ) : (
+                      <span className="text-xs font-medium text-slate-500">{product.stock_quantity} in stock</span>
+                    )
+                  ) : (
+                    <span className="text-xs font-medium text-slate-500">Unlimited stock</span>
+                  )}
+                  
+                  {/* Options Indicator */}
+                  {parsedOptions.length > 0 && (
+                     <span className="text-xs font-medium text-blue-500">{parsedOptions.length} variant{parsedOptions.length !== 1 ? 's' : ''}</span>
+                  )}
+                </div>
 
                 {/* Actions */}
-                <div className="mt-4 flex items-center justify-end gap-2 pt-4 border-t border-slate-50">
+                <div className="mt-auto flex items-center justify-end gap-2 pt-4 border-t border-slate-50">
                   <Link
                     href={`/dashboard/products/${product.id}/edit`}
                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-100"
@@ -110,7 +147,8 @@ export default async function ProductsPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

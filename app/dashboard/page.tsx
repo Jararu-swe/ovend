@@ -69,7 +69,7 @@ export default async function Page() {
         </div>
       </div>
 
-      {weeklyAnalytics.length > 0 && (
+      {weeklyAnalytics.length > 0 ? (
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-6">
             <ChartBarIcon className="h-5 w-5 text-slate-400" />
@@ -99,6 +99,16 @@ export default async function Page() {
               <p className="text-xs text-slate-500 mt-1">Conversion</p>
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center flex flex-col items-center justify-center">
+          <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <ChartBarIcon className="h-6 w-6 text-slate-400" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-900">No Analytics Yet</h3>
+          <p className="mt-2 text-sm text-slate-500 max-w-sm">
+            Once you start sharing your store link, you'll see your store visits, orders, and revenue here.
+          </p>
         </div>
       )}
     </div>

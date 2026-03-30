@@ -145,6 +145,42 @@ export default function SectionEditor({
                         value={content.subtitle || ''}
                         onChange={(v) => updateContent(section.id, 'subtitle', v)}
                       />
+                      <div className="grid grid-cols-2 gap-2">
+                        <MiniInput
+                          label="CTA Button Text"
+                          value={content.cta_text || ''}
+                          onChange={(v) => updateContent(section.id, 'cta_text', v)}
+                        />
+                        <MiniInput
+                          label="CTA Link"
+                          value={content.cta_link || '#item-list'}
+                          onChange={(v) => updateContent(section.id, 'cta_link', v)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-500 mb-1">Text Alignment</label>
+                        <div className="flex gap-2">
+                          {(['left', 'center', 'right'] as const).map((align) => (
+                            <button
+                              key={align}
+                              type="button"
+                              onClick={() => updateContent(section.id, 'text_align', align)}
+                              className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold capitalize transition ${
+                                (content.text_align || 'left') === align
+                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                                  : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                              }`}
+                            >
+                              {align}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <MiniInput
+                        label="Background Image URL (optional)"
+                        value={content.image_url || ''}
+                        onChange={(v) => updateContent(section.id, 'image_url', v)}
+                      />
                     </>
                   )}
                   {section.id === 'announcement-bar' && (
@@ -174,6 +210,25 @@ export default function SectionEditor({
                       value={content.title || 'Featured'}
                       onChange={(v) => updateContent(section.id, 'title', v)}
                     />
+                  )}
+                  {section.id === 'trust-badges' && (
+                    <TrustBadgesEditor
+                      badges={content.badges || []}
+                      onChange={(b) => updateContent(section.id, 'badges', b)}
+                    />
+                  )}
+                  {section.id === 'image-gallery' && (
+                    <>
+                      <MiniInput
+                        label="Section title"
+                        value={content.title || '📸 Gallery'}
+                        onChange={(v) => updateContent(section.id, 'title', v)}
+                      />
+                      <ImageGalleryEditor
+                        images={content.images || []}
+                        onChange={(imgs) => updateContent(section.id, 'images', imgs)}
+                      />
+                    </>
                   )}
                   {section.id === 'about-section' && (
                     <>
@@ -351,6 +406,130 @@ function TestimonialsEditor({
         className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 transition"
       >
         + Add testimonial
+      </button>
+    </div>
+  );
+}
+
+type Badge = { icon: string; label: string };
+
+function TrustBadgesEditor({
+  badges,
+  onChange,
+}: {
+  badges: Badge[];
+  onChange: (b: Badge[]) => void;
+}) {
+  const addBadge = () => {
+    onChange([...badges, { icon: '✅', label: 'New Badge' }]);
+  };
+  const removeBadge = (idx: number) => {
+    onChange(badges.filter((_, i) => i !== idx));
+  };
+  const updateBadge = (idx: number, key: keyof Badge, val: string) => {
+    onChange(badges.map((b, i) => (i === idx ? { ...b, [key]: val } : b)));
+  };
+
+  return (
+    <div className="space-y-2">
+      {badges.map((badge, idx) => (
+        <div key={idx} className="flex gap-2 items-center">
+          <input
+            type="text"
+            value={badge.icon}
+            onChange={(e) => updateBadge(idx, 'icon', e.target.value)}
+            className="w-12 rounded-lg border border-slate-200 px-2 py-1 text-center text-sm outline-none focus:border-emerald-500"
+            maxLength={4}
+            title="Emoji icon"
+          />
+          <input
+            type="text"
+            value={badge.label}
+            onChange={(e) => updateBadge(idx, 'label', e.target.value)}
+            placeholder="Badge label"
+            className="flex-1 rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-emerald-500"
+          />
+          <button
+            type="button"
+            onClick={() => removeBadge(idx)}
+            className="text-xs text-red-400 hover:text-red-600 transition"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addBadge}
+        className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 transition"
+      >
+        + Add badge
+      </button>
+    </div>
+  );
+}
+
+type GalleryImage = { url: string; caption?: string };
+
+function ImageGalleryEditor({
+  images,
+  onChange,
+}: {
+  images: GalleryImage[];
+  onChange: (imgs: GalleryImage[]) => void;
+}) {
+  const addImage = () => {
+    onChange([...images, { url: '', caption: '' }]);
+  };
+  const removeImage = (idx: number) => {
+    onChange(images.filter((_, i) => i !== idx));
+  };
+  const updateImage = (idx: number, key: keyof GalleryImage, val: string) => {
+    onChange(images.map((img, i) => (i === idx ? { ...img, [key]: val } : img)));
+  };
+
+  return (
+    <div className="space-y-3">
+      {images.map((img, idx) => (
+        <div key={idx} className="flex gap-2 items-start">
+          {/* Thumbnail preview */}
+          {img.url && (
+            <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden bg-slate-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="h-full w-full object-cover" />
+            </div>
+          )}
+          <div className="flex-1 space-y-1">
+            <input
+              type="text"
+              value={img.url}
+              onChange={(e) => updateImage(idx, 'url', e.target.value)}
+              placeholder="Image URL (https://...)"
+              className="w-full rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-emerald-500"
+            />
+            <input
+              type="text"
+              value={img.caption || ''}
+              onChange={(e) => updateImage(idx, 'caption', e.target.value)}
+              placeholder="Caption (optional)"
+              className="w-full rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-emerald-500"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => removeImage(idx)}
+            className="text-xs text-red-400 hover:text-red-600 mt-1 transition"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addImage}
+        className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 transition"
+      >
+        + Add image
       </button>
     </div>
   );

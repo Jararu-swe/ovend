@@ -7,8 +7,9 @@ import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
 import { createOrder } from '@/app/lib/actions';
 import { useSearchParams } from 'next/navigation';
-import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent } from '@/app/lib/template-presets';
+import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent, FONT_MAP } from '@/app/lib/template-presets';
 import SectionRenderer from '@/app/ui/store/section-renderer';
+import ProductQuickView from '@/app/ui/store/product-quick-view';
 
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
@@ -20,13 +21,7 @@ function safeParse<T>(json: string | null | undefined, fallback: T): T {
   }
 }
 
-const FONT_MAP: Record<string, string> = {
-  inter: "'Inter', sans-serif",
-  poppins: "'Poppins', sans-serif",
-  roboto: "'Roboto', sans-serif",
-  playfair: "'Playfair Display', serif",
-  montserrat: "'Montserrat', sans-serif",
-};
+
 
 export default function Storefront({ vendor, products, theme }: { vendor: User; products: Product[]; theme: StoreTheme }) {
   const searchParams = useSearchParams();
@@ -39,6 +34,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const [placedOrder, setPlacedOrder] = useState<{ id: string; total: number; paymentMethod: 'cash' | 'card' } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const activeProducts = products.filter((p) => p.status === 'active');
   const activeTheme = useMemo(() => previewTheme ?? theme, [previewTheme, theme]);
@@ -204,15 +200,15 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     return () => window.removeEventListener('message', handlePreviewMessage);
   }, [isPreview]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, qty = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
         return prev.map((item) =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.productId === product.id ? { ...item, quantity: item.quantity + qty } : item
         );
       }
-      return [...prev, { productId: product.id, name: product.name, price: product.price, quantity: 1 }];
+      return [...prev, { productId: product.id, name: product.name, price: product.price, quantity: qty }];
     });
   };
 
@@ -306,6 +302,24 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     }
   };
 
+  // Inject keyframes for product grid animations (must be before any early returns)
+  useEffect(() => {
+    if (document.getElementById('ovd-keyframes')) return;
+    const styleEl = document.createElement('style');
+    styleEl.id = 'ovd-keyframes';
+    styleEl.textContent = `
+      @keyframes ovdFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes ovdSlideUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes ovdZoomIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+      @keyframes ovdBounceIn { 0% { opacity: 0; transform: scale(0.85) translateY(20px); } 60% { opacity: 1; transform: scale(1.04) translateY(-4px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+      .ovd-fade-in { animation: ovdFadeIn 0.6s ease-out both; }
+      .ovd-slide-up { animation: ovdSlideUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+      .ovd-zoom-in { animation: ovdZoomIn 0.5s ease-out both; }
+      .ovd-bounce-in { animation: ovdBounceIn 0.8s cubic-bezier(0.34,1.56,0.64,1) both; }
+    `;
+    document.head.appendChild(styleEl);
+  }, []);
+
   // ─── Order confirmation screen ──────────────────────────────
   if (placedOrder) {
     const orderItemsList = cart.map(item => 
@@ -389,11 +403,27 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     );
   }
 
+  // ─── Entrance animation class mapping ────────────────────────
+  const getEntranceClass = (anim: string) => {
+    switch (anim) {
+      case 'fade': return 'ovd-fade-in';
+      case 'slide': return 'ovd-slide-up';
+      case 'zoom': return 'ovd-zoom-in';
+      case 'bounce': return 'ovd-bounce-in';
+      default: return '';
+    }
+  };
+
+  const entranceAnim = getEntranceClass(activeTheme.animation_style);
+
   // ─── Product grid renderer (passed to SectionRenderer) ──────
   const renderProductGrid = () => (
     <section id="item-list">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-bold" style={{ color: activeTheme.heading_color || activeTheme.text_color }}>Products</h3>
+        <h3
+          className="text-lg font-bold"
+          style={{ color: activeTheme.heading_color || activeTheme.text_color, fontFamily: FONT_MAP[activeTheme.heading_font] || undefined }}
+        >Products</h3>
         <span className="text-xs text-slate-500 font-medium bg-white px-3 py-1 rounded-full border border-slate-100 italic">
           {activeProducts.length} items available
         </span>
@@ -404,20 +434,34 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         activeTheme.layout_style === 'list' ? 'grid-cols-1' :
         'grid-cols-1 sm:grid-cols-2'
       }`}>
-        {activeProducts.map((product) => (
+        {activeProducts.map((product, idx) => {
+          let parsedOptions = [];
+          try {
+            if (product.options) parsedOptions = JSON.parse(product.options);
+          } catch (e) {}
+          
+          const hasOptions = parsedOptions.length > 0;
+          const isOutOfStock = product.stock_quantity !== null && product.stock_quantity <= 0;
+          const isOnSale = product.compare_at_price && product.compare_at_price > product.price;
+
+          return (
           <div
             key={product.id}
-            className={`group flex flex-col overflow-hidden bg-white border transition-shadow hover:shadow-md ${cardShadowStyle} ${
+            onClick={() => setQuickViewProduct(product)}
+            className={`group flex flex-col overflow-hidden bg-white border transition-all hover:shadow-lg cursor-pointer ${cardShadowStyle} ${entranceAnim} ${
               activeTheme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
               activeTheme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
               activeTheme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
               'rounded-2xl border-4'
-            }`}
-            style={activeTheme.card_style === 'bold' ? { 
-              borderColor: activeTheme.primary_color,
-              boxShadow: `4px 4px 0 ${activeTheme.primary_color}40`
-            } : {
-              borderColor: activeTheme.border_color || undefined,
+            } ${isOutOfStock ? 'opacity-70' : ''}`}
+            style={{
+              animationDelay: `${idx * 80}ms`,
+              ...(activeTheme.card_style === 'bold' ? { 
+                borderColor: activeTheme.primary_color,
+                boxShadow: `4px 4px 0 ${activeTheme.primary_color}40`,
+              } : {
+                borderColor: activeTheme.border_color || undefined,
+              }),
             }}
           >
             {activeTheme.show_product_images && (
@@ -427,16 +471,37 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                     src={product.image_url}
                     alt={product.name}
                     fill
-                    className="object-cover transition-transform group-hover:scale-110 duration-500"
+                    className={`object-cover transition-transform group-hover:scale-110 duration-500 ${isOutOfStock ? 'grayscale' : ''}`}
                   />
                 ) : (
                   <ShoppingBagIcon className="h-16 w-16" />
+                )}
+                
+                {/* Sale and Stock Badges */}
+                <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
+                  {isOnSale && !isOutOfStock && (
+                    <span className="rounded-full bg-red-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                      Sale
+                    </span>
+                  )}
+                  {isOutOfStock && (
+                    <span className="rounded-full bg-slate-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                      Sold Out
+                    </span>
+                  )}
+                </div>
+
+                {/* Category Badge */}
+                {product.category && (
+                  <div className="absolute bottom-3 left-3 font-semibold text-[10px] bg-white/90 backdrop-blur-sm text-slate-700 px-2 py-1 rounded-lg">
+                    {product.category}
+                  </div>
                 )}
               </div>
             )}
             <div className="flex flex-1 flex-col p-5">
               <h4
-                className="font-bold leading-snug mb-1"
+                className="font-bold leading-snug mb-1 line-clamp-2"
                 style={{ color: activeTheme.heading_color || activeTheme.text_color, fontFamily: FONT_MAP[activeTheme.heading_font] || undefined }}
               >
                 {product.name}
@@ -446,28 +511,55 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                   {product.description}
                 </p>
               )}
-              <div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-50">
-                <p className="text-lg font-bold" style={{ color: activeTheme.primary_color }}>
-                  {formatCurrency(product.price)}
-                </p>
+              <div className="mt-4 flex items-end justify-between pt-4 border-t border-slate-50">
+                <div className="flex flex-col">
+                  {isOnSale && (
+                     <span className="text-xs text-slate-400 line-through mb-0.5">{formatCurrency(product.compare_at_price!)}</span>
+                  )}
+                  <p className="text-lg font-bold" style={{ color: activeTheme.primary_color }}>
+                    {formatCurrency(product.price)}
+                  </p>
+                </div>
+
                 <button 
-                  onClick={() => addToCart(product)}
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center text-white shadow-lg ${buttonRadiusClass} ${interactionAnimationStyle}`}
-                  style={dynamicBtnStyle}
+                  disabled={isOutOfStock}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (hasOptions || isOutOfStock) {
+                      setQuickViewProduct(product);
+                    } else {
+                      addToCart(product); 
+                    }
+                  }}
+                  className={`flex shrink-0 items-center justify-center font-bold text-white shadow-lg ${buttonRadiusClass} ${interactionAnimationStyle} ${
+                    isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  style={{...dynamicBtnStyle, padding: hasOptions ? '0.5rem 1rem' : '', height: '2.5rem', width: hasOptions ? 'auto' : '2.5rem', fontSize: '0.875rem' }}
                 >
-                  <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
+                  {isOutOfStock ? (
+                    'Sold'
+                  ) : hasOptions ? (
+                    'Options'
+                  ) : (
+                    <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
+                  )}
                 </button>
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 
   return (
-    <div 
-      className={`min-h-screen ${fontSizeClass}`}
+    <>
+      {activeTheme.custom_css && (
+        <style dangerouslySetInnerHTML={{ __html: activeTheme.custom_css.replace(/<\/style>/gi, '') }} />
+      )}
+      <div 
+        className={`min-h-screen ${fontSizeClass}`}
       style={{
         '--color-primary': activeTheme.primary_color,
         '--color-secondary': activeTheme.secondary_color,
@@ -702,6 +794,14 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           </div>
         </div>
       )}
+      {/* Product Quick View Modal */}
+      <ProductQuickView
+        product={quickViewProduct}
+        theme={activeTheme}
+        onClose={() => setQuickViewProduct(null)}
+        onAddToCart={addToCart}
+      />
     </div>
+    </>
   );
 }

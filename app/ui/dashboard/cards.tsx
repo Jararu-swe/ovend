@@ -30,11 +30,18 @@ export default async function CardWrapper({
     <>
       <Card title="Total Revenue" value={formatCurrency(stats.totalRevenue)} type="revenue" />
       <Card title="Total Orders" value={stats.numberOfOrders} type="orders" />
-      <Card title="Active Products" value={stats.numberOfProducts} type="products" />
       <Card title="Pending Orders" value={stats.numberOfPendingOrders} type="bestSelling" />
+      <Card title="Active Products" value={stats.numberOfProducts} type="products" />
     </>
   );
 }
+
+const colorMap = {
+  revenue: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+  orders: 'bg-blue-50 text-blue-600 border-blue-100',
+  products: 'bg-purple-50 text-purple-600 border-purple-100',
+  bestSelling: 'bg-amber-50 text-amber-600 border-amber-100',
+};
 
 export function Card({
   title,
@@ -46,19 +53,19 @@ export function Card({
   type: 'revenue' | 'products' | 'orders' | 'bestSelling';
 }) {
   const Icon = iconMap[type];
+  const colorClass = colorMap[type];
 
   return (
-    <div className="rounded-xl bg-gray-50 p-2 shadow-sm">
-      <div className="flex p-4">
-        {Icon ? <Icon className="h-5 w-5 text-gray-700" /> : null}
-        <h3 className="ml-2 text-sm font-medium">{title}</h3>
+    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:shadow-md">
+      <div className="flex items-center gap-4">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-xl border ${colorClass}`}>
+          {Icon ? <Icon className="h-6 w-6" /> : null}
+        </div>
+        <div>
+          <h3 className="text-sm font-medium text-slate-500">{title}</h3>
+          <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+        </div>
       </div>
-      <p
-        className={`${lusitana.className}
-          truncate rounded-xl bg-white px-4 py-8 text-center text-2xl`}
-      >
-        {value}
-      </p>
     </div>
   );
 }

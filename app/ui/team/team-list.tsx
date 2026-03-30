@@ -1,18 +1,28 @@
 import { fetchTeamMembers } from '@/app/lib/team';
-import { UsersIcon, ShieldCheckIcon, UserIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, ShieldCheckIcon, UserIcon, PlusIcon } from '@heroicons/react/24/outline';
 import RemoveTeamMemberButton from './remove-member-button';
+import Link from 'next/link';
 
 export default async function TeamList({ vendorId }: { vendorId: string }) {
   const members = await fetchTeamMembers(vendorId);
 
   if (members.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center">
-        <UsersIcon className="h-12 w-12 text-slate-300 mb-4" />
-        <h3 className="text-lg font-semibold text-slate-900 mb-2">No team members yet</h3>
+      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12 text-center py-24">
+        <div className="h-16 w-16 rounded-full bg-slate-100 flex flex-col items-center justify-center mb-6">
+          <UsersIcon className="h-8 w-8 text-slate-400" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 mb-2">No team members yet</h3>
         <p className="text-sm text-slate-500 mb-6 max-w-sm">
-          Invite team members to help manage your store. You can assign different roles and permissions.
+          Invite team members to help manage your store, fulfill orders, and add products without giving them full ownership access.
         </p>
+        <Link
+          href="/dashboard/team/invite"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
+        >
+          <PlusIcon className="h-4 w-4" />
+          Invite Member
+        </Link>
       </div>
     );
   }
