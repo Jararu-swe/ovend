@@ -26,11 +26,11 @@
 ## 🚧 Next Steps (UX Polish & Refinements)
 
 ### Outstanding Tasks
-- [ ] **Accessibility:** Add a WCAG contrast checker utility to warn vendors if their chosen text colors clash with background tokens.
-- [ ] **Undo/Redo:** Implement an undo stack locally in the editor before hitting save.
-- [ ] **Empty States:** Build an inviting empty state for the Product Grid section if the vendor has 0 active products.
-- [ ] **Section Extensions:** Add a "FAQs" section type and an "Image Gallery" section type.
-- [ ] **Loading Polish:** Add smooth fade-in transitions for dynamically loaded Google Fonts.
+- [x] **Accessibility:** Add a WCAG contrast checker utility to warn vendors if their chosen text colors clash with background tokens.
+- [x] **Undo/Redo:** Implement an undo stack locally in the editor before hitting save.
+- [x] **Empty States:** Build an inviting empty state for the Product Grid section if the vendor has 0 active products.
+- [x] **Section Extensions:** Add a "FAQs" section type and an "Image Gallery" section type.
+- [x] **Loading Polish:** Add smooth fade-in transitions for dynamically loaded Google Fonts.
 
 ## 📝 Key Technical Decisions
 

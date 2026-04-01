@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ensureLogoLayoutColumns } from '@/app/lib/theme';
 import { ensureProductColumns } from '@/app/lib/data';
+import { validateDiscountCode, incrementDiscountUse } from '@/app/lib/discounts';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -271,7 +272,9 @@ export async function createOrder(
   totalAmount: number,
   formData: FormData,
   paymentMethod: 'cash' | 'card' | 'transfer' = 'cash',
-  paymentReference?: string
+  paymentReference?: string,
+  discountCode?: string,
+  discountAmount?: number
 ) {
   const customer_name = formData.get('customer_name') as string;
   const customer_phone = formData.get('customer_phone') as string;
@@ -297,7 +300,9 @@ export async function createOrder(
         status,
         payment_method,
         payment_reference,
-        payment_status
+        payment_status,
+        discount_code,
+        discount_amount
       )
       VALUES (
         ${vendorId}, 
@@ -310,7 +315,9 @@ export async function createOrder(
         'new',
         ${paymentMethod},
         ${paymentReference || null},
-        ${paymentStatus}
+        ${paymentStatus},
+        ${discountCode || null},
+        ${discountAmount || 0}
       )
       RETURNING id
     `;
@@ -333,6 +340,20 @@ export async function createOrder(
           SET stock_quantity = stock_quantity - ${item.quantity}
           WHERE id = ${item.productId} AND stock_quantity IS NOT NULL
         `.catch((err) => console.error("Error decrementing stock:", err));
+      }
+    }
+
+    // Identify and increment discount use
+    if (discountCode) {
+      try {
+        const [discount] = await sql`
+          SELECT id FROM discount_codes WHERE vendor_id = ${vendorId} AND code = ${discountCode} LIMIT 1
+        `;
+        if (discount) {
+          await incrementDiscountUse(discount.id);
+        }
+      } catch (err) {
+        console.error("Error tracking discount:", err);
       }
     }
     
@@ -444,6 +465,13 @@ export async function toggleDiscountAction(
   return { message: null, errors: {} };
 }
 
+export async function validateDiscountAction(vendorId: string, code: string, orderTotal: number) {
+  try {
+    return await validateDiscountCode(vendorId, code, orderTotal);
+  } catch (err) {
+    return { valid: false, error: 'Failed to validate code' };
+  }
+}
 
 // Team management actions
 export async function inviteTeamMemberAction(

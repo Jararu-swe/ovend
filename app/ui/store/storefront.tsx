@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
-import { createOrder } from '@/app/lib/actions';
+import { createOrder, validateDiscountAction } from '@/app/lib/actions';
 import { useSearchParams } from 'next/navigation';
 import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent, FONT_MAP } from '@/app/lib/template-presets';
 import SectionRenderer from '@/app/ui/store/section-renderer';
@@ -36,6 +36,11 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const [customerEmail, setCustomerEmail] = useState('');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
+  const [discountCodeInput, setDiscountCodeInput] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number } | null>(null);
+  const [discountError, setDiscountError] = useState('');
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+
   const activeProducts = products.filter((p) => p.status === 'active');
   const activeTheme = useMemo(() => previewTheme ?? theme, [previewTheme, theme]);
 
@@ -50,6 +55,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const grandTotal = Math.max(0, cartTotal - (appliedDiscount?.amount || 0));
 
   const fontSizeClass =
     activeTheme.font_size === 'small' ? 'text-sm'
@@ -95,6 +101,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const initialLetter = vendor.store_name?.charAt(0) || vendor.name.charAt(0);
 
   // ─── Dynamic font loading ───────────────────────────────────
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  
   useEffect(() => {
     const fonts = new Set([activeTheme.font_family, activeTheme.heading_font]);
     fonts.forEach((f) => {
@@ -111,6 +119,12 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         }
       }
     });
+
+    if (document.fonts) {
+      document.fonts.ready.then(() => setFontsLoaded(true));
+    } else {
+      setFontsLoaded(true);
+    }
   }, [activeTheme.font_family, activeTheme.heading_font]);
 
   // ─── Interactive token mappings ─────────────────────────────
@@ -249,7 +263,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         const handler = window.PaystackPop.setup({
           key: publicKey,
           email: customerEmail,
-          amount: cartTotal * 100,
+          amount: grandTotal * 100,
           currency: 'NGN',
           ref: `OVD-${Date.now()}`,
           onClose: function() {
@@ -264,15 +278,16 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
             .then(res => res.json())
             .then(data => {
               if (data.success) {
-                return createOrder(vendor.id, cart, cartTotal, formData, 'card', response.reference);
+                return createOrder(vendor.id, cart, grandTotal, formData, 'card', response.reference, appliedDiscount?.code, appliedDiscount?.amount);
               } else {
                 throw new Error('Payment verification failed');
               }
             })
             .then(result => {
               if (result?.success) {
-                setPlacedOrder({ id: result.id, total: cartTotal, paymentMethod: 'card' });
+                setPlacedOrder({ id: result.id, total: grandTotal, paymentMethod: 'card' });
                 setCart([]);
+                setAppliedDiscount(null);
                 setIsCheckingOut(false);
               }
               setIsSubmitting(false);
@@ -287,10 +302,11 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
         handler.openIframe();
       } else {
-        const result = await createOrder(vendor.id, cart, cartTotal, formData, 'cash');
+        const result = await createOrder(vendor.id, cart, grandTotal, formData, 'cash', undefined, appliedDiscount?.code, appliedDiscount?.amount);
         if (result?.success) {
-          setPlacedOrder({ id: result.id, total: cartTotal, paymentMethod: 'cash' });
+          setPlacedOrder({ id: result.id, total: grandTotal, paymentMethod: 'cash' });
           setCart([]);
+          setAppliedDiscount(null);
           setIsCheckingOut(false);
         }
         setIsSubmitting(false);
@@ -434,8 +450,17 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         activeTheme.layout_style === 'list' ? 'grid-cols-1' :
         'grid-cols-1 sm:grid-cols-2'
       }`}>
-        {activeProducts.map((product, idx) => {
-          let parsedOptions = [];
+        {activeProducts.length === 0 ? (
+          <div className="col-span-1 sm:col-span-2 py-16 px-6 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
+            <ShoppingBagIcon className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+            <h4 className="text-lg font-bold text-slate-700 mb-2">No products available yet</h4>
+            <p className="text-sm text-slate-500 max-w-sm mx-auto">
+              This store looks amazing, but the vendor is still adding their products to the shelves. Please check back later!
+            </p>
+          </div>
+        ) : (
+          activeProducts.map((product, idx) => {
+            let parsedOptions = [];
           try {
             if (product.options) parsedOptions = JSON.parse(product.options);
           } catch (e) {}
@@ -548,10 +573,40 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
             </div>
           </div>
           );
-        })}
+        })
+        )}
       </div>
     </section>
   );
+
+  const applyDiscountCode = async () => {
+    if (!discountCodeInput.trim()) return;
+    setIsApplyingDiscount(true);
+    setDiscountError('');
+    try {
+      const res = await validateDiscountAction(vendor.id, discountCodeInput.trim(), cartTotal);
+      if (res.valid && res.discount) {
+        const d = res.discount;
+        const amount = d.discount_type === 'percentage' 
+          ? Math.floor((cartTotal * d.discount_value) / 100)
+          : Math.min(d.discount_value, cartTotal);
+        setAppliedDiscount({ code: d.code, amount });
+      } else {
+        setDiscountError(res.error || 'Invalid code');
+        setAppliedDiscount(null);
+      }
+    } catch (e) {
+      setDiscountError('Error validating code');
+    } finally {
+      setIsApplyingDiscount(false);
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCodeInput('');
+    setDiscountError('');
+  };
 
   return (
     <>
@@ -559,7 +614,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         <style dangerouslySetInnerHTML={{ __html: activeTheme.custom_css.replace(/<\/style>/gi, '') }} />
       )}
       <div 
-        className={`min-h-screen ${fontSizeClass}`}
+        className={`min-h-screen ${fontSizeClass} transition-opacity duration-500 ease-in-out ${fontsLoaded ? 'opacity-100' : 'opacity-0'}`}
       style={{
         '--color-primary': activeTheme.primary_color,
         '--color-secondary': activeTheme.secondary_color,
@@ -687,9 +742,49 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
                 {cart.length > 0 && (
                   <div className="border-t border-slate-100 px-6 py-8">
-                    <div className="flex items-center justify-between text-lg font-bold text-slate-900 mb-6">
-                      <span>Total</span>
-                      <span>{formatCurrency(cartTotal)}</span>
+                    {!isCheckingOut && !appliedDiscount && (
+                      <div className="mb-6 flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="Promo Code"
+                            value={discountCodeInput}
+                            onChange={(e) => setDiscountCodeInput(e.target.value.toUpperCase())}
+                            className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm uppercase outline-none focus:border-emerald-500 transition"
+                          />
+                          <button
+                            onClick={applyDiscountCode}
+                            disabled={isApplyingDiscount || !discountCodeInput.trim()}
+                            className="rounded-xl px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 shadow-md"
+                            style={{ backgroundColor: activeTheme.primary_color }}
+                          >
+                            {isApplyingDiscount ? '...' : 'Apply'}
+                          </button>
+                        </div>
+                        {discountError && <p className="text-xs font-medium text-red-500 px-2">{discountError}</p>}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-2 mb-6">
+                      <div className="flex items-center justify-between text-sm text-slate-500 font-medium tracking-wide">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(cartTotal)}</span>
+                      </div>
+                      
+                      {appliedDiscount && (
+                        <div className="flex items-center justify-between text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-2.5 rounded-xl border border-emerald-100">
+                          <div className="flex items-center gap-2">
+                            <span>Discount ({appliedDiscount.code})</span>
+                            <button onClick={removeDiscount} className="rounded-full bg-emerald-200 text-emerald-700 hover:bg-emerald-300 w-5 h-5 flex items-center justify-center text-sm transition">×</button>
+                          </div>
+                          <span>-{formatCurrency(appliedDiscount.amount)}</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-lg font-black text-slate-900 mt-2 pt-4 border-t border-slate-100">
+                        <span>Total</span>
+                        <span>{formatCurrency(grandTotal)}</span>
+                      </div>
                     </div>
                     
                     {!isCheckingOut ? (

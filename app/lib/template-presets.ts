@@ -60,6 +60,7 @@ export const SECTION_TYPES = [
   { id: 'product-grid',      label: 'Product Grid',      icon: '📦', description: 'Main product listing', removable: false },
   { id: 'trust-badges',      label: 'Trust Badges',      icon: '🛡️', description: 'Secure checkout, fast delivery badges', removable: true },
   { id: 'image-gallery',     label: 'Image Gallery',     icon: '🎨', description: 'Photo gallery with lightbox', removable: true },
+  { id: 'faqs',              label: 'FAQs',              icon: '❓', description: 'Frequently asked questions', removable: true },
   { id: 'testimonials',      label: 'Testimonials',      icon: '💬', description: 'Customer quotes and reviews', removable: true },
   { id: 'about-section',     label: 'About Us',          icon: '🏪', description: 'Your store\'s story', removable: true },
   { id: 'contact-cta',       label: 'Contact / CTA',     icon: '📲', description: '"Order on WhatsApp" call-to-action', removable: true },
@@ -73,9 +74,10 @@ const DEFAULT_SECTIONS: TemplateSection[] = [
   { id: 'product-grid',      enabled: true,  order: 3 },
   { id: 'trust-badges',      enabled: true,  order: 4 },
   { id: 'image-gallery',     enabled: false, order: 5 },
-  { id: 'testimonials',      enabled: false, order: 6 },
-  { id: 'about-section',     enabled: false, order: 7 },
-  { id: 'contact-cta',       enabled: true,  order: 8 },
+  { id: 'faqs',              enabled: false, order: 6 },
+  { id: 'testimonials',      enabled: false, order: 7 },
+  { id: 'about-section',     enabled: false, order: 8 },
+  { id: 'contact-cta',       enabled: true,  order: 9 },
 ];
 
 const DEFAULT_SECTION_CONTENT: TemplateSectionContent = {
@@ -112,6 +114,13 @@ const DEFAULT_SECTION_CONTENT: TemplateSectionContent = {
       { url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&h=400&fit=crop', caption: 'Fashion Forward' },
       { url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=600&h=600&fit=crop', caption: 'Premium Collection' },
     ],
+  },
+  'faqs': {
+    title: 'Frequently Asked Questions',
+    items: [
+      { question: 'Do you offer delivery?', answer: 'Yes! We deliver across the country. Delivery fees may vary.' },
+      { question: 'What is your return policy?', answer: 'We offer a 7-day return policy for unused products in their original packaging.' }
+    ]
   },
   'testimonials': {
     quotes: [

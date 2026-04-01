@@ -128,6 +128,8 @@ export default function SectionRenderer({
             return <TrustBadges key={section.id} content={c} theme={theme} entrance={e} />;
           case 'image-gallery':
             return <ImageGallery key={section.id} content={c} theme={theme} entrance={e} />;
+          case 'faqs':
+            return <FaqsSection key={section.id} content={c} theme={theme} entrance={e} />;
           case 'contact-cta':
             return <ContactCta key={section.id} content={c} vendor={vendor} theme={theme} entrance={e} />;
           default:
@@ -653,6 +655,72 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── FAQS SECTION ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function FaqsSection({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
+  const items: { question: string; answer: string }[] = content.items || [];
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  if (items.length === 0) return null;
+
+  const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+
+  return (
+    <div className={`mb-8 ${entrance.className}`}>
+      <h3
+        className="text-lg font-bold mb-4"
+        style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}
+      >
+        {content.title || 'FAQ'}
+      </h3>
+      <div className="space-y-3">
+        {items.map((item, idx) => {
+          const isOpen = openIdx === idx;
+          const e = entranceClass(theme.animation_style, idx * 60);
+          return (
+            <div
+              key={idx}
+              className={`border overflow-hidden transition-all duration-300 ${e.className} ${isOpen ? 'shadow-md' : 'shadow-sm'}`}
+              style={{
+                animationDelay: `${idx * 60}ms`,
+                borderColor: isOpen ? theme.primary_color : (theme.border_color || '#e2e8f0'),
+                backgroundColor: theme.surface_color || '#ffffff',
+                borderRadius: borderRadiusStyle,
+              }}
+            >
+              <button
+                onClick={() => setOpenIdx(isOpen ? null : idx)}
+                className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50/50"
+              >
+                <span className="font-semibold" style={{ color: theme.heading_color || theme.text_color }}>
+                  {item.question}
+                </span>
+                <ChevronUpIcon
+                  className={`h-5 w-5 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-90'}`}
+                  style={{ color: theme.primary_color }}
+                  strokeWidth={2.5}
+                />
+              </button>
+              <div
+                className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                style={{ overflow: 'hidden' }}
+              >
+                <div className="p-4 pt-0 text-sm leading-relaxed" style={{ color: theme.text_color }}>
+                  <div className="pt-2 border-t border-slate-100">
+                    {item.answer}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -230,6 +230,19 @@ export default function SectionEditor({
                       />
                     </>
                   )}
+                  {section.id === 'faqs' && (
+                    <>
+                      <MiniInput
+                        label="Section title"
+                        value={content.title || 'Frequently Asked Questions'}
+                        onChange={(v) => updateContent(section.id, 'title', v)}
+                      />
+                      <FaqsEditor
+                        items={content.items || []}
+                        onChange={(items) => updateContent(section.id, 'items', items)}
+                      />
+                    </>
+                  )}
                   {section.id === 'about-section' && (
                     <>
                       <MiniInput
@@ -530,6 +543,61 @@ function ImageGalleryEditor({
         className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 transition"
       >
         + Add image
+      </button>
+    </div>
+  );
+}
+
+type FaqItem = { question: string; answer: string };
+
+function FaqsEditor({
+  items,
+  onChange,
+}: {
+  items: FaqItem[];
+  onChange: (items: FaqItem[]) => void;
+}) {
+  const addItem = () => onChange([...items, { question: '', answer: '' }]);
+  const removeItem = (idx: number) => onChange(items.filter((_, i) => i !== idx));
+  const updateItem = (idx: number, key: keyof FaqItem, val: string) => {
+    onChange(items.map((it, i) => (i === idx ? { ...it, [key]: val } : it)));
+  };
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, idx) => (
+        <div key={idx} className="flex gap-2 items-start border-l-2 border-emerald-500 pl-2">
+          <div className="flex-1 space-y-1">
+            <input
+              type="text"
+              value={item.question}
+              onChange={(e) => updateItem(idx, 'question', e.target.value)}
+              placeholder="Question"
+              className="w-full rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-emerald-500 font-semibold"
+            />
+            <textarea
+              value={item.answer}
+              onChange={(e) => updateItem(idx, 'answer', e.target.value)}
+              placeholder="Answer..."
+              rows={2}
+              className="w-full rounded-lg border border-slate-200 px-2 py-1 text-xs outline-none focus:border-emerald-500 resize-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => removeItem(idx)}
+            className="text-xs text-red-400 hover:text-red-600 mt-1 transition"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addItem}
+        className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 transition"
+      >
+        + Add Question
       </button>
     </div>
   );
