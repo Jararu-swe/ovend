@@ -107,6 +107,13 @@ export default function LoginForm() {
             </div>
           </div>
 
+          {/* Forgot password */}
+          <div className="text-right">
+            <button type="button" className="text-xs text-slate-400 hover:text-emerald-600 transition cursor-not-allowed" title="Coming soon" disabled>
+              Forgot password?
+            </button>
+          </div>
+
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-600">

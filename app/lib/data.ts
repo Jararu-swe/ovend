@@ -411,3 +411,89 @@ export async function fetchWeeklyAnalytics(vendorId: string) {
     return [];
   }
 }
+
+// ─── Public Store Directory ──────────────────────────────────
+export type PublicStore = {
+  id: string;
+  store_name: string;
+  store_slug: string;
+  logo_url: string | null;
+  product_count: number;
+  top_products: { name: string; image_url: string | null; price: number }[];
+};
+
+export async function fetchAllPublicStores(search?: string): Promise<PublicStore[]> {
+  try {
+    const searchFilter = search ? `%${search}%` : '%';
+
+    const stores = await sql<{
+      id: string;
+      store_name: string;
+      store_slug: string;
+      product_count: string;
+    }[]>`
+      SELECT 
+        u.id,
+        u.store_name,
+        u.store_slug,
+        COUNT(p.id)::text AS product_count
+      FROM users u
+      LEFT JOIN products p ON p.vendor_id = u.id AND p.status = 'active'
+      WHERE u.store_name IS NOT NULL
+        AND u.store_name != ''
+        AND u.store_name ILIKE ${searchFilter}
+      GROUP BY u.id, u.store_name, u.store_slug
+      HAVING COUNT(p.id) > 0
+      ORDER BY COUNT(p.id) DESC, u.store_name ASC
+      LIMIT 50
+    `;
+
+    // Fetch logo + top 3 products for each store
+    const results: PublicStore[] = await Promise.all(
+      stores.map(async (store) => {
+        const [logoRow] = await sql<{ logo_url: string | null }[]>`
+          SELECT logo_url FROM store_theme WHERE vendor_id = ${store.id} LIMIT 1
+        `;
+
+        const topProducts = await sql<{ name: string; image_url: string | null; price: number }[]>`
+          SELECT name, image_url, price FROM products
+          WHERE vendor_id = ${store.id} AND status = 'active'
+          ORDER BY created_at DESC
+          LIMIT 3
+        `;
+
+        return {
+          id: store.id,
+          store_name: store.store_name,
+          store_slug: store.store_slug,
+          logo_url: logoRow?.logo_url || null,
+          product_count: Number(store.product_count),
+          top_products: topProducts,
+        };
+      })
+    );
+
+    return results;
+  } catch (error) {
+    console.error('Database Error (fetchAllPublicStores):', error);
+    return [];
+  }
+}
+
+// ─── Order Tracking ──────────────────────────────────────────
+export async function fetchOrderByTracking(orderId: string, phone: string) {
+  try {
+    const [order] = await sql<Order[]>`
+      SELECT o.*, u.store_name
+      FROM orders o
+      JOIN users u ON u.id = o.vendor_id
+      WHERE o.id::text ILIKE ${orderId + '%'}
+        AND o.customer_phone = ${phone}
+      LIMIT 1
+    `;
+    return order ? { ...order, store_name: (order as any).store_name } : null;
+  } catch (error) {
+    console.error('Database Error (fetchOrderByTracking):', error);
+    return null;
+  }
+}

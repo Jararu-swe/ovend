@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, CheckCircleIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
 import { createOrder, validateDiscountAction } from '@/app/lib/actions';
@@ -154,25 +154,48 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const interactionAnimationStyle = getHoverAnimation();
   const dynamicBtnStyle = getButtonStyle();
 
+  const handleShare = async () => {
+    const url = window.location.href.split('?')[0]; // strip preview params
+    const title = `${vendor.store_name} on Ovend`;
+    if (navigator.share) {
+      try { await navigator.share({ title, url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      alert('Store link copied to clipboard!');
+    }
+  };
+
   const cartButton = (
-    <button
-      type="button"
-      onClick={() => setIsCartOpen(true)}
-      className="relative rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50"
-      style={{ '--hover-color': activeTheme.primary_color } as React.CSSProperties}
-      onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.primary_color; }}
-      onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
-    >
-      <ShoppingBagIcon className="h-6 w-6" />
-      {cartCount > 0 && (
-        <span
-          className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white"
-          style={{ backgroundColor: activeTheme.primary_color }}
-        >
-          {cartCount}
-        </span>
-      )}
-    </button>
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={handleShare}
+        className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50"
+        onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.primary_color; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
+        title="Share this store"
+      >
+        <ShareIcon className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setIsCartOpen(true)}
+        className="relative rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50"
+        style={{ '--hover-color': activeTheme.primary_color } as React.CSSProperties}
+        onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.primary_color; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
+      >
+        <ShoppingBagIcon className="h-6 w-6" />
+        {cartCount > 0 && (
+          <span
+            className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-white"
+            style={{ backgroundColor: activeTheme.primary_color }}
+          >
+            {cartCount}
+          </span>
+        )}
+      </button>
+    </div>
   );
 
   const logoOrInitial =
@@ -354,7 +377,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           <CheckCircleIcon className="h-16 w-16" />
         </div>
         <h2 className="text-3xl font-black text-slate-900">Order Placed!</h2>
-        <p className="mt-4 text-slate-500 max-w-sm">
+        <p className="mt-2 text-sm font-mono text-slate-400">Order ID: {placedOrder.id.slice(0, 8)}</p>
+        <p className="mt-3 text-slate-500 max-w-sm">
           Your order has been sent to <strong>{vendor.store_name}</strong>.
         </p>
 
@@ -408,6 +432,12 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           ) : (
             <p className="text-xs text-slate-400 italic">Vendor WhatsApp not available</p>
           )}
+          <a
+            href="/order-status"
+            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-700 transition hover:bg-slate-50"
+          >
+            📦 Track your order
+          </a>
           <button
             onClick={() => setPlacedOrder(null)}
             className="rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200"

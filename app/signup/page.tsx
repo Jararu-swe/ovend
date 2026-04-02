@@ -42,8 +42,21 @@ export default function SignupPage() {
         return;
       }
 
-      // Redirect to login after successful registration
-      router.push('/login?registered=1');
+      // Auto-sign-in after successful registration
+      const { signIn } = await import('next-auth/react');
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        // Registration succeeded but auto-login failed — fall back to login page
+        router.push('/login?registered=1');
+        return;
+      }
+
+      router.push('/dashboard/onboarding');
     } catch {
       setError('Something went wrong. Please try again.');
       setIsSubmitting(false);
