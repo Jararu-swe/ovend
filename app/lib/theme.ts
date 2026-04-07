@@ -1,8 +1,6 @@
-import postgres from 'postgres';
+import { sql } from './db';
 import { StoreTheme } from './definitions';
 import { getDefaultSections, getDefaultSectionContent } from './template-presets';
-
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 let ensureNewColumnsPromise: Promise<void> | null = null;
 

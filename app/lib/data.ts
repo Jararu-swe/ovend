@@ -1,4 +1,4 @@
-import postgres from 'postgres';
+import { sql } from './db';
 // Forced refresh
 import {
   CustomerField,
@@ -12,8 +12,6 @@ import {
   Order,
 } from './definitions';
 import { formatCurrency } from './utils';
-
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
 let ensureProductColumnsPromise: Promise<void> | null = null;
 export async function ensureProductColumns() {

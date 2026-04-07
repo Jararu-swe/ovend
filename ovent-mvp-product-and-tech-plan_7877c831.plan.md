@@ -1,4 +1,4 @@
----
+\\\\---
 name: ovend-mvp-product-and-tech-plan
 overview: High-level product and technical plan to build Ovend, a digital storefront platform for Nigerian small and medium vendors, starting as a responsive web app MVP.
 todos: []
