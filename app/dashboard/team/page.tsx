@@ -13,15 +13,20 @@ export default async function TeamPage() {
   }
 
   return (
-    <div className="w-full">
-      <div className="flex w-full items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Team Members</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Team Members</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Invite collaborators to help manage your store.
+          </p>
+        </div>
         <Link
           href="/dashboard/team/invite"
-          className="flex h-10 items-center rounded-xl bg-emerald-500 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-400"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400"
         >
-          <span className="hidden md:block">Invite Member</span>
-          <PlusIcon className="h-5 md:ml-2" />
+          <PlusIcon className="h-4 w-4" />
+          <span className="hidden sm:inline">Invite Member</span>
         </Link>
       </div>
       <Suspense fallback={<TeamListSkeleton />}>

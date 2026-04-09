@@ -104,11 +104,19 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const [fontsLoaded, setFontsLoaded] = useState(false);
   
   useEffect(() => {
+    const fontFamilyMap: Record<string, string> = {
+      poppins: 'Poppins',
+      roboto: 'Roboto',
+      playfair: 'Playfair+Display',
+      montserrat: 'Montserrat',
+      outfit: 'Outfit',
+      dmSans: 'DM+Sans',
+      spaceGrotesk: 'Space+Grotesk',
+    };
     const fonts = new Set([activeTheme.font_family, activeTheme.heading_font]);
     fonts.forEach((f) => {
       if (f && f !== 'inter') {
-        const fontName = f.charAt(0).toUpperCase() + f.slice(1);
-        const family = fontName === 'Playfair' ? 'Playfair+Display' : fontName;
+        const family = fontFamilyMap[f] || f.charAt(0).toUpperCase() + f.slice(1);
         const id = `gfont-${f}`;
         if (!document.getElementById(id)) {
           const link = document.createElement('link');
