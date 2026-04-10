@@ -104,24 +104,24 @@ const DEFAULT_SECTION_CONTENT: TemplateSectionContent = {
     text_align: 'left',
   },
   'announcement-bar': {
-    text: '🎉 Free delivery on orders over ₦5,000!',
+    text: 'Free delivery on orders over ₦5,000!',
     bg_color: '#10b981',
     text_color: '#ffffff',
   },
   'featured-products': {
-    title: '⭐ Featured',
+    title: 'Featured',
     product_ids: [],
   },
   'trust-badges': {
     badges: [
-      { icon: '🔒', label: 'Secure Checkout' },
-      { icon: '🚚', label: 'Fast Delivery' },
-      { icon: '↩️', label: 'Easy Returns' },
-      { icon: '💬', label: 'WhatsApp Support' },
+      { icon: 'shield', label: 'Secure Checkout' },
+      { icon: 'truck', label: 'Fast Delivery' },
+      { icon: 'return', label: 'Easy Returns' },
+      { icon: 'chat', label: 'WhatsApp Support' },
     ],
   },
   'image-gallery': {
-    title: '📸 Gallery',
+    title: 'Gallery',
     images: [
       { url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=600&fit=crop', caption: 'Our Store' },
       { url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=400&fit=crop', caption: 'Shopping Experience' },
@@ -196,14 +196,14 @@ export const TEMPLATES: Template[] = [
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
-        title: 'Fresh picks, delivered fast 🚀',
+        title: 'Fresh picks, delivered fast',
         subtitle: 'Farm-fresh groceries and produce at your fingertips.',
         cta_text: 'Browse Products',
         cta_link: '#item-list',
         text_align: 'left',
       },
       'announcement-bar': {
-        text: '🥬 New stock just arrived — order before it\'s gone!',
+        text: 'New stock just arrived — order before it\'s gone!',
         bg_color: '#16a34a',
         text_color: '#ffffff',
       },
@@ -251,6 +251,10 @@ export const TEMPLATES: Template[] = [
     ],
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
+      'featured-products': {
+        title: 'Featured',
+        product_ids: [],
+      },
       'hero-banner': {
         title: 'Curated for you',
         subtitle: 'Discover exclusive pieces handpicked with care.',
@@ -260,10 +264,10 @@ export const TEMPLATES: Template[] = [
       },
       'trust-badges': {
         badges: [
-          { icon: '✨', label: 'Authentic Products' },
-          { icon: '🎁', label: 'Premium Packaging' },
-          { icon: '🚚', label: 'Express Delivery' },
-          { icon: '💬', label: '24/7 Support' },
+          { icon: 'star', label: 'Authentic Products' },
+          { icon: 'gift', label: 'Premium Packaging' },
+          { icon: 'truck', label: 'Express Delivery' },
+          { icon: 'chat', label: '24/7 Support' },
         ],
       },
       'testimonials': {
@@ -316,14 +320,14 @@ export const TEMPLATES: Template[] = [
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
-        title: 'Power up your tech 🔋',
+        title: 'Power up your tech',
         subtitle: 'Genuine gadgets, accessories, and electronics.',
         cta_text: 'Shop Now',
         cta_link: '#item-list',
         text_align: 'left',
       },
       'featured-products': {
-        title: '🔥 Hot Deals',
+        title: 'Hot Deals',
         product_ids: [],
       },
     },
@@ -370,7 +374,7 @@ export const TEMPLATES: Template[] = [
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
-        title: 'Glow from within 🌸',
+        title: 'Glow from within',
         subtitle: 'Premium skincare and beauty essentials curated for radiant skin.',
         cta_text: 'Browse Collection',
         cta_link: '#item-list',
@@ -425,27 +429,27 @@ export const TEMPLATES: Template[] = [
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
-        title: 'Hungry? Order now 🍔',
+        title: 'Hungry? Order now',
         subtitle: 'Delicious meals ready in minutes — straight to your door.',
         cta_text: 'See Menu',
         cta_link: '#item-list',
         text_align: 'left',
       },
       'featured-products': {
-        title: '🔥 Most Popular',
+        title: 'Most Popular',
         product_ids: [],
       },
       'announcement-bar': {
-        text: '🔥 Free delivery for orders above ₦3,000 today!',
+        text: 'Free delivery for orders above ₦3,000 today!',
         bg_color: '#dc2626',
         text_color: '#ffffff',
       },
       'trust-badges': {
         badges: [
-          { icon: '⏱️', label: '30min Delivery' },
-          { icon: '🍽️', label: 'Fresh Daily' },
-          { icon: '💸', label: 'Best Prices' },
-          { icon: '📲', label: 'Order via WhatsApp' },
+          { icon: 'clock', label: '30min Delivery' },
+          { icon: 'fresh', label: 'Fresh Daily' },
+          { icon: 'price', label: 'Best Prices' },
+          { icon: 'chat', label: 'Order via WhatsApp' },
         ],
       },
     },
@@ -493,7 +497,7 @@ export const TEMPLATES: Template[] = [
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
-        title: 'Made with love 🤍',
+        title: 'Made with love',
         subtitle: 'Handcrafted pieces, each one unique — made just for you.',
         cta_text: 'Discover',
         cta_link: '#item-list',
@@ -548,7 +552,7 @@ export const TEMPLATES: Template[] = [
     sectionContent: {
       ...DEFAULT_SECTION_CONTENT,
       'hero-banner': {
-        title: 'Elevate your style ✦',
+        title: 'Elevate your style',
         subtitle: 'Premium collections for those who appreciate the finer things.',
         cta_text: 'Explore',
         cta_link: '#item-list',
@@ -556,10 +560,10 @@ export const TEMPLATES: Template[] = [
       },
       'trust-badges': {
         badges: [
-          { icon: '💎', label: 'Premium Quality' },
-          { icon: '🔐', label: 'Secure Payment' },
-          { icon: '🚀', label: 'Priority Shipping' },
-          { icon: '👑', label: 'VIP Support' },
+          { icon: 'diamond', label: 'Premium Quality' },
+          { icon: 'shield', label: 'Secure Payment' },
+          { icon: 'rocket', label: 'Priority Shipping' },
+          { icon: 'crown', label: 'VIP Support' },
         ],
       },
       'testimonials': {

@@ -511,7 +511,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           <div
             key={product.id}
             onClick={() => setQuickViewProduct(product)}
-            className={`group flex flex-col overflow-hidden bg-white border transition-all hover:shadow-lg cursor-pointer ${cardShadowStyle} ${entranceAnim} ${
+            className={`group flex flex-col overflow-hidden bg-white border transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer ${cardShadowStyle} ${entranceAnim} ${
               activeTheme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
               activeTheme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
               activeTheme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
@@ -537,7 +537,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                     className={`object-cover transition-transform group-hover:scale-110 duration-500 ${isOutOfStock ? 'grayscale' : ''}`}
                   />
                 ) : (
-                  <ShoppingBagIcon className="h-16 w-16" />
+                  <ShoppingBagIcon className="h-12 w-12" />
+                  <span className="text-xs font-medium mt-1">No image</span>
                 )}
                 
                 {/* Sale and Stock Badges */}
@@ -706,6 +707,37 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           renderProductGrid={renderProductGrid}
         />
       </main>
+
+      {/* ─── Branded Store Footer ─── */}
+      <footer
+        className="mx-auto max-w-2xl px-4 pb-24 pt-8"
+      >
+        <div
+          className="border-t pt-8 flex flex-col items-center gap-3 text-center"
+          style={{ borderColor: activeTheme.border_color || '#e2e8f0' }}
+        >
+          <p
+            className="text-sm font-semibold"
+            style={{ color: activeTheme.heading_color || activeTheme.text_color }}
+          >
+            {vendor.store_name || vendor.name}
+          </p>
+          <p className="text-xs" style={{ color: activeTheme.text_color, opacity: 0.5 }}>
+            Powered by{' '}
+            <a
+              href="https://ovend.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold transition-opacity hover:opacity-80"
+              style={{ color: activeTheme.primary_color }}
+            >
+              Ovend
+            </a>
+            {' · '}
+            {new Date().getFullYear()}
+          </p>
+        </div>
+      </footer>
 
       {/* Floating Cart Button */}
       {cartCount > 0 && !isCartOpen && (

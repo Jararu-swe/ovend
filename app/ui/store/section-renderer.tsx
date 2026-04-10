@@ -160,7 +160,7 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
 
   return (
     <div
-      className={`mb-8 overflow-hidden ${radiusClass} relative min-h-[200px] ${entrance.className}`}
+      className={`mb-12 overflow-hidden ${radiusClass} relative min-h-[260px] md:min-h-[320px] ${entrance.className}`}
       style={{
         animationDelay: entrance.style ? '0ms' : undefined,
       }}
@@ -184,29 +184,30 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
         />
       )}
 
+      {/* Noise texture overlay for depth */}
+      <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%270 0 256 256%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noise%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.9%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noise)%27/%3E%3C/svg%3E")', backgroundSize: '128px 128px' }} />
+
       {/* Decorative orbs */}
-      <div className="absolute top-0 right-0 w-40 h-40 rounded-full -mr-12 -mt-12 blur-3xl opacity-50" style={{ backgroundColor: theme.accent_color }} />
-      <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full -ml-8 -mb-8 blur-2xl opacity-30" style={{ backgroundColor: theme.accent_color }} />
-      <div className="absolute top-1/2 right-1/4 w-20 h-20 rounded-full blur-2xl opacity-20" style={{ backgroundColor: '#ffffff' }} />
+      <div className="absolute top-0 right-0 w-48 h-48 rounded-full -mr-16 -mt-16 blur-3xl opacity-30" style={{ backgroundColor: theme.accent_color }} />
+      <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full -ml-10 -mb-10 blur-3xl opacity-20" style={{ backgroundColor: theme.accent_color }} />
 
       {/* Content */}
-      <div className={`relative z-10 flex flex-col ${alignClass} p-8 md:p-10`}>
+      <div className={`relative z-10 flex flex-col ${alignClass} p-8 md:p-12 lg:p-14`}>
         <h2
-          className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-tight"
+          className="text-3xl md:text-4xl font-bold tracking-tight text-white leading-tight"
           style={{ fontFamily: FONT_MAP[theme.heading_font] || theme.heading_font }}
         >
           {content.title || 'Welcome to our store'}
         </h2>
-        <p className="mt-2 text-white/80 text-sm md:text-base max-w-[340px] leading-relaxed">
+        <p className="mt-3 text-white/75 text-sm md:text-base max-w-[380px] leading-relaxed">
           {content.subtitle || 'Browse our collection and order directly.'}
         </p>
         {content.cta_text && (
           <a
             href={content.cta_link || '#item-list'}
-            className={`mt-5 inline-flex items-center gap-2 px-6 py-3 text-sm font-bold shadow-xl ${btn.className}`}
+            className={`mt-6 inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold shadow-xl ${btn.className}`}
             style={{
               ...btn.style,
-              // Override for hero: always high contrast
               backgroundColor: '#ffffff',
               color: theme.primary_color,
               border: 'none',
@@ -269,9 +270,9 @@ function FeaturedProducts({
   const btn = useButtonProps(theme);
 
   return (
-    <div className={`mb-8 ${entrance.className}`}>
+    <div className={`mb-12 ${entrance.className}`}>
       <h3 className="text-lg font-bold mb-4" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}>
-        {content.title || '⭐ Featured'}
+        {content.title || 'Featured'}
       </h3>
       <div className="flex gap-4 overflow-x-auto pb-3 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
         {featured.map((product, idx) => {
@@ -323,9 +324,9 @@ function Testimonials({ content, theme, entrance }: { content: Record<string, an
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
 
   return (
-    <div className={`mb-8 ${entrance.className}`}>
+    <div className={`mb-12 ${entrance.className}`}>
       <h3 className="text-lg font-bold mb-4" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}>
-        💬 What our customers say
+        Customer Reviews
       </h3>
       <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide">
         {quotes.map((q, i) => {
@@ -377,7 +378,7 @@ function AboutSection({ content, theme, entrance }: { content: Record<string, an
 
   return (
     <div
-      className={`mb-8 border p-6 ${entrance.className}`}
+      className={`mb-12 border p-6 md:p-8 ${entrance.className}`}
       style={{
         borderColor: theme.border_color || '#e2e8f0',
         backgroundColor: theme.surface_color || '#ffffff',
@@ -401,23 +402,40 @@ function AboutSection({ content, theme, entrance }: { content: Record<string, an
 // ─── TRUST BADGES ─────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 
+// ─── SVG ICON MAP FOR TRUST BADGES ────────────────────────────
+const BADGE_ICONS: Record<string, JSX.Element> = {
+  shield: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.623 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>,
+  truck: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.07-.504 1.004-1.125a57.006 57.006 0 0 0-2.33-10.5A2.625 2.625 0 0 0 16.5 4.5h-1.875a.375.375 0 0 0-.375.375V10.5m-3.375 8.25H7.5m9-13.5V5.625m0 0H2.25V15" /></svg>,
+  'return': <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>,
+  chat: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" /></svg>,
+  star: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" /></svg>,
+  gift: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>,
+  diamond: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m3.75 7.5 8.25 11.25L20.25 7.5m-16.5 0L12 2.25l8.25 5.25m-16.5 0h16.5" /></svg>,
+  rocket: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" /></svg>,
+  crown: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>,
+  clock: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>,
+  fresh: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /></svg>,
+  price: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" /></svg>,
+};
+
 function TrustBadges({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
   const badges = content.badges || [
-    { icon: '🔒', label: 'Secure Checkout' },
-    { icon: '🚚', label: 'Fast Delivery' },
-    { icon: '↩️', label: 'Easy Returns' },
-    { icon: '💬', label: 'WhatsApp Support' },
+    { icon: 'shield', label: 'Secure Checkout' },
+    { icon: 'truck', label: 'Fast Delivery' },
+    { icon: 'return', label: 'Easy Returns' },
+    { icon: 'chat', label: 'WhatsApp Support' },
   ];
 
   return (
-    <div className={`mb-8 ${entrance.className}`}>
+    <div className={`mb-12 ${entrance.className}`}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {badges.map((badge: any, i: number) => {
           const e = entranceClass(theme.animation_style, i * 60);
+          const svgIcon = BADGE_ICONS[badge.icon];
           return (
             <div
               key={i}
-              className={`flex flex-col items-center gap-2 py-4 px-3 text-center border ${e.className}`}
+              className={`flex flex-col items-center gap-2.5 py-5 px-3 text-center border ${e.className}`}
               style={{
                 animationDelay: `${i * 60}ms`,
                 borderColor: theme.border_color || '#e2e8f0',
@@ -425,7 +443,9 @@ function TrustBadges({ content, theme, entrance }: { content: Record<string, any
                 borderRadius: theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '0.75rem',
               }}
             >
-              <span className="text-2xl">{badge.icon}</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: `${theme.primary_color}12`, color: theme.primary_color }}>
+                {svgIcon || <span className="text-xl">{badge.icon}</span>}
+              </div>
               <span className="text-xs font-semibold" style={{ color: theme.text_color }}>{badge.label}</span>
             </div>
           );
@@ -449,7 +469,7 @@ function ContactCta({ content, vendor, theme, entrance }: { content: Record<stri
 
   return (
     <div
-      className={`mb-8 p-6 md:p-8 text-center ${entrance.className}`}
+      className={`mb-12 p-6 md:p-8 text-center ${entrance.className}`}
       style={{
         background: `linear-gradient(135deg, ${theme.primary_color}12, ${theme.secondary_color}12)`,
         borderRadius: borderRadiusStyle,
@@ -531,12 +551,12 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '0.75rem';
 
   return (
-    <div className={`mb-8 ${entrance.className}`}>
+    <div className={`mb-12 ${entrance.className}`}>
       <h3
         className="text-lg font-bold mb-4"
         style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}
       >
-        {content.title || '📸 Gallery'}
+        {content.title || 'Gallery'}
       </h3>
 
       {/* Masonry-style grid */}
@@ -672,7 +692,7 @@ function FaqsSection({ content, theme, entrance }: { content: Record<string, any
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
 
   return (
-    <div className={`mb-8 ${entrance.className}`}>
+    <div className={`mb-12 ${entrance.className}`}>
       <h3
         className="text-lg font-bold mb-4"
         style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}
