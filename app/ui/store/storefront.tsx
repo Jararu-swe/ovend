@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, CheckCircleIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
-import { formatCurrency } from '@/app/lib/utils';
+import { formatCurrency, getCardStyleClasses, getCardShadowClass, getCardHoverEffect } from '@/app/lib/utils';
 import { createOrder, validateDiscountAction } from '@/app/lib/actions';
 import { useSearchParams } from 'next/navigation';
 import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent, FONT_MAP } from '@/app/lib/template-presets';
@@ -20,6 +20,35 @@ function safeParse<T>(json: string | null | undefined, fallback: T): T {
     return fallback;
   }
 }
+
+/** Helper function to get button styling based on theme */
+function useButtonProps(theme: StoreTheme) {
+  const radiusClass =
+    theme.button_radius === 'sharp' ? 'rounded-none' :
+    theme.button_radius === 'pill' ? 'rounded-full' : 'rounded-xl';
+
+  const style = (() => {
+    switch (theme.button_style) {
+      case 'outline': return { border: `2px solid ${theme.primary_color}`, color: theme.primary_color, backgroundColor: 'transparent' };
+      case 'soft': return { backgroundColor: `${theme.primary_color}18`, color: theme.primary_color, border: 'none' };
+      case 'glass': return { backgroundColor: `${theme.surface_color || '#fff'}cc`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: `1px solid ${theme.border_color || '#e2e8f0'}`, color: theme.primary_color };
+      default: return { backgroundColor: theme.primary_color, color: '#ffffff', border: 'none' };
+    }
+  })();
+
+  const hover = (() => {
+    switch (theme.animation_style) {
+      case 'zoom': return 'hover:scale-105 active:scale-95';
+      case 'slide': return 'hover:-translate-y-1 active:translate-y-0';
+      case 'bounce': return 'hover:-translate-y-1.5 hover:scale-[1.03] active:scale-95';
+      case 'fade': return 'hover:opacity-80 active:opacity-60';
+      default: return 'hover:opacity-90';
+    }
+  })();
+
+  return { radiusClass, style, hover, className: `transition-all duration-300 ${radiusClass} ${hover} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` };
+}
+
 
 
 
@@ -178,7 +207,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       <button
         type="button"
         onClick={handleShare}
-        className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50"
+        className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        style={{ '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
         onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.primary_color; }}
         onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
         title="Share this store"
@@ -188,8 +218,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       <button
         type="button"
         onClick={() => setIsCartOpen(true)}
-        className="relative rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50"
-        style={{ '--hover-color': activeTheme.primary_color } as React.CSSProperties}
+        className="relative rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        style={{ '--hover-color': activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
         onMouseEnter={(e) => { e.currentTarget.style.color = activeTheme.primary_color; }}
         onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
       >
@@ -433,7 +463,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
             >
               Notify via WhatsApp
             </a>
@@ -442,13 +472,13 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           )}
           <a
             href="/order-status"
-            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-700 transition hover:bg-slate-50"
+            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
           >
             📦 Track your order
           </a>
           <button
             onClick={() => setPlacedOrder(null)}
-            className="rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200"
+            className="rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
           >
             Go back to store
           </button>
@@ -471,7 +501,19 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const entranceAnim = getEntranceClass(activeTheme.animation_style);
 
   // ─── Product grid renderer (passed to SectionRenderer) ──────
-  const renderProductGrid = () => (
+  const renderProductGrid = () => {
+    // Get button props using the helper
+    const btn = useButtonProps(activeTheme);
+    
+    // Get card styling classes
+    const cardStyleClasses = getCardStyleClasses(
+      activeTheme.card_style || 'modern',
+      activeTheme.border_radius || 'rounded'
+    );
+    const cardShadowClass = getCardShadowClass(activeTheme.card_shadow || 'soft');
+    const cardHoverEffect = getCardHoverEffect(activeTheme.card_style || 'modern');
+
+    return (
     <section id="item-list">
       <div className="mb-6 flex items-center justify-between">
         <h3
@@ -511,12 +553,11 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           <div
             key={product.id}
             onClick={() => setQuickViewProduct(product)}
-            className={`group flex flex-col overflow-hidden bg-white border transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer ${cardShadowStyle} ${entranceAnim} ${
-              activeTheme.card_style === 'modern' ? 'rounded-3xl border-slate-100' :
-              activeTheme.card_style === 'classic' ? 'rounded-xl border-slate-200' :
-              activeTheme.card_style === 'minimal' ? 'rounded-lg border-transparent' :
-              'rounded-2xl border-4'
-            } ${isOutOfStock ? 'opacity-70' : ''}`}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setQuickViewProduct(product); } }}
+            tabIndex={0}
+            role="button"
+            aria-label={`View details for ${product.name}`}
+            className={`group flex flex-col overflow-hidden bg-white cursor-pointer ${cardStyleClasses} ${cardShadowClass} ${cardHoverEffect} ${entranceAnim} ${isOutOfStock ? 'opacity-70' : ''} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
             style={{
               animationDelay: `${idx * 80}ms`,
               ...(activeTheme.card_style === 'bold' ? { 
@@ -525,6 +566,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
               } : {
                 borderColor: activeTheme.border_color || undefined,
               }),
+              ['--tw-ring-color' as any]: activeTheme.primary_color,
             }}
           >
             {activeTheme.show_product_images && (
@@ -537,14 +579,16 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                     className={`object-cover transition-transform group-hover:scale-110 duration-500 ${isOutOfStock ? 'grayscale' : ''}`}
                   />
                 ) : (
-                  <ShoppingBagIcon className="h-12 w-12" />
-                  <span className="text-xs font-medium mt-1">No image</span>
+                  <>
+                    <ShoppingBagIcon className="h-12 w-12" />
+                    <span className="text-xs font-medium mt-1">No image</span>
+                  </>
                 )}
                 
                 {/* Sale and Stock Badges */}
                 <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
                   {isOnSale && !isOutOfStock && (
-                    <span className="rounded-full bg-red-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                    <span className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm" style={{ backgroundColor: activeTheme.accent_color }}>
                       Sale
                     </span>
                   )}
@@ -595,10 +639,10 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                       addToCart(product); 
                     }
                   }}
-                  className={`flex shrink-0 items-center justify-center font-bold text-white shadow-lg ${buttonRadiusClass} ${interactionAnimationStyle} ${
+                  className={`flex shrink-0 items-center justify-center font-bold shadow-lg ${btn.className} ${
                     isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  style={{...dynamicBtnStyle, padding: hasOptions ? '0.5rem 1rem' : '', height: '2.5rem', width: hasOptions ? 'auto' : '2.5rem', fontSize: '0.875rem' }}
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
+                  style={{...btn.style, padding: hasOptions ? '0.5rem 1rem' : '', height: '2.5rem', width: hasOptions ? 'auto' : '2.5rem', fontSize: '0.875rem', ['--tw-ring-color' as any]: activeTheme.primary_color }}
                 >
                   {isOutOfStock ? (
                     'Sold'
@@ -617,6 +661,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       </div>
     </section>
   );
+};
 
   const applyDiscountCode = async () => {
     if (!discountCodeInput.trim()) return;
@@ -728,8 +773,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
               href="https://ovend.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold transition-opacity hover:opacity-80"
-              style={{ color: activeTheme.primary_color }}
+              className="font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded"
+              style={{ color: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
             >
               Ovend
             </a>
@@ -744,8 +789,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl p-4 z-10">
           <button 
             onClick={() => setIsCartOpen(true)}
-            className={`flex w-full items-center justify-between p-4 font-bold text-white shadow-2xl ${buttonRadiusClass} ${interactionAnimationStyle}`}
-            style={dynamicBtnStyle}
+            className={`flex w-full items-center justify-center p-4 font-bold text-white shadow-2xl ${buttonRadiusClass} ${interactionAnimationStyle} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
+            style={{ ...dynamicBtnStyle, ['--tw-ring-color' as any]: activeTheme.primary_color }}
           >
             <span>{cartCount} items in cart</span>
             <span className="flex items-center gap-2">
@@ -764,7 +809,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-6 font-bold text-slate-900">
                   <h2 className="text-xl">Your Cart</h2>
-                  <button onClick={() => setIsCartOpen(false)} className="rounded-full p-2 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition">
+                  <button onClick={() => setIsCartOpen(false)} className="rounded-full p-2 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
@@ -776,7 +821,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                       <p className="mt-4 text-slate-500">Your cart is empty.</p>
                       <button 
                          onClick={() => setIsCartOpen(false)}
-                         className="mt-6 text-sm font-bold text-emerald-600 hover:text-emerald-500"
+                         className="mt-6 text-sm font-bold text-emerald-600 hover:text-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 rounded-lg px-2 py-1"
                       >
                          Continue shopping
                       </button>
@@ -792,14 +837,16 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                           <div className="flex items-center gap-3">
                             <button 
                               onClick={() => removeFromCart(item.productId)}
-                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                              aria-label="Decrease quantity"
                             >
                               <MinusIcon className="h-4 w-4" strokeWidth={2.5} />
                             </button>
                             <span className="w-4 text-center font-bold text-slate-900">{item.quantity}</span>
                             <button 
                               onClick={() => addToCart({ id: item.productId, name: item.name, price: item.price } as Product)}
-                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                              aria-label="Increase quantity"
                             >
                               <PlusIcon className="h-4 w-4" strokeWidth={2.5} />
                             </button>
@@ -825,13 +872,13 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                           <button
                             onClick={applyDiscountCode}
                             disabled={isApplyingDiscount || !discountCodeInput.trim()}
-                            className="rounded-xl px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 shadow-md"
-                            style={{ backgroundColor: activeTheme.primary_color }}
+                            className="rounded-xl px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                            style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
                           >
                             {isApplyingDiscount ? '...' : 'Apply'}
                           </button>
                         </div>
-                        {discountError && <p className="text-xs font-medium text-red-500 px-2">{discountError}</p>}
+                        {discountError && <p className="text-xs font-medium px-2" style={{ color: activeTheme.accent_color }}>{discountError}</p>}
                       </div>
                     )}
 
@@ -845,7 +892,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                         <div className="flex items-center justify-between text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-2.5 rounded-xl border border-emerald-100">
                           <div className="flex items-center gap-2">
                             <span>Discount ({appliedDiscount.code})</span>
-                            <button onClick={removeDiscount} className="rounded-full bg-emerald-200 text-emerald-700 hover:bg-emerald-300 w-5 h-5 flex items-center justify-center text-sm transition">×</button>
+                            <button onClick={removeDiscount} className="rounded-full bg-emerald-200 text-emerald-700 hover:bg-emerald-300 w-5 h-5 flex items-center justify-center text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500" aria-label="Remove discount">×</button>
                           </div>
                           <span>-{formatCurrency(appliedDiscount.amount)}</span>
                         </div>
@@ -860,8 +907,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                     {!isCheckingOut ? (
                       <button 
                         onClick={() => setIsCheckingOut(true)}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-                        style={{ backgroundColor: activeTheme.primary_color }}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                        style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
                       >
                         Checkout Order <ArrowRightIcon className="h-5 w-5" strokeWidth={2.5} />
                       </button>
@@ -903,11 +950,11 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                         <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2 italic">Payment Method</label>
                           <div className="grid grid-cols-2 gap-3">
-                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
                               <input type="radio" name="payment_method" value="cash" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} className="hidden sr-only" />
                               <span className="text-sm font-bold text-slate-700">Cash/Transfer</span>
                             </label>
-                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
                               <input type="radio" name="payment_method" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="hidden sr-only" />
                               <span className="text-sm font-bold text-slate-700">💳 Card</span>
                             </label>
@@ -915,11 +962,11 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                          <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                          <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
                             <input type="radio" name="delivery_type" value="delivery" defaultChecked className="hidden sr-only" />
                             <span className="text-sm font-bold text-slate-700">Delivery</span>
                           </label>
-                          <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                          <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
                             <input type="radio" name="delivery_type" value="pickup" className="hidden sr-only" />
                             <span className="text-sm font-bold text-slate-700">Pickup</span>
                           </label>
@@ -937,15 +984,15 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                            <button 
                             type="button" 
                             onClick={() => setIsCheckingOut(false)}
-                            className="flex-1 rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200"
+                            className="flex-1 rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
                            >
                             Back
                            </button>
                            <button 
                             type="submit" 
                             disabled={isSubmitting}
-                            className={`flex-[2] p-4 font-bold text-white shadow-lg disabled:opacity-50 ${buttonRadiusClass} ${interactionAnimationStyle}`}
-                            style={dynamicBtnStyle}
+                            className={`flex-[2] p-4 font-bold text-white shadow-lg disabled:opacity-50 ${buttonRadiusClass} ${interactionAnimationStyle} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
+                            style={{ ...dynamicBtnStyle, ['--tw-ring-color' as any]: activeTheme.primary_color }}
                            >
                             {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
                            </button>

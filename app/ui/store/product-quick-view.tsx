@@ -197,7 +197,7 @@ export default function ProductQuickView({
                   />
                   <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                      {isOnSale && !isOutOfStock && (
-                       <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-md">
+                       <span className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-md" style={{ backgroundColor: theme.accent_color }}>
                          Sale
                        </span>
                      )}
@@ -294,12 +294,12 @@ export default function ProductQuickView({
               {/* Status badge */}
               <div className="flex items-center gap-2">
                 {isOutOfStock ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 border border-red-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border" style={{ backgroundColor: `${theme.accent_color}15`, color: theme.accent_color, borderColor: `${theme.accent_color}30` }}>
                     Out of Stock
                   </span>
                 ) : stockLimit <= 5 ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1.5 text-xs font-bold text-orange-600 border border-orange-100">
-                    <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border" style={{ backgroundColor: `${theme.secondary_color}15`, color: theme.secondary_color, borderColor: `${theme.secondary_color}30` }}>
+                    <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: theme.secondary_color }} />
                     Only {stockLimit} left in stock
                   </span>
                 ) : (

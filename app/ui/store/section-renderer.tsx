@@ -2,7 +2,7 @@
 
 import { User, Product, StoreTheme } from '@/app/lib/definitions';
 import { TemplateSection, TemplateSectionContent, FONT_MAP } from '@/app/lib/template-presets';
-import { formatCurrency } from '@/app/lib/utils';
+import { formatCurrency, getSectionSpacing } from '@/app/lib/utils';
 import { ShoppingBagIcon, PlusIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import Image from 'next/image';
@@ -33,7 +33,7 @@ function useButtonProps(theme: StoreTheme) {
     }
   })();
 
-  return { radiusClass, style, hover, className: `transition-all duration-300 ${radiusClass} ${hover}` };
+  return { radiusClass, style, hover, className: `transition-all duration-300 ${radiusClass} ${hover} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` };
 }
 
 function entranceClass(anim: string, delayMs = 0) {
@@ -157,12 +157,14 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
   const align = content.text_align || 'left';
   const alignClass = align === 'center' ? 'text-center items-center' : align === 'right' ? 'text-right items-end' : 'text-left items-start';
   const hasImage = !!content.image_url;
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
     <div
-      className={`mb-12 overflow-hidden ${radiusClass} relative min-h-[260px] md:min-h-[320px] ${entrance.className}`}
+      className={`overflow-hidden ${radiusClass} relative min-h-[260px] md:min-h-[320px] ${entrance.className}`}
       style={{
         animationDelay: entrance.style ? '0ms' : undefined,
+        marginBottom: spacing.section,
       }}
     >
       {/* Background */}
@@ -194,8 +196,12 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
       {/* Content */}
       <div className={`relative z-10 flex flex-col ${alignClass} p-8 md:p-12 lg:p-14`}>
         <h2
-          className="text-3xl md:text-4xl font-bold tracking-tight text-white leading-tight"
-          style={{ fontFamily: FONT_MAP[theme.heading_font] || theme.heading_font }}
+          className="text-3xl md:text-4xl font-bold tracking-tight leading-tight"
+          style={{
+            color: theme.heading_color || '#ffffff',
+            fontFamily: FONT_MAP[theme.heading_font] || theme.heading_font,
+            textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          }}
         >
           {content.title || 'Welcome to our store'}
         </h2>
@@ -211,7 +217,8 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
               backgroundColor: '#ffffff',
               color: theme.primary_color,
               border: 'none',
-            }}
+              '--tw-ring-color': theme.primary_color,
+            } as React.CSSProperties}
           >
             {content.cta_text}
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
@@ -227,14 +234,15 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
 // ═══════════════════════════════════════════════════════════════
 
 function AnnouncementBar({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
-  const text = content.text || '🎉 Special offer — limited time!';
+  const text = content.text || 'Special offer — limited time!';
   const bgColor = content.bg_color || theme.primary_color;
   const textColor = content.text_color || '#ffffff';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
     <div
-      className={`mb-6 overflow-hidden rounded-xl ${entrance.className}`}
-      style={{ backgroundColor: bgColor, color: textColor }}
+      className={`overflow-hidden rounded-xl ${entrance.className}`}
+      style={{ backgroundColor: bgColor, color: textColor, marginBottom: spacing.section }}
     >
       <div className="relative flex overflow-hidden py-2.5">
         <div
@@ -268,9 +276,10 @@ function FeaturedProducts({
   if (featured.length === 0) return null;
 
   const btn = useButtonProps(theme);
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
-    <div className={`mb-12 ${entrance.className}`}>
+    <div className={entrance.className} style={{ marginBottom: spacing.section }}>
       <h3 className="text-lg font-bold mb-4" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}>
         {content.title || 'Featured'}
       </h3>
@@ -280,12 +289,13 @@ function FeaturedProducts({
           return (
             <div
               key={product.id}
-              className={`min-w-[160px] max-w-[180px] flex-shrink-0 snap-start group overflow-hidden bg-white shadow-sm border transition-shadow hover:shadow-lg ${e.className}`}
+              className={`min-w-[160px] max-w-[180px] flex-shrink-0 snap-start group overflow-hidden bg-white shadow-sm border transition-shadow hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${e.className}`}
               style={{
                 animationDelay: `${idx * 80}ms`,
                 borderColor: theme.border_color || '#e2e8f0',
                 borderRadius: theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem',
-              }}
+                '--tw-ring-color': theme.primary_color,
+              } as React.CSSProperties}
             >
               {product.image_url ? (
                 <div className="aspect-square relative overflow-hidden bg-slate-50">
@@ -300,7 +310,11 @@ function FeaturedProducts({
                 <h4 className="text-sm font-bold truncate" style={{ color: theme.text_color }}>{product.name}</h4>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-sm font-bold" style={{ color: theme.primary_color }}>{formatCurrency(product.price)}</span>
-                  <button onClick={() => onAddToCart(product)} className={`h-7 w-7 flex items-center justify-center ${btn.className}`} style={btn.style}>
+                  <button 
+                    onClick={() => onAddToCart(product)} 
+                    className={`h-7 w-7 flex items-center justify-center ${btn.className}`} 
+                    style={{ ...btn.style, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
+                  >
                     <PlusIcon className="h-4 w-4" strokeWidth={2.5} />
                   </button>
                 </div>
@@ -322,9 +336,10 @@ function Testimonials({ content, theme, entrance }: { content: Record<string, an
   if (quotes.length === 0) return null;
 
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
-    <div className={`mb-12 ${entrance.className}`}>
+    <div className={entrance.className} style={{ marginBottom: spacing.section }}>
       <h3 className="text-lg font-bold mb-4" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}>
         Customer Reviews
       </h3>
@@ -375,14 +390,17 @@ function Testimonials({ content, theme, entrance }: { content: Record<string, an
 
 function AboutSection({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
     <div
-      className={`mb-12 border p-6 md:p-8 ${entrance.className}`}
+      className={`border ${entrance.className}`}
       style={{
         borderColor: theme.border_color || '#e2e8f0',
         backgroundColor: theme.surface_color || '#ffffff',
         borderRadius: borderRadiusStyle,
+        marginBottom: spacing.section,
+        padding: spacing.internal,
       }}
     >
       <h3
@@ -426,8 +444,10 @@ function TrustBadges({ content, theme, entrance }: { content: Record<string, any
     { icon: 'chat', label: 'WhatsApp Support' },
   ];
 
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+
   return (
-    <div className={`mb-12 ${entrance.className}`}>
+    <div className={entrance.className} style={{ marginBottom: spacing.section }}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {badges.map((badge: any, i: number) => {
           const e = entranceClass(theme.animation_style, i * 60);
@@ -466,13 +486,16 @@ function ContactCta({ content, vendor, theme, entrance }: { content: Record<stri
 
   const btn = useButtonProps(theme);
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
     <div
-      className={`mb-12 p-6 md:p-8 text-center ${entrance.className}`}
+      className={`text-center ${entrance.className}`}
       style={{
         background: `linear-gradient(135deg, ${theme.primary_color}12, ${theme.secondary_color}12)`,
         borderRadius: borderRadiusStyle,
+        marginBottom: spacing.section,
+        padding: spacing.internal,
       }}
     >
       <h3 className="text-lg font-bold mb-1" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}>
@@ -487,7 +510,7 @@ function ContactCta({ content, vendor, theme, entrance }: { content: Record<stri
           target="_blank"
           rel="noopener noreferrer"
           className={`inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold shadow-xl ${btn.className}`}
-          style={btn.style}
+          style={{ ...btn.style, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.03L.789 23.66l4.77-1.456A11.926 11.926 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-2.17 0-4.206-.61-5.947-1.664l-.427-.253-2.828.863.84-2.736-.278-.442A9.776 9.776 0 012.182 12c0-5.418 4.4-9.818 9.818-9.818S21.818 6.582 21.818 12 17.418 21.818 12 21.818z"/></svg>
           {content.button_text || 'Chat on WhatsApp'}
@@ -517,8 +540,8 @@ function BackToTop({ theme }: { theme: StoreTheme }) {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className="fixed bottom-20 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95"
-      style={{ backgroundColor: theme.primary_color }}
+      className="fixed bottom-20 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      style={{ backgroundColor: theme.primary_color, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
       aria-label="Back to top"
     >
       <ChevronUpIcon className="h-5 w-5" strokeWidth={2.5} />
@@ -549,9 +572,10 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
   if (images.length === 0) return null;
 
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '0.75rem';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
-    <div className={`mb-12 ${entrance.className}`}>
+    <div className={entrance.className} style={{ marginBottom: spacing.section }}>
       <h3
         className="text-lg font-bold mb-4"
         style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}
@@ -569,13 +593,18 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
               key={i}
               className={`relative overflow-hidden cursor-pointer group ${e2.className} ${
                 isLarge ? 'col-span-2 row-span-2' : ''
-              }`}
+              } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
               style={{
                 animationDelay: `${i * 60}ms`,
                 borderRadius: borderRadiusStyle,
                 aspectRatio: isLarge ? '1' : '1',
-              }}
+                '--tw-ring-color': theme.primary_color,
+              } as React.CSSProperties}
               onClick={() => setLightboxIdx(i)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLightboxIdx(i); } }}
+              tabIndex={0}
+              role="button"
+              aria-label={img.caption || `View gallery image ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -610,7 +639,8 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
           {/* Close button */}
           <button
             onClick={() => setLightboxIdx(null)}
-            className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            aria-label="Close lightbox"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -622,7 +652,8 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
             <>
               <button
                 onClick={() => setLightboxIdx((lightboxIdx - 1 + images.length) % images.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label="Previous image"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -630,7 +661,8 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
               </button>
               <button
                 onClick={() => setLightboxIdx((lightboxIdx + 1) % images.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label="Next image"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -661,9 +693,10 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
                 <button
                   key={i}
                   onClick={() => setLightboxIdx(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
+                  className={`h-2 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white ${
                     i === lightboxIdx ? 'w-6 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
                   }`}
+                  aria-label={`Go to image ${i + 1}`}
                 />
               ))}
             </div>
@@ -690,9 +723,10 @@ function FaqsSection({ content, theme, entrance }: { content: Record<string, any
   if (items.length === 0) return null;
 
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
-    <div className={`mb-12 ${entrance.className}`}>
+    <div className={entrance.className} style={{ marginBottom: spacing.section }}>
       <h3
         className="text-lg font-bold mb-4"
         style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] || undefined }}
@@ -716,7 +750,8 @@ function FaqsSection({ content, theme, entrance }: { content: Record<string, any
             >
               <button
                 onClick={() => setOpenIdx(isOpen ? null : idx)}
-                className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50/50"
+                className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+                style={{ '--tw-ring-color': theme.primary_color } as React.CSSProperties}
               >
                 <span className="font-semibold" style={{ color: theme.heading_color || theme.text_color }}>
                   {item.question}

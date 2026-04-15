@@ -67,3 +67,99 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
     totalPages,
   ];
 };
+
+// Theme styling helper functions
+
+/**
+ * Returns Tailwind classes for product cards based on card_style and border_radius
+ * @param cardStyle - The card style from theme (modern, classic, minimal, bold)
+ * @param borderRadius - The border radius setting from theme (sharp, rounded, pill)
+ * @returns Tailwind CSS classes as a string
+ */
+export function getCardStyleClasses(
+  cardStyle: 'modern' | 'classic' | 'minimal' | 'bold',
+  borderRadius: 'sharp' | 'rounded' | 'pill'
+): string {
+  // Determine radius class based on border_radius setting
+  const radiusClass =
+    borderRadius === 'sharp' ? 'rounded-none' :
+    borderRadius === 'pill' ? 'rounded-3xl' : 'rounded-2xl';
+
+  // Apply card-style-specific classes
+  switch (cardStyle) {
+    case 'modern':
+      return `${radiusClass} border border-slate-100`;
+    case 'classic':
+      return 'rounded-xl border border-slate-200';
+    case 'minimal':
+      return 'rounded-lg border border-transparent';
+    case 'bold':
+      return `${radiusClass} border-4`;
+    default:
+      return radiusClass;
+  }
+}
+
+/**
+ * Returns shadow classes based on card_shadow property
+ * @param shadow - The shadow setting from theme (none, soft, elevated, hard)
+ * @returns Tailwind CSS shadow class as a string
+ */
+export function getCardShadowClass(
+  shadow: 'none' | 'soft' | 'elevated' | 'hard'
+): string {
+  switch (shadow) {
+    case 'none':
+      return 'shadow-none';
+    case 'elevated':
+      return 'shadow-lg';
+    case 'hard':
+      return 'shadow-[4px_4px_0px_rgba(0,0,0,0.1)]';
+    case 'soft':
+    default:
+      return 'shadow-sm';
+  }
+}
+
+/**
+ * Returns hover effect classes based on card_style
+ * @param cardStyle - The card style from theme (modern, classic, minimal, bold)
+ * @returns Tailwind CSS hover classes as a string
+ */
+export function getCardHoverEffect(
+  cardStyle: 'modern' | 'classic' | 'minimal' | 'bold'
+): string {
+  const baseTransition = 'transition-all duration-300';
+
+  switch (cardStyle) {
+    case 'modern':
+      return `${baseTransition} hover:shadow-xl hover:-translate-y-0.5`;
+    case 'minimal':
+      return `${baseTransition} hover:border-slate-300`;
+    case 'bold':
+      return `${baseTransition} hover:-translate-y-1`;
+    case 'classic':
+      return `${baseTransition} hover:scale-[1.02]`;
+    default:
+      return baseTransition;
+  }
+}
+
+/**
+ * Returns spacing values based on theme's spacing setting
+ * @param spacing - The spacing setting from theme (compact, comfortable, spacious)
+ * @returns Object with section and internal spacing values
+ */
+export function getSectionSpacing(
+  spacing: 'compact' | 'comfortable' | 'spacious'
+): { section: string; internal: string } {
+  switch (spacing) {
+    case 'compact':
+      return { section: '3rem', internal: '1.5rem' }; // 48px, 24px
+    case 'spacious':
+      return { section: '6rem', internal: '3rem' }; // 96px, 48px
+    case 'comfortable':
+    default:
+      return { section: '4rem', internal: '2rem' }; // 64px, 32px
+  }
+}
