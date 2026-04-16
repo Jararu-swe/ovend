@@ -229,8 +229,11 @@ export type StoreTheme = {
   sections: string; // JSON stringified TemplateSection[]
   section_content: string; // JSON stringified TemplateSectionContent
 
-  // Advanced
-  custom_css: string | null;
+  // Advanced Styling
+  primary_gradient: string | null;
+  glass_effect: boolean;
+  layout_width: 'standard' | 'wide' | 'full';
+  show_mobile_checkout_bar: boolean;
 
   created_at: string;
   updated_at: string;

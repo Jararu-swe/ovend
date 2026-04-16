@@ -27,11 +27,12 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
     ...theme,
     template_id: theme.template_id ?? 'fresh-market',
     logo_position: theme.logo_position ?? 'left',
-    logo_frame: theme.logo_frame ?? 'profile',
     surface_color: theme.surface_color ?? '#ffffff',
     heading_color: theme.heading_color ?? '#0f172a',
     border_color: theme.border_color ?? '#e2e8f0',
     card_shadow: theme.card_shadow ?? 'soft',
+    primary_gradient: theme.primary_gradient ?? null,
+    glass_effect: theme.glass_effect ?? false,
   }));
 
   const [sections, setSections] = useState<TemplateSection[]>(() =>
@@ -107,6 +108,7 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
       'show_product_images', 'show_product_description',
       'show_logo', 'logo_position', 'logo_frame', 'logo_url',
       'button_style', 'button_radius', 'animation_style', 'custom_css',
+      'primary_gradient', 'glass_effect',
     ];
     return keys.some((k) => String(localTheme[k] ?? '') !== String(theme[k] ?? ''));
   }, [localTheme, theme]);
@@ -223,6 +225,8 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
         <input type="hidden" name="logo_frame" value={localTheme.logo_frame} />
         <input type="hidden" name="logo_url" value={localTheme.logo_url ?? ''} />
         <input type="hidden" name="custom_css" value={localTheme.custom_css ?? ''} />
+        <input type="hidden" name="primary_gradient" value={localTheme.primary_gradient ?? ''} />
+        <input type="hidden" name="glass_effect" value={localTheme.glass_effect ? 'true' : 'false'} />
         <input type="hidden" name="sections" value={JSON.stringify(sections)} />
         <input type="hidden" name="section_content" value={JSON.stringify(sectionContent)} />
       </form>

@@ -88,6 +88,11 @@ export default function SectionEditor({
       case 'testimonials': return `${(c.quotes || []).length} reviews`;
       case 'about-section': return c.title || 'About Us';
       case 'contact-cta': return c.title || 'Contact CTA';
+      case 'newsletter': return c.title || 'Newsletter';
+      case 'video-promo': return c.title || 'Video';
+      case 'logo-cloud': return `${(c.logos || []).length} logos`;
+      case 'rich-text': return c.title || 'Rich Text';
+      case 'category-grid': return `${(c.categories || []).length} categories`;
       default: return '';
     }
   };
@@ -269,6 +274,82 @@ export default function SectionEditor({
                         onChange={(q) => updateContent(section.id, 'quotes', q)}
                       />
                     )}
+                    {section.id === 'newsletter' && (
+                      <>
+                        <MiniInput label="Title" value={(sectionContent[section.id] || {}).title || ''} onChange={(v) => updateContent(section.id, 'title', v)} />
+                        <MiniInput label="Subtitle" value={(sectionContent[section.id] || {}).subtitle || ''} onChange={(v) => updateContent(section.id, 'subtitle', v)} />
+                        <div className="grid grid-cols-2 gap-2">
+                          <MiniInput label="Placeholder" value={(sectionContent[section.id] || {}).placeholder || ''} onChange={(v) => updateContent(section.id, 'placeholder', v)} />
+                          <MiniInput label="Button text" value={(sectionContent[section.id] || {}).button_text || ''} onChange={(v) => updateContent(section.id, 'button_text', v)} />
+                        </div>
+                      </>
+                    )}
+                    {section.id === 'video-promo' && (
+                      <>
+                        <MiniInput label="Title (Optional)" value={(sectionContent[section.id] || {}).title || ''} onChange={(v) => updateContent(section.id, 'title', v)} />
+                        <MiniInput label="Video URL (YouTube/Vimeo)" value={(sectionContent[section.id] || {}).video_url || ''} onChange={(v) => updateContent(section.id, 'video_url', v)} />
+                        <div className="flex gap-4 mt-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={!!(sectionContent[section.id] || {}).autoplay} onChange={(e) => updateContent(section.id, 'autoplay', e.target.checked)} className="rounded text-emerald-500" />
+                            <span className="text-[10px] font-semibold text-slate-500">Autoplay</span>
+                          </label>
+                          <select 
+                            value={(sectionContent[section.id] || {}).aspect_ratio || '16/9'} 
+                            onChange={(e) => updateContent(section.id, 'aspect_ratio', e.target.value)}
+                            className="text-[10px] bg-slate-50 border-none rounded px-2 py-1"
+                          >
+                            <option value="16/9">16:9 Wide</option>
+                            <option value="4/3">4:3 TV</option>
+                            <option value="1/1">1:1 Square</option>
+                            <option value="9/16">9:16 Vertical</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                    {section.id === 'logo-cloud' && (
+                      <>
+                        <MiniInput label="Section title (Optional)" value={(sectionContent[section.id] || {}).title || ''} onChange={(v) => updateContent(section.id, 'title', v)} />
+                        <LogoCloudEditor 
+                          logos={(sectionContent[section.id] || {}).logos || []} 
+                          onChange={(l) => updateContent(section.id, 'logos', l)} 
+                        />
+                      </>
+                    )}
+                    {section.id === 'rich-text' && (
+                      <>
+                        <MiniInput label="Title (Optional)" value={(sectionContent[section.id] || {}).title || ''} onChange={(v) => updateContent(section.id, 'title', v)} />
+                        <MiniTextarea label="Content" value={(sectionContent[section.id] || {}).text || ''} onChange={(v) => updateContent(section.id, 'text', v)} />
+                        <div className="flex gap-2">
+                          <select 
+                            value={(sectionContent[section.id] || {}).align || 'center'} 
+                            onChange={(e) => updateContent(section.id, 'align', e.target.value)}
+                            className="bg-slate-50 text-[10px] border-none rounded px-2 py-1 flex-1"
+                          >
+                            <option value="left">Left Align</option>
+                            <option value="center">Center Align</option>
+                            <option value="right">Right Align</option>
+                          </select>
+                          <select 
+                            value={(sectionContent[section.id] || {}).size || 'medium'} 
+                            onChange={(e) => updateContent(section.id, 'size', e.target.value)}
+                            className="bg-slate-50 text-[10px] border-none rounded px-2 py-1 flex-1"
+                          >
+                            <option value="small">Small Font</option>
+                            <option value="medium">Medium Font</option>
+                            <option value="large">Large Font</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                    {section.id === 'category-grid' && (
+                      <>
+                        <MiniInput label="Title" value={(sectionContent[section.id] || {}).title || 'Shop by Category'} onChange={(v) => updateContent(section.id, 'title', v)} />
+                        <CategoryGridEditor 
+                          categories={(sectionContent[section.id] || {}).categories || []} 
+                          onChange={(c) => updateContent(section.id, 'categories', c)} 
+                        />
+                      </>
+                    )}
                     {section.id === 'product-grid' && (
                       <p className="text-[10px] text-slate-400 italic">Configure layout, cards & spacing in the Layout panel.</p>
                     )}
@@ -398,6 +479,42 @@ function FaqsEditor({ items, onChange }: { items: FaqItem[]; onChange: (items: F
         </div>
       ))}
       <button type="button" onClick={() => onChange([...items, { question: '', answer: '' }])} className="text-[10px] font-semibold text-emerald-600 hover:text-emerald-500">+ Add question</button>
+    </div>
+  );
+}
+// ─── Specialized Editors ──────────────────────────────────────
+
+function LogoCloudEditor({ logos, onChange }: { logos: { url: string; name: string }[]; onChange: (l: { url: string; name: string }[]) => void }) {
+  return (
+    <div className="space-y-2 mt-4">
+      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Brand Logos</label>
+      {logos.map((logo, idx) => (
+        <div key={idx} className="flex gap-2 items-start">
+          <input type="text" value={logo.url} onChange={(e) => onChange(logos.map((l, i) => (i === idx ? { ...l, url: e.target.value } : l)))} placeholder="Logo URL" className="flex-1 rounded-lg border border-slate-100 px-2 py-1 text-[10px] outline-none focus:border-emerald-500" />
+          <button type="button" onClick={() => onChange(logos.filter((_, i) => i !== idx))} className="text-[10px] text-red-400 hover:text-red-600 mt-1">✕</button>
+        </div>
+      ))}
+      <button type="button" onClick={() => onChange([...logos, { url: '', name: '' }])} className="text-[10px] font-semibold text-emerald-600 hover:text-emerald-500">+ Add Logo URL</button>
+    </div>
+  );
+}
+
+function CategoryGridEditor({ categories, onChange }: { categories: any[]; onChange: (c: any[]) => void }) {
+  return (
+    <div className="space-y-3 mt-4">
+      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Categories</label>
+      {categories.map((cat, idx) => (
+        <div key={idx} className="space-y-1 p-2 bg-slate-50/50 rounded-lg border border-slate-100">
+          <div className="flex justify-between">
+            <span className="text-[9px] font-black uppercase text-slate-400">Category #{idx + 1}</span>
+            <button type="button" onClick={() => onChange(categories.filter((_, i) => i !== idx))} className="text-[9px] text-red-400 hover:text-red-500">Remove</button>
+          </div>
+          <input type="text" value={cat.name} onChange={(e) => onChange(categories.map((c, i) => (i === idx ? { ...c, name: e.target.value } : c)))} placeholder="Category Name" className="w-full rounded-lg border border-slate-100 px-2 py-1 text-[10px] outline-none focus:border-emerald-500" />
+          <input type="text" value={cat.image_url} onChange={(e) => onChange(categories.map((c, i) => (i === idx ? { ...c, image_url: e.target.value } : c)))} placeholder="Image URL" className="w-full rounded-lg border border-slate-100 px-2 py-1 text-[10px] outline-none focus:border-emerald-500" />
+          <input type="text" value={cat.link} onChange={(e) => onChange(categories.map((c, i) => (i === idx ? { ...c, link: e.target.value } : c)))} placeholder="Internal Link (e.g. #item-list)" className="w-full rounded-lg border border-slate-100 px-2 py-1 text-[10px] outline-none focus:border-emerald-500 italic" />
+        </div>
+      ))}
+      <button type="button" onClick={() => onChange([...categories, { id: Math.random().toString(), name: '', image_url: '', link: '#item-list' }])} className="text-[10px] font-semibold text-emerald-600 hover:text-emerald-500">+ Add Category Card</button>
     </div>
   );
 }

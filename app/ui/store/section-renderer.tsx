@@ -2,39 +2,13 @@
 
 import { User, Product, StoreTheme } from '@/app/lib/definitions';
 import { TemplateSection, TemplateSectionContent, FONT_MAP } from '@/app/lib/template-presets';
-import { formatCurrency, getSectionSpacing } from '@/app/lib/utils';
+import { formatCurrency, getSectionSpacing, getButtonStyles, getBorderRadiusClass } from '@/app/lib/utils';
 import { ShoppingBagIcon, PlusIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 // ─── Shared style helpers ─────────────────────────────────────
-function useButtonProps(theme: StoreTheme) {
-  const radiusClass =
-    theme.button_radius === 'sharp' ? 'rounded-none' :
-    theme.button_radius === 'pill' ? 'rounded-full' : 'rounded-xl';
-
-  const style = (() => {
-    switch (theme.button_style) {
-      case 'outline': return { border: `2px solid ${theme.primary_color}`, color: theme.primary_color, backgroundColor: 'transparent' };
-      case 'soft': return { backgroundColor: `${theme.primary_color}18`, color: theme.primary_color, border: 'none' };
-      case 'glass': return { backgroundColor: `${theme.surface_color || '#fff'}cc`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', border: `1px solid ${theme.border_color || '#e2e8f0'}`, color: theme.primary_color };
-      default: return { backgroundColor: theme.primary_color, color: '#ffffff', border: 'none' };
-    }
-  })();
-
-  const hover = (() => {
-    switch (theme.animation_style) {
-      case 'zoom': return 'hover:scale-105 active:scale-95';
-      case 'slide': return 'hover:-translate-y-1 active:translate-y-0';
-      case 'bounce': return 'hover:-translate-y-1.5 hover:scale-[1.03] active:scale-95';
-      case 'fade': return 'hover:opacity-80 active:opacity-60';
-      default: return 'hover:opacity-90';
-    }
-  })();
-
-  return { radiusClass, style, hover, className: `transition-all duration-300 ${radiusClass} ${hover} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` };
-}
 
 function entranceClass(anim: string, delayMs = 0) {
   const delayStyle = delayMs > 0 ? `animation-delay: ${delayMs}ms;` : '';
@@ -132,6 +106,16 @@ export default function SectionRenderer({
             return <FaqsSection key={section.id} content={c} theme={theme} entrance={e} />;
           case 'contact-cta':
             return <ContactCta key={section.id} content={c} vendor={vendor} theme={theme} entrance={e} />;
+          case 'newsletter':
+            return <Newsletter key={section.id} content={c} theme={theme} entrance={e} />;
+          case 'video-promo':
+            return <VideoPromo key={section.id} content={c} theme={theme} entrance={e} />;
+          case 'logo-cloud':
+            return <LogoCloud key={section.id} content={c} theme={theme} entrance={e} />;
+          case 'rich-text':
+            return <RichText key={section.id} content={c} theme={theme} entrance={e} />;
+          case 'category-grid':
+            return <CategoryGrid key={section.id} content={c} theme={theme} entrance={e} />;
           default:
             return null;
         }
@@ -148,11 +132,8 @@ type Entrance = { className: string; style: string };
 // ═══════════════════════════════════════════════════════════════
 
 function HeroBanner({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
-  const btn = useButtonProps(theme);
-  const radiusClass =
-    theme.border_radius === 'sharp' ? 'rounded-none'
-    : theme.border_radius === 'pill' ? 'rounded-3xl'
-    : 'rounded-2xl';
+  const btn = getButtonStyles(theme);
+  const radiusClass = getBorderRadiusClass(theme.border_radius as any);
 
   const align = content.text_align || 'left';
   const alignClass = align === 'center' ? 'text-center items-center' : align === 'right' ? 'text-right items-end' : 'text-left items-start';
@@ -176,13 +157,19 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
           </div>
           <div
             className="absolute inset-0"
-            style={{ background: `linear-gradient(135deg, ${theme.primary_color}dd, ${theme.secondary_color}aa)` }}
+            style={{ 
+              background: theme.primary_gradient 
+                ? `${theme.primary_gradient}dd` 
+                : `linear-gradient(135deg, ${theme.primary_color}dd, ${theme.secondary_color}aa)` 
+            }}
           />
         </>
       ) : (
         <div
           className="absolute inset-0"
-          style={{ background: `linear-gradient(135deg, ${theme.primary_color}, ${theme.secondary_color})` }}
+          style={{ 
+            background: theme.primary_gradient || `linear-gradient(135deg, ${theme.primary_color}, ${theme.secondary_color})` 
+          }}
         />
       )}
 
@@ -241,7 +228,7 @@ function AnnouncementBar({ content, theme, entrance }: { content: Record<string,
 
   return (
     <div
-      className={`overflow-hidden rounded-xl ${entrance.className}`}
+      className={`overflow-hidden ${getBorderRadiusClass(theme.border_radius as any)} ${entrance.className}`}
       style={{ backgroundColor: bgColor, color: textColor, marginBottom: spacing.section }}
     >
       <div className="relative flex overflow-hidden py-2.5">
@@ -275,7 +262,7 @@ function FeaturedProducts({
 
   if (featured.length === 0) return null;
 
-  const btn = useButtonProps(theme);
+  const btn = getButtonStyles(theme);
   const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
@@ -294,7 +281,7 @@ function FeaturedProducts({
                 animationDelay: `${idx * 80}ms`,
                 borderColor: theme.border_color || '#e2e8f0',
                 borderRadius: theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem',
-                '--tw-ring-color': theme.primary_color,
+                ['--tw-ring-color' as any]: theme.primary_color,
               } as React.CSSProperties}
             >
               {product.image_url ? (
@@ -335,7 +322,6 @@ function Testimonials({ content, theme, entrance }: { content: Record<string, an
   const quotes: { name: string; text: string; rating: number }[] = content.quotes || [];
   if (quotes.length === 0) return null;
 
-  const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
   const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
@@ -353,8 +339,10 @@ function Testimonials({ content, theme, entrance }: { content: Record<string, an
               style={{
                 animationDelay: `${i * 100}ms`,
                 borderColor: theme.border_color || '#e2e8f0',
-                backgroundColor: theme.surface_color || '#ffffff',
-                borderRadius: borderRadiusStyle,
+                backgroundColor: theme.glass_effect ? 'rgba(255, 255, 255, 0.4)' : (theme.surface_color || '#ffffff'),
+                backdropFilter: theme.glass_effect ? 'blur(12px)' : undefined,
+                WebkitBackdropFilter: theme.glass_effect ? 'blur(12px)' : undefined,
+                borderRadius: theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem',
               }}
             >
               <div className="flex items-center gap-0.5 mb-3">
@@ -389,16 +377,13 @@ function Testimonials({ content, theme, entrance }: { content: Record<string, an
 // ═══════════════════════════════════════════════════════════════
 
 function AboutSection({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
-  const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
   const spacing = getSectionSpacing(theme.spacing || 'comfortable');
-
   return (
     <div
-      className={`border ${entrance.className}`}
+      className={`border ${getBorderRadiusClass(theme.border_radius as any)} ${entrance.className}`}
       style={{
         borderColor: theme.border_color || '#e2e8f0',
         backgroundColor: theme.surface_color || '#ffffff',
-        borderRadius: borderRadiusStyle,
         marginBottom: spacing.section,
         padding: spacing.internal,
       }}
@@ -460,7 +445,7 @@ function TrustBadges({ content, theme, entrance }: { content: Record<string, any
                 animationDelay: `${i * 60}ms`,
                 borderColor: theme.border_color || '#e2e8f0',
                 backgroundColor: theme.surface_color || '#ffffff',
-                borderRadius: theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '0.75rem',
+                borderRadius: getBorderRadiusClass(theme.border_radius as any) === 'rounded-none' ? '0' : '1rem',
               }}
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: `${theme.primary_color}12`, color: theme.primary_color }}>
@@ -483,17 +468,13 @@ function ContactCta({ content, vendor, theme, entrance }: { content: Record<stri
   const whatsappLink = vendor.whatsapp_number
     ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}`
     : null;
-
-  const btn = useButtonProps(theme);
-  const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
   const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
     <div
-      className={`text-center ${entrance.className}`}
+      className={`text-center ${getBorderRadiusClass(theme.border_radius as any)} ${entrance.className}`}
       style={{
         background: `linear-gradient(135deg, ${theme.primary_color}12, ${theme.secondary_color}12)`,
-        borderRadius: borderRadiusStyle,
         marginBottom: spacing.section,
         padding: spacing.internal,
       }}
@@ -509,8 +490,8 @@ function ContactCta({ content, vendor, theme, entrance }: { content: Record<stri
           href={whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold shadow-xl ${btn.className}`}
-          style={{ ...btn.style, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
+          className={`inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold shadow-xl ${getButtonStyles(theme).className}`}
+          style={{ ...getButtonStyles(theme).style, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.03L.789 23.66l4.77-1.456A11.926 11.926 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-2.17 0-4.206-.61-5.947-1.664l-.427-.253-2.828.863.84-2.736-.278-.442A9.776 9.776 0 012.182 12c0-5.418 4.4-9.818 9.818-9.818S21.818 6.582 21.818 12 17.418 21.818 12 21.818z"/></svg>
           {content.button_text || 'Chat on WhatsApp'}
@@ -773,6 +754,180 @@ function FaqsSection({ content, theme, entrance }: { content: Record<string, any
                 </div>
               </div>
             </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── NEWSLETTER SECTION ────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function Newsletter({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
+  const btn = useButtonProps(theme);
+  const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+
+  return (
+    <div
+      className={`relative overflow-hidden ${entrance.className}`}
+      style={{
+        backgroundColor: theme.surface_color || '#ffffff',
+        border: `1px solid ${theme.border_color || '#e2e8f0'}`,
+        borderRadius: borderRadiusStyle,
+        marginBottom: spacing.section,
+        padding: spacing.internal,
+      }}
+    >
+      <div className="relative z-10 text-center max-w-lg mx-auto">
+        <h3 className="text-xl font-bold mb-2" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] }}>
+          {content.title || 'Join our mailing list'}
+        </h3>
+        <p className="text-sm opacity-70 mb-6" style={{ color: theme.text_color }}>
+          {content.subtitle || 'Get the latest updates and exclusive offers.'}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            placeholder={content.placeholder || 'your@email.com'}
+            className="flex-1 px-4 py-3 text-sm bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-offset-1"
+            style={{ borderRadius: theme.button_radius === 'sharp' ? '0' : '0.75rem', '--tw-ring-color': theme.primary_color } as any}
+          />
+          <button
+            className={`px-6 py-3 text-sm font-bold shadow-sm whitespace-nowrap ${btn.className}`}
+            style={btn.style as any}
+          >
+            {content.button_text || 'Subscribe'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── VIDEO PROMO ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function VideoPromo({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
+  const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+  const [playing, setPlaying] = useState(content.autoplay || false);
+
+  const videoId = content.video_url?.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/)?.[1];
+  const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=${playing ? 1 : 0}&mute=1` : content.video_url;
+
+  return (
+    <div
+      className={`overflow-hidden ${entrance.className}`}
+      style={{
+        borderRadius: borderRadiusStyle,
+        marginBottom: spacing.section,
+        aspectRatio: content.aspect_ratio || '16/9',
+        border: `1px solid ${theme.border_color || '#e2e8f0'}`,
+      }}
+    >
+      {videoId ? (
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+        ></iframe>
+      ) : (
+        <div className="flex items-center justify-center h-full bg-slate-100 text-slate-400">
+          <svg className="h-12 w-12 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" /></svg>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── LOGO CLOUD ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function LogoCloud({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
+  const logos = content.logos || [];
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+
+  return (
+    <div className={`text-center ${entrance.className}`} style={{ marginBottom: spacing.section }}>
+      {content.title && (
+        <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6 px-1">
+          {content.title}
+        </h4>
+      )}
+      <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+        {logos.map((logo: any, i: number) => (
+          <img key={i} src={logo.url} alt={logo.name} className="h-6 md:h-8 w-auto object-contain" />
+        ))}
+        {logos.length === 0 && <span className="text-xs italic text-slate-300">Brand logos go here</span>}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── RICH TEXT ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function RichText({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+  const alignClass = content.align === 'center' ? 'text-center mx-auto' : content.align === 'right' ? 'text-right ml-auto' : 'text-left';
+  const sizeClass = content.size === 'large' ? 'text-lg md:text-xl' : content.size === 'small' ? 'text-xs md:text-sm' : 'text-sm md:text-base';
+
+  return (
+    <div className={`${alignClass} ${entrance.className} max-w-2xl px-4`} style={{ marginBottom: spacing.section }}>
+      {content.title && (
+        <h3 className="text-xl md:text-2xl font-bold mb-4" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] }}>
+          {content.title}
+        </h3>
+      )}
+      <p className={`${sizeClass} leading-relaxed opacity-80`} style={{ color: theme.text_color }}>
+        {content.text}
+      </p>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── CATEGORY GRID ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function CategoryGrid({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
+  const categories = content.categories || [];
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+  const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
+
+  return (
+    <div className={entrance.className} style={{ marginBottom: spacing.section }}>
+      {content.title && (
+        <h3 className="text-lg font-bold mb-4" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] }}>
+          {content.title}
+        </h3>
+      )}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {categories.map((cat: any, i: number) => {
+          const e = entranceClass(theme.animation_style, i * 60);
+          return (
+            <a
+              key={cat.id || i}
+              href={cat.link || '#'}
+              className={`group relative overflow-hidden aspect-[4/5] ${e.className}`}
+              style={{
+                animationDelay: `${i * 60}ms`,
+                borderRadius: borderRadiusStyle,
+              }}
+            >
+              <img src={cat.image_url} alt={cat.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 text-white">
+                <span className="text-sm font-bold tracking-tight">{cat.name}</span>
+                <span className="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 uppercase tracking-widest">Shop Now →</span>
+              </div>
+            </a>
           );
         })}
       </div>

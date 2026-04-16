@@ -102,124 +102,124 @@ export default function EditorSidebar({
     },
     {
       id: 'advanced',
-      label: 'Advanced',
-      description: 'Custom CSS & danger zone',
-      icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>,
+      label: 'Store Settings',
+      description: 'Custom CSS & dynamic effects',
+      icon: <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12a7.5 7.5 0 1 1 15 0 7.5 7.5 0 0 1-15 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3l2 1" /></svg>,
     },
   ];
 
   return (
     <>
-      {/* Sidebar */}
       <div
-        className={`flex h-full flex-col border-r border-slate-200 bg-white transition-all duration-300 ease-in-out ${
-          isOpen ? 'w-[350px]' : 'w-0'
-        } overflow-hidden`}
+        className={`flex h-full flex-col transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isOpen ? 'w-[360px] opacity-100' : 'w-0 opacity-0 overflow-hidden'
+        }`}
       >
-        <div className="flex h-full w-[350px] flex-col">
-          {/* Panel header with back navigation */}
-          <div className="flex h-12 shrink-0 items-center gap-2 border-b border-slate-100 px-4">
-            {panelStack.length > 1 ? (
-              <button
-                type="button"
-                onClick={popPanel}
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                </svg>
-                Back
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onToggle}
-                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
-                title="Collapse sidebar"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
-                </svg>
-              </button>
-            )}
-            <span className="text-sm font-bold text-slate-800">{currentPanel.label}</span>
-          </div>
-
-          {/* Panel content */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            <div className="animate-in fade-in duration-200">
-              {/* Home panel */}
-              {currentPanel.id === 'home' && (
-                <div className="p-3 space-y-1">
-                  {homeItems.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => pushPanel({ id: item.id, label: item.label })}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:bg-slate-50 group"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-emerald-50 group-hover:text-emerald-600">
-                        {item.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-900">{item.label}</span>
-                        <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{item.description}</p>
-                      </div>
-                      <svg className="h-4 w-4 text-slate-300 transition group-hover:text-slate-500 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
+        <div className="flex h-full w-[360px] flex-col p-4 bg-slate-50/30">
+          <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200/60 shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden">
+            {/* Panel header with back navigation */}
+            <div className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-100 px-4 bg-white/50 backdrop-blur-sm">
+              {panelStack.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={popPanel}
+                  className="group flex items-center justify-center h-8 w-8 rounded-lg bg-slate-50 text-slate-500 transition-all hover:bg-slate-900 hover:text-white"
+                >
+                  <svg className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onToggle}
+                  className="flex items-center justify-center h-8 w-8 rounded-lg bg-slate-50 text-slate-400 transition-all hover:bg-slate-200 hover:text-slate-600"
+                  title="Collapse sidebar"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                  </svg>
+                </button>
               )}
+              <span className="text-sm font-black uppercase tracking-widest text-slate-800">{currentPanel.label}</span>
+            </div>
 
-              {/* Themes panel */}
-              {currentPanel.id === 'themes' && (
-                <TemplatePicker
-                  activeTemplateId={localTheme.template_id}
-                  onSelect={onApplyTemplate}
-                />
-              )}
+            {/* Panel content */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="animate-in fade-in duration-200">
+                {/* Home panel */}
+                {currentPanel.id === 'home' && (
+                  <div className="p-3 space-y-1">
+                    {homeItems.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => pushPanel({ id: item.id, label: item.label })}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:bg-slate-50 group"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-emerald-50 group-hover:text-emerald-600">
+                          {item.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-900">{item.label}</span>
+                          <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{item.description}</p>
+                        </div>
+                        <svg className="h-4 w-4 text-slate-300 transition group-hover:text-slate-500 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-              {/* Sections panel */}
-              {currentPanel.id === 'sections' && (
-                <SectionEditor
-                  sections={sections}
-                  sectionContent={sectionContent}
-                  onSectionsChange={onSectionsChange}
-                  onSectionContentChange={onSectionContentChange}
-                />
-              )}
+                {/* Themes panel */}
+                {currentPanel.id === 'themes' && (
+                  <TemplatePicker
+                    activeTemplateId={localTheme.template_id}
+                    onSelect={onApplyTemplate}
+                  />
+                )}
 
-              {/* Colors panel */}
-              {currentPanel.id === 'colors' && (
-                <ColorsPanel theme={localTheme} onChange={onThemeChange} />
-              )}
+                {/* Sections panel */}
+                {currentPanel.id === 'sections' && (
+                  <SectionEditor
+                    sections={sections}
+                    sectionContent={sectionContent}
+                    onSectionsChange={onSectionsChange}
+                    onSectionContentChange={onSectionContentChange}
+                  />
+                )}
 
-              {/* Typography panel */}
-              {currentPanel.id === 'typography' && (
-                <TypographyPanel theme={localTheme} onChange={onThemeChange} />
-              )}
+                {/* Colors panel */}
+                {currentPanel.id === 'colors' && (
+                  <ColorsPanel theme={localTheme} onChange={onThemeChange} />
+                )}
 
-              {/* Layout panel */}
-              {currentPanel.id === 'layout' && (
-                <LayoutPanel theme={localTheme} onChange={onThemeChange} />
-              )}
+                {/* Typography panel */}
+                {currentPanel.id === 'typography' && (
+                  <TypographyPanel theme={localTheme} onChange={onThemeChange} />
+                )}
 
-              {/* Buttons panel */}
-              {currentPanel.id === 'buttons' && (
-                <ButtonsPanel theme={localTheme} onChange={onThemeChange} />
-              )}
+                {/* Layout panel */}
+                {currentPanel.id === 'layout' && (
+                  <LayoutPanel theme={localTheme} onChange={onThemeChange} />
+                )}
 
-              {/* Brand panel */}
-              {currentPanel.id === 'brand' && (
-                <BrandPanel theme={localTheme} onChange={onThemeChange} />
-              )}
+                {/* Buttons panel */}
+                {currentPanel.id === 'buttons' && (
+                  <ButtonsPanel theme={localTheme} onChange={onThemeChange} />
+                )}
 
-              {/* Advanced panel */}
-              {currentPanel.id === 'advanced' && (
-                <AdvancedPanel theme={localTheme} onChange={onThemeChange} onResetDefaults={onResetDefaults} />
-              )}
+                {/* Brand panel */}
+                {currentPanel.id === 'brand' && (
+                  <BrandPanel theme={localTheme} onChange={onThemeChange} />
+                )}
+
+                {/* Advanced panel */}
+                {currentPanel.id === 'advanced' && (
+                  <AdvancedPanel theme={localTheme} onChange={onThemeChange} onResetDefaults={onResetDefaults} />
+                )}
+              </div>
             </div>
           </div>
         </div>

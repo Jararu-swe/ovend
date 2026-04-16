@@ -214,6 +214,37 @@ export default function LayoutPanel({ theme, onChange }: LayoutPanelProps) {
             ]}
           />
         </div>
+
+        {/* Page Width */}
+        <div className="mt-5 border-t border-slate-100 pt-5">
+          <VisualSelect
+            label="Page Width"
+            value={theme.layout_width}
+            onChange={(v) => onChange('layout_width', v)}
+            options={[
+              { value: 'standard', label: 'Standard', visual: <div className="w-6 h-8 border-x-2 border-current/20 bg-current/5 mx-auto" /> },
+              { value: 'wide', label: 'Wide', visual: <div className="w-8 h-8 border-x-2 border-current/20 bg-current/5 mx-auto" /> },
+              { value: 'full', label: 'Full', visual: <div className="w- كامل h-8 bg-current/10" /> },
+            ]}
+          />
+        </div>
+
+        {/* Mobile Optimisation */}
+        <div className="mt-5 border-t border-slate-100 pt-5">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3 px-1">Mobile Optimisation</h3>
+          <label className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2.5 transition hover:bg-slate-50 cursor-pointer">
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-slate-700">Sticky Checkout Bar</span>
+              <span className="text-[10px] text-slate-400">Fixed cart button at bottom of mobile</span>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={theme.show_mobile_checkout_bar} 
+              onChange={(e) => onChange('show_mobile_checkout_bar', e.target.checked)} 
+              className="h-4 w-4 accent-emerald-500 rounded" 
+            />
+          </label>
+        </div>
       </div>
     </div>
   );
