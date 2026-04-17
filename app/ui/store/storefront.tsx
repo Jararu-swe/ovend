@@ -144,17 +144,54 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     'max-w-2xl';
 
   const logoPos = activeTheme.logo_position ?? 'left';
-  const logoFrame = activeTheme.logo_frame ?? 'profile';
+  const logoFrame = (activeTheme.logo_frame ?? 'profile') as string;
+  const isTransparentHeader = activeTheme.header_style === 'transparent';
 
-  const logoMarkSize = logoFrame === 'minimal' ? 'h-8 w-8' : 'h-11 w-11';
-  const logoFrameClass =
-    logoFrame === 'profile'
-      ? `${logoMarkSize} shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-slate-200`
+  // Detect if this is a "dark" theme surface so we can invert the frame colors
+  const isDarkSurface = (() => {
+    const hex = (activeTheme.surface_color || '#ffffff').replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.4;
+  })();
+
+  // Frame bg / ring adapts to dark vs light theme surfaces
+  const frameBg = isDarkSurface
+    ? (activeTheme.surface_color || '#1a1a1a')
+    : '#ffffff';
+  const frameRing = isDarkSurface ? 'rgba(255,255,255,0.12)' : '#e2e8f0';
+
+  // On transparent headers, add a subtle backdrop so the logo is always readable
+  const transparentFrameStyle = isTransparentHeader
+    ? { backgroundColor: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', boxShadow: '0 0 0 1px rgba(255,255,255,0.15)' }
+    : {};
+
+  const logoMarkSize = logoFrame === 'minimal' ? 'h-8 w-8' : 'h-10 w-10';
+
+  // 'none' / 'plain' = no decorative wrapper; other frames get a shaped container
+  const hasLogoFrame = logoFrame !== 'none' && logoFrame !== 'plain';
+
+  const logoFrameClass = !hasLogoFrame
+    ? `${logoMarkSize} shrink-0 overflow-hidden`
+    : logoFrame === 'profile'
+      ? `${logoMarkSize} shrink-0 overflow-hidden rounded-full`
       : logoFrame === 'rounded'
-        ? `${logoMarkSize} shrink-0 overflow-hidden ${borderRadiusClass} bg-white ring-1 ring-slate-200`
+        ? `${logoMarkSize} shrink-0 overflow-hidden ${borderRadiusClass}`
         : logoFrame === 'minimal'
-          ? `${logoMarkSize} shrink-0 overflow-hidden ${borderRadiusClass} bg-slate-50 ring-1 ring-slate-100`
-          : `${logoMarkSize} shrink-0 overflow-hidden ${borderRadiusClass} bg-white`;
+          ? `${logoMarkSize} shrink-0 overflow-hidden ${borderRadiusClass}`
+          : `${logoMarkSize} shrink-0 overflow-hidden ${borderRadiusClass}`;
+
+  // Inline style for logo frame (bg + ring, adapted to dark/transparent)
+  const logoFrameStyle: React.CSSProperties = !hasLogoFrame
+    ? {}
+    : isTransparentHeader
+      ? transparentFrameStyle
+      : {
+          backgroundColor: frameBg,
+          boxShadow: `0 0 0 1.5px ${frameRing}`,
+        };
 
   const initialLetter = vendor.store_name?.charAt(0) || vendor.name.charAt(0);
 
@@ -205,41 +242,51 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     }
   };
 
+  // Shared icon button style for header actions (share & cart) — kept visually consistent
+  const headerIconColor = isTransparentHeader ? 'rgba(255,255,255,0.92)' : activeTheme.text_color;
+  const headerIconBg = isTransparentHeader ? 'rgba(255,255,255,0.12)' : `${activeTheme.primary_color}0d`;
+  const headerIconHoverBg = isTransparentHeader ? 'rgba(255,255,255,0.2)' : `${activeTheme.primary_color}18`;
+  const boldBorder = activeTheme.card_style === 'bold'
+    ? `2px solid ${isTransparentHeader ? 'rgba(255,255,255,0.4)' : activeTheme.primary_color}`
+    : 'none';
+
   const cartButton = (
-    <div className="flex items-center gap-1.5 pt-0.5">
+    <div className="flex items-center gap-1">
+      {/* Share button — same pill/box visual as cart */}
       <button
         type="button"
         onClick={handleShare}
-        className={`p-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${borderRadiusClass} ${activeTheme.animation_style === 'zoom' ? 'hover:scale-110 active:scale-90' : 'hover:opacity-80'}`}
+        className={`flex items-center justify-center h-10 w-10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${borderRadiusClass} ${activeTheme.animation_style === 'zoom' ? 'hover:scale-110 active:scale-90' : 'hover:brightness-110'}`}
         style={{ 
-          color: activeTheme.header_style === 'transparent' ? 'rgba(255,255,255,0.85)' : (activeTheme.text_color),
+          color: headerIconColor,
+          backgroundColor: headerIconBg,
+          border: boldBorder,
           '--tw-ring-color': activeTheme.primary_color 
         } as React.CSSProperties}
-        onMouseEnter={(e) => { 
-          if (activeTheme.header_style !== 'transparent') {
-            e.currentTarget.style.backgroundColor = `${activeTheme.primary_color}14`;
-          }
-        }}
-        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; }}
+        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = headerIconHoverBg; }}
+        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = headerIconBg; }}
         title="Share this store"
       >
-        <ShareIcon className="h-6 w-6" />
+        <ShareIcon className="h-5 w-5" />
       </button>
+      {/* Cart button */}
       <button
         type="button"
         onClick={() => setIsCartOpen(true)}
-        className={`relative flex items-center justify-center h-11 px-3.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${borderRadiusClass} ${activeTheme.animation_style === 'bounce' ? 'hover:-translate-y-1' : ''}`}
+        className={`relative flex items-center justify-center h-10 px-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${borderRadiusClass} ${activeTheme.animation_style === 'bounce' ? 'hover:-translate-y-0.5' : 'hover:brightness-110'}`}
         style={{ 
-          color: activeTheme.header_style === 'transparent' ? '#ffffff' : activeTheme.text_color,
+          color: headerIconColor,
           '--tw-ring-color': activeTheme.primary_color,
-          backgroundColor: activeTheme.header_style === 'transparent' ? 'rgba(255,255,255,0.15)' : `${activeTheme.primary_color}08`,
-          border: activeTheme.card_style === 'bold' ? `2px solid ${activeTheme.header_style === 'transparent' ? '#ffffff' : activeTheme.primary_color}` : 'none'
+          backgroundColor: headerIconBg,
+          border: boldBorder,
         } as React.CSSProperties}
+        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = headerIconHoverBg; }}
+        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = headerIconBg; }}
       >
-        <ShoppingBagIcon className="h-6 w-6" />
+        <ShoppingBagIcon className="h-5 w-5" />
         {cartCount > 0 && (
           <span
-            className="ml-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white shadow-sm ring-1 ring-white/20"
+            className="ml-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-black text-white shadow-sm ring-1 ring-white/20"
             style={{ backgroundColor: activeTheme.primary_color }}
           >
             {cartCount}
@@ -250,15 +297,36 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   );
 
   const logoOrInitial =
-    !activeTheme.show_logo ? null : activeTheme.logo_url ? (
-      <div className={logoFrameClass}>
+    !(activeTheme.show_logo ?? true) ? null : activeTheme.logo_url ? (
+      <div className={logoFrameClass} style={logoFrameStyle}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={activeTheme.logo_url} alt="" className="h-full w-full object-contain p-1" />
+        <img
+          src={activeTheme.logo_url}
+          alt=""
+          className={`h-full w-full object-contain ${hasLogoFrame ? 'p-1' : ''}`}
+        />
       </div>
     ) : (
+      // Initial letter avatar — always uses primary color as bg for brand consistency
+      // 'none'/'plain' frames get a smaller, cleaner look without the ring
       <div
-        className={`${logoFrameClass} flex items-center justify-center text-lg font-bold uppercase text-white`}
-        style={{ backgroundColor: activeTheme.primary_color }}
+        className={`${logoFrameClass} flex items-center justify-center text-base font-bold uppercase`}
+        style={{
+          ...logoFrameStyle,
+          // For framed styles, override bg with primary color so it's branded
+          backgroundColor: hasLogoFrame ? activeTheme.primary_color : 'transparent',
+          // For transparent headers with no frame, add a subtle backdrop
+          ...(isTransparentHeader && !hasLogoFrame ? transparentFrameStyle : {}),
+          color: '#ffffff',
+          // Ensure minimum size even for frameless logos
+          minWidth: '2.5rem',
+          minHeight: '2.5rem',
+          borderRadius: logoFrame === 'profile' ? '50%'
+            : logoFrame === 'rounded' || logoFrame === 'minimal'
+              ? (activeTheme.border_radius === 'pill' ? '9999px' : activeTheme.border_radius === 'sharp' ? '0' : '0.5rem')
+            : logoFrame === 'none' || logoFrame === 'plain' ? '0.375rem'
+            : '50%',
+        }}
       >
         {initialLetter}
       </div>

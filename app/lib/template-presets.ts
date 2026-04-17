@@ -55,6 +55,8 @@ export type Template = {
     glass_effect: boolean;
     layout_width: 'standard' | 'wide' | 'full';
     show_mobile_checkout_bar: boolean;
+    logo_position?: 'left' | 'center' | 'right';
+    logo_frame?: 'plain' | 'none' | 'profile' | 'rounded' | 'minimal';
   };
   sections: TemplateSection[];
   sectionContent: TemplateSectionContent;

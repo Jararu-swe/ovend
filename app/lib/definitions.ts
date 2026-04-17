@@ -217,7 +217,7 @@ export type StoreTheme = {
   show_logo: boolean;
   logo_url: string | null;
   logo_position: 'left' | 'center' | 'right';
-  logo_frame: 'plain' | 'profile' | 'rounded' | 'minimal';
+  logo_frame: 'plain' | 'none' | 'profile' | 'rounded' | 'minimal';
   header_style: 'sticky' | 'static' | 'transparent';
 
   // Product display
