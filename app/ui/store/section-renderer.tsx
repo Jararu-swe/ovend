@@ -6,7 +6,7 @@ import { formatCurrency, getSectionSpacing, getButtonStyles, getBorderRadiusClas
 import { ShoppingBagIcon, PlusIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 
 // ─── Shared style helpers ─────────────────────────────────────
 
@@ -140,12 +140,16 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
   const hasImage = !!content.image_url;
   const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
+  const heroMarginBottom = theme.header_style === 'transparent'
+    ? `calc(${spacing.section} + 2rem)`
+    : spacing.section;
+
   return (
     <div
-      className={`overflow-hidden ${radiusClass} relative min-h-[260px] md:min-h-[320px] ${entrance.className}`}
+      className={`overflow-hidden ${radiusClass} relative min-h-[320px] md:min-h-[420px] ${entrance.className}`}
       style={{
         animationDelay: entrance.style ? '0ms' : undefined,
-        marginBottom: spacing.section,
+        marginBottom: heroMarginBottom,
       }}
     >
       {/* Background */}
@@ -181,7 +185,10 @@ function HeroBanner({ content, theme, entrance }: { content: Record<string, any>
       <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full -ml-10 -mb-10 blur-3xl opacity-20" style={{ backgroundColor: theme.accent_color }} />
 
       {/* Content */}
-      <div className={`relative z-10 flex flex-col ${alignClass} p-8 md:p-12 lg:p-14`}>
+      <div
+        className={`relative z-10 flex flex-col ${alignClass} p-8 md:p-12 lg:p-14`}
+        style={theme.header_style === 'transparent' ? { paddingTop: '6rem' } : undefined}
+      >
         <h2
           className="text-3xl md:text-4xl font-bold tracking-tight leading-tight"
           style={{
@@ -432,7 +439,7 @@ function TrustBadges({ content, theme, entrance }: { content: Record<string, any
   const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 
   return (
-    <div className={entrance.className} style={{ marginBottom: spacing.section }}>
+    <div className={entrance.className} style={{ marginTop: spacing.section, marginBottom: spacing.section }}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {badges.map((badge: any, i: number) => {
           const e = entranceClass(theme.animation_style, i * 60);

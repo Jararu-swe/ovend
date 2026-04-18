@@ -333,7 +333,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
     );
 
   const titleBlock = (
-    <div className={logoPos === 'center' ? 'flex flex-col items-center max-w-[calc(100%-110px)]' : 'min-w-0 flex flex-col justify-center'}>
+    <div className="min-w-0 flex flex-col justify-center">
       <h1 
         className="font-bold leading-none text-base md:text-xl tracking-tight line-clamp-1" 
         style={{ 
@@ -808,12 +808,16 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         )}
         <div className={`mx-auto px-4 py-4 ${layoutWidthClass}`}>
           {logoPos === 'center' ? (
-            <div className="relative flex min-h-[4.5rem] flex-col items-center justify-center py-2">
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 pr-1 md:pr-0">{cartButton}</div>
-              <div className="flex flex-col items-center gap-2">
+            <div className="relative flex h-16 items-center justify-center">
+              {/* Invisible spacer on left to balance the cart button on the right */}
+              <div className="absolute left-0 opacity-0 pointer-events-none">{cartButton}</div>
+              {/* Centered logo + name side by side */}
+              <div className="flex items-center gap-3 min-w-0">
                 {logoOrInitial}
                 {titleBlock}
               </div>
+              {/* Cart button pinned to the right */}
+              <div className="absolute right-0">{cartButton}</div>
             </div>
           ) : logoPos === 'right' ? (
             <div className="flex items-center justify-between gap-5 h-16">
