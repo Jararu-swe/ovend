@@ -22,6 +22,11 @@ export async function ensureNewColumns() {
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS custom_css TEXT`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS sections JSONB DEFAULT '[]'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS section_content JSONB DEFAULT '{}'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS icon_library VARCHAR(20) DEFAULT 'heroicons'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS icon_fill VARCHAR(20) DEFAULT 'outline'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS icon_weight VARCHAR(20) DEFAULT 'regular'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS cart_icon VARCHAR(20) DEFAULT 'shopping-bag'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS user_icon VARCHAR(20) DEFAULT 'user'`,
       ];
       try {
         for (const stmt of alters) {
@@ -69,6 +74,11 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     show_product_description: true,
     spacing: 'comfortable',
     custom_css: null,
+    icon_library: 'heroicons',
+    icon_fill: 'outline',
+    icon_weight: 'regular',
+    cart_icon: 'shopping-bag',
+    user_icon: 'user',
     sections: JSON.stringify(getDefaultSections()),
     section_content: JSON.stringify(getDefaultSectionContent()),
   };
@@ -105,6 +115,11 @@ function normalizeTheme(row: any): StoreTheme {
     button_style: row.button_style ?? 'solid',
     button_radius: row.button_radius ?? 'rounded',
     animation_style: row.animation_style ?? 'fade',
+    icon_library: row.icon_library ?? 'heroicons',
+    icon_fill: row.icon_fill ?? 'outline',
+    icon_weight: row.icon_weight ?? 'regular',
+    cart_icon: row.cart_icon ?? 'shopping-bag',
+    user_icon: row.user_icon ?? 'user',
     custom_css: row.custom_css ?? null,
     sections: hasSections
       ? (typeof rawSections === 'string' ? rawSections : JSON.stringify(rawSections))
@@ -165,6 +180,11 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       image_aspect_ratio,
       show_product_description,
       spacing,
+      icon_library,
+      icon_fill,
+      icon_weight,
+      cart_icon,
+      user_icon,
       custom_css,
       sections,
       section_content
@@ -198,6 +218,11 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       ${d.image_aspect_ratio},
       ${d.show_product_description},
       ${d.spacing},
+      ${d.icon_library},
+      ${d.icon_fill},
+      ${d.icon_weight},
+      ${d.cart_icon},
+      ${d.user_icon},
       ${d.custom_css},
       ${d.sections},
       ${d.section_content}

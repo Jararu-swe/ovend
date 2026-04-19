@@ -71,7 +71,7 @@ const ThemeSchema = z.object({
   show_mobile_checkout_bar: z.coerce.boolean().optional().default(false),
   show_logo: z.preprocess((v) => v === 'true' || v === true, z.boolean()),
   logo_position: z.enum(['left', 'center', 'right']),
-  logo_frame: z.enum(['plain', 'profile', 'rounded', 'minimal']),
+  logo_frame: z.enum(['plain', 'none', 'profile', 'rounded', 'minimal']),
   logo_url: z.preprocess(
     (v) => {
       if (v === null || v === undefined) return null;
@@ -84,6 +84,11 @@ const ThemeSchema = z.object({
       z.string().regex(/^\/uploads\//, 'Must be an uploaded file path or https URL'),
     ]),
   ),
+  icon_library: z.enum(['heroicons', 'lucide']).optional().default('heroicons'),
+  icon_fill: z.enum(['solid', 'outline']).optional().default('outline'),
+  icon_weight: z.enum(['light', 'regular', 'bold']).optional().default('regular'),
+  cart_icon: z.enum(['shopping-bag', 'shopping-cart', 'basket', 'tote']).optional().default('shopping-bag'),
+  user_icon: z.enum(['user', 'face', 'smile']).optional().default('user'),
   sections: z.string().optional(),        // JSON string
   section_content: z.string().optional(),  // JSON string
 });
@@ -595,6 +600,11 @@ export async function updateThemeAction(
       logo_position: formData.get('logo_position'),
       logo_frame: formData.get('logo_frame'),
       logo_url: formData.get('logo_url'),
+      icon_library: formData.get('icon_library') || 'heroicons',
+      icon_fill: formData.get('icon_fill') || 'outline',
+      icon_weight: formData.get('icon_weight') || 'regular',
+      cart_icon: formData.get('cart_icon') || 'shopping-bag',
+      user_icon: formData.get('user_icon') || 'user',
       custom_css: formData.get('custom_css') as string,
       sections: formData.get('sections') as string,
       section_content: formData.get('section_content') as string,
@@ -638,6 +648,11 @@ export async function updateThemeAction(
         logo_position = ${themeData.logo_position},
         logo_frame = ${themeData.logo_frame},
         logo_url = ${themeData.logo_url},
+        icon_library = ${themeData.icon_library},
+        icon_fill = ${themeData.icon_fill},
+        icon_weight = ${themeData.icon_weight},
+        cart_icon = ${themeData.cart_icon},
+        user_icon = ${themeData.user_icon},
         custom_css = ${themeData.custom_css ?? null},
         primary_gradient = ${themeData.primary_gradient ?? null},
         glass_effect = ${themeData.glass_effect ?? false},

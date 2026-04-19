@@ -7,6 +7,7 @@ import { ShoppingBagIcon, PlusIcon, ChevronUpIcon } from '@heroicons/react/24/ou
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import { JSX, useEffect, useState } from 'react';
+import DynamicHero from './hero-renderers';
 
 // ─── Shared style helpers ─────────────────────────────────────
 
@@ -87,7 +88,7 @@ export default function SectionRenderer({
         const wrapStyle = e.style ? { style: e.style } : {};
         switch (section.id) {
           case 'hero-banner':
-            return <HeroBanner key={section.id} content={c} theme={theme} entrance={e} />;
+            return <DynamicHero key={section.id} content={c} theme={theme} entrance={e} />;
           case 'announcement-bar':
             return <AnnouncementBar key={section.id} content={c} theme={theme} entrance={e} />;
           case 'featured-products':
@@ -126,102 +127,6 @@ export default function SectionRenderer({
 }
 
 type Entrance = { className: string; style: string };
-
-// ═══════════════════════════════════════════════════════════════
-// ─── HERO BANNER V2 ───────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════
-
-function HeroBanner({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
-  const btn = getButtonStyles(theme);
-  const radiusClass = getBorderRadiusClass(theme.border_radius as any);
-
-  const align = content.text_align || 'left';
-  const alignClass = align === 'center' ? 'text-center items-center' : align === 'right' ? 'text-right items-end' : 'text-left items-start';
-  const hasImage = !!content.image_url;
-  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
-
-  const heroMarginBottom = theme.header_style === 'transparent'
-    ? `calc(${spacing.section} + 2rem)`
-    : spacing.section;
-
-  return (
-    <div
-      className={`overflow-hidden ${radiusClass} relative min-h-[320px] md:min-h-[420px] ${entrance.className}`}
-      style={{
-        animationDelay: entrance.style ? '0ms' : undefined,
-        marginBottom: heroMarginBottom,
-      }}
-    >
-      {/* Background */}
-      {hasImage ? (
-        <>
-          <div className="absolute inset-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={content.image_url} alt="" className="h-full w-full object-cover" />
-          </div>
-          <div
-            className="absolute inset-0"
-            style={{ 
-              background: theme.primary_gradient 
-                ? `${theme.primary_gradient}dd` 
-                : `linear-gradient(135deg, ${theme.primary_color}dd, ${theme.secondary_color}aa)` 
-            }}
-          />
-        </>
-      ) : (
-        <div
-          className="absolute inset-0"
-          style={{ 
-            background: theme.primary_gradient || `linear-gradient(135deg, ${theme.primary_color}, ${theme.secondary_color})` 
-          }}
-        />
-      )}
-
-      {/* Noise texture overlay for depth */}
-      <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%270 0 256 256%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noise%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.9%27 numOctaves=%274%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noise)%27/%3E%3C/svg%3E")', backgroundSize: '128px 128px' }} />
-
-      {/* Decorative orbs */}
-      <div className="absolute top-0 right-0 w-48 h-48 rounded-full -mr-16 -mt-16 blur-3xl opacity-30" style={{ backgroundColor: theme.accent_color }} />
-      <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full -ml-10 -mb-10 blur-3xl opacity-20" style={{ backgroundColor: theme.accent_color }} />
-
-      {/* Content */}
-      <div
-        className={`relative z-10 flex flex-col ${alignClass} p-8 md:p-12 lg:p-14`}
-        style={theme.header_style === 'transparent' ? { paddingTop: '6rem' } : undefined}
-      >
-        <h2
-          className="text-3xl md:text-4xl font-bold tracking-tight leading-tight"
-          style={{
-            color: theme.heading_color || '#ffffff',
-            fontFamily: FONT_MAP[theme.heading_font] || theme.heading_font,
-            textShadow: '0 2px 8px rgba(0,0,0,0.3)',
-          }}
-        >
-          {content.title || 'Welcome to our store'}
-        </h2>
-        <p className="mt-3 text-white/75 text-sm md:text-base max-w-[380px] leading-relaxed">
-          {content.subtitle || 'Browse our collection and order directly.'}
-        </p>
-        {content.cta_text && (
-          <a
-            href={content.cta_link || '#item-list'}
-            className={`mt-6 inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold shadow-xl ${btn.className}`}
-            style={{
-              ...btn.style,
-              backgroundColor: '#ffffff',
-              color: theme.primary_color,
-              border: 'none',
-              '--tw-ring-color': theme.primary_color,
-            } as React.CSSProperties}
-          >
-            {content.cta_text}
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════
 // ─── SCROLLING MARQUEE ANNOUNCEMENT BAR ───────────────────────
@@ -773,7 +678,7 @@ function FaqsSection({ content, theme, entrance }: { content: Record<string, any
 // ═══════════════════════════════════════════════════════════════
 
 function Newsletter({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
-  const btn = useButtonProps(theme);
+  const btn = getButtonStyles(theme);
   const borderRadiusStyle = theme.border_radius === 'sharp' ? '0' : theme.border_radius === 'pill' ? '1.5rem' : '1rem';
   const spacing = getSectionSpacing(theme.spacing || 'comfortable');
 

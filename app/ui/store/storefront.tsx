@@ -18,6 +18,7 @@ import { useSearchParams } from 'next/navigation';
 import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent, FONT_MAP } from '@/app/lib/template-presets';
 import SectionRenderer from '@/app/ui/store/section-renderer';
 import ProductQuickView from '@/app/ui/store/product-quick-view';
+import DynamicNav from '@/app/ui/store/nav-renderers';
 
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
@@ -787,6 +788,50 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       {activeTheme.custom_css && (
         <style dangerouslySetInnerHTML={{ __html: activeTheme.custom_css.replace(/<\/style>/gi, '') }} />
       )}
+      {/* Boutique-specific global styles */}
+      {activeTheme.template_id === 'luxe-boutique' && (
+        <style>{`
+          @keyframes boutiqueFadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes boutiqueLineGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+          @keyframes boutiqueHeroReveal { from { opacity: 0; letter-spacing: 0.35em; } to { opacity: 1; letter-spacing: 0.12em; } }
+          @keyframes boutiqueSubReveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 0.75; transform: translateY(0); } }
+          .btq-fade-down { animation: boutiqueFadeDown 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+          .btq-line-grow { animation: boutiqueLineGrow 1s cubic-bezier(0.16,1,0.3,1) both; transform-origin: left; }
+          .btq-hero-reveal { animation: boutiqueHeroReveal 1.4s cubic-bezier(0.16,1,0.3,1) 0.1s both; }
+          .btq-sub-reveal { animation: boutiqueSubReveal 1s cubic-bezier(0.16,1,0.3,1) 0.5s both; }
+        `}</style>
+      )}
+      {/* Tech Store-specific global styles */}
+      {activeTheme.template_id === 'tech-store' && (
+        <style>{`
+          @keyframes techScanPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+          @keyframes techGlowIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes techCartBounce { 0%,100% { transform: scale(1); } 30% { transform: scale(1.25); } 60% { transform: scale(0.9); } }
+          .tch-glow-in { animation: techGlowIn 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+          .tch-scan { animation: techScanPulse 3s ease-in-out infinite; }
+          .tch-cart-bounce { animation: techCartBounce 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+        `}</style>
+      )}
+      {/* Beauty-specific global styles */}
+      {activeTheme.template_id === 'beauty-glow' && (
+        <style>{`
+          @keyframes beautyFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+          .bty-fade-up { animation: beautyFadeIn 1s ease-out forwards; }
+          .bty-delay-1 { animation-delay: 0.3s; }
+          .bty-delay-2 { animation-delay: 0.6s; }
+        `}</style>
+      )}
+      {/* Midnight-specific global styles */}
+      {activeTheme.template_id === 'midnight-luxe' && (
+        <style>{`
+          @keyframes midnightReveal { from { opacity: 0; filter: blur(10px); transform: scale(0.95); } to { opacity: 1; filter: blur(0); transform: scale(1); } }
+          @keyframes midnightFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+          .mdn-reveal { animation: midnightReveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+          .mdn-float { animation: midnightFloat 6s ease-in-out infinite; }
+          .mdn-delay-1 { animation-delay: 0.2s; }
+          .mdn-delay-2 { animation-delay: 0.4s; }
+        `}</style>
+      )}
       <div 
         className={`min-h-screen ${fontSizeClass} transition-opacity duration-500 ease-in-out ${fontsLoaded ? 'opacity-100' : 'opacity-0'}`}
       style={{
@@ -800,48 +845,19 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         fontFamily: FONT_MAP[activeTheme.font_family] || activeTheme.font_family,
       } as React.CSSProperties}
     >
-      {/* Store Header */}
-      <header className={`z-[100] ${headerClass}`} style={headerStyles}>
-        {/* Subtle noise texture overlay for glass effect */}
-        {activeTheme.header_style !== 'transparent' && activeTheme.glass_effect && (
-          <div className="absolute inset-0 z-[-1] opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%270 0 256 256%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cfilter id=%27noise%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.65%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23noise)%27/%3E%3C/svg%3E")' }} />
-        )}
-        <div className={`mx-auto px-4 py-4 ${layoutWidthClass}`}>
-          {logoPos === 'center' ? (
-            <div className="relative flex h-16 items-center justify-center">
-              {/* Invisible spacer on left to balance the cart button on the right */}
-              <div className="absolute left-0 opacity-0 pointer-events-none">{cartButton}</div>
-              {/* Centered logo + name side by side */}
-              <div className="flex items-center gap-3 min-w-0">
-                {logoOrInitial}
-                {titleBlock}
-              </div>
-              {/* Cart button pinned to the right */}
-              <div className="absolute right-0">{cartButton}</div>
-            </div>
-          ) : logoPos === 'right' ? (
-            <div className="flex items-center justify-between gap-5 h-16">
-              <div className="min-w-0 flex-1">{titleBlock}</div>
-              <div className="flex shrink-0 items-center gap-4">
-                {logoOrInitial}
-                <div className="h-8 w-px bg-slate-200/20" />
-                {cartButton}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-5 h-16">
-              <div className="flex min-w-0 items-center gap-5">
-                {logoOrInitial}
-                {titleBlock}
-              </div>
-              {cartButton}
-            </div>
-          )}
-        </div>
-      </header>
+      <DynamicNav
+        vendor={vendor}
+        theme={activeTheme}
+        cartCount={cartCount}
+        handleShare={handleShare}
+        setIsCartOpen={setIsCartOpen}
+        layoutWidthClass={layoutWidthClass}
+      />
 
       <main 
         className={`mx-auto px-4 pb-32 ${layoutWidthClass} ${
+          ['luxe-boutique', 'beauty-glow', 'midnight-luxe', 'vogue-minimal'].includes(activeTheme.template_id) ? 'pt-0' :
+          activeTheme.template_id === 'tech-store' ? 'pt-8' :
           activeTheme.header_style === 'transparent' && sections[0]?.id !== 'hero-banner' ? 'pt-24' : 'pt-8'
         }`}
       >

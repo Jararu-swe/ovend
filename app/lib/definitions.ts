@@ -234,6 +234,14 @@ export type StoreTheme = {
   glass_effect: boolean;
   layout_width: 'standard' | 'wide' | 'full';
   show_mobile_checkout_bar: boolean;
+  custom_css: string | null;
+
+  // Iconography
+  icon_library: 'heroicons' | 'lucide';
+  icon_fill: 'solid' | 'outline';
+  icon_weight: 'light' | 'regular' | 'bold';
+  cart_icon: 'shopping-bag' | 'shopping-cart' | 'basket' | 'tote';
+  user_icon: 'user' | 'face' | 'smile';
 
   created_at: string;
   updated_at: string;
