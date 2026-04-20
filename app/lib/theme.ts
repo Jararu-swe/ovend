@@ -27,6 +27,8 @@ export async function ensureNewColumns() {
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS icon_weight VARCHAR(20) DEFAULT 'regular'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS cart_icon VARCHAR(20) DEFAULT 'shopping-bag'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS user_icon VARCHAR(20) DEFAULT 'user'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS share_icon VARCHAR(20) DEFAULT 'arrow-square'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS add_icon VARCHAR(20) DEFAULT 'plus'`,
       ];
       try {
         for (const stmt of alters) {
@@ -79,6 +81,8 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     icon_weight: 'regular',
     cart_icon: 'shopping-bag',
     user_icon: 'user',
+    share_icon: 'arrow-square',
+    add_icon: 'plus',
     sections: JSON.stringify(getDefaultSections()),
     section_content: JSON.stringify(getDefaultSectionContent()),
   };

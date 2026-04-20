@@ -3,7 +3,8 @@
 import { User, Product, StoreTheme } from '@/app/lib/definitions';
 import { TemplateSection, TemplateSectionContent, FONT_MAP } from '@/app/lib/template-presets';
 import { formatCurrency, getSectionSpacing, getButtonStyles, getBorderRadiusClass } from '@/app/lib/utils';
-import { ShoppingBagIcon, PlusIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { ShoppingBagIcon, PlusIcon, ChevronUpIcon, CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import StoreIcon from './storefront-icons';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import { JSX, useEffect, useState } from 'react';
@@ -115,6 +116,8 @@ export default function SectionRenderer({
             return <LogoCloud key={section.id} content={c} theme={theme} entrance={e} />;
           case 'rich-text':
             return <RichText key={section.id} content={c} theme={theme} entrance={e} />;
+          case 'split-feature':
+            return <SplitFeature key={section.id} content={c} theme={theme} entrance={e} />;
           case 'category-grid':
             return <CategoryGrid key={section.id} content={c} theme={theme} entrance={e} />;
           default:
@@ -212,9 +215,9 @@ function FeaturedProducts({
                   <button 
                     onClick={() => onAddToCart(product)} 
                     className={`h-7 w-7 flex items-center justify-center ${btn.className}`} 
-                    style={{ ...btn.style, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
+                    style={{ ...btn.style, '--tw-ring-color': theme.primary_color } as any as React.CSSProperties}
                   >
-                    <PlusIcon className="h-4 w-4" strokeWidth={2.5} />
+                    <StoreIcon name="add" theme={theme} className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -403,7 +406,7 @@ function ContactCta({ content, vendor, theme, entrance }: { content: Record<stri
           target="_blank"
           rel="noopener noreferrer"
           className={`inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold shadow-xl ${getButtonStyles(theme).className}`}
-          style={{ ...getButtonStyles(theme).style, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
+          style={{ ...getButtonStyles(theme).style, '--tw-ring-color': theme.primary_color } as any as React.CSSProperties}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.03L.789 23.66l4.77-1.456A11.926 11.926 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-2.17 0-4.206-.61-5.947-1.664l-.427-.253-2.828.863.84-2.736-.278-.442A9.776 9.776 0 012.182 12c0-5.418 4.4-9.818 9.818-9.818S21.818 6.582 21.818 12 17.418 21.818 12 21.818z"/></svg>
           {content.button_text || 'Chat on WhatsApp'}
@@ -434,7 +437,7 @@ function BackToTop({ theme }: { theme: StoreTheme }) {
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       className="fixed bottom-20 right-4 z-40 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-      style={{ backgroundColor: theme.primary_color, '--tw-ring-color': theme.primary_color } as React.CSSProperties}
+      style={{ backgroundColor: theme.primary_color, '--tw-ring-color': theme.primary_color } as any as React.CSSProperties}
       aria-label="Back to top"
     >
       <ChevronUpIcon className="h-5 w-5" strokeWidth={2.5} />
@@ -492,7 +495,7 @@ function ImageGallery({ content, theme, entrance }: { content: Record<string, an
                 borderRadius: borderRadiusStyle,
                 aspectRatio: isLarge ? '1' : '1',
                 '--tw-ring-color': theme.primary_color,
-              } as React.CSSProperties}
+              } as any as React.CSSProperties}
               onClick={() => setLightboxIdx(i)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLightboxIdx(i); } }}
               tabIndex={0}
@@ -644,7 +647,7 @@ function FaqsSection({ content, theme, entrance }: { content: Record<string, any
               <button
                 onClick={() => setOpenIdx(isOpen ? null : idx)}
                 className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-slate-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset"
-                style={{ '--tw-ring-color': theme.primary_color } as React.CSSProperties}
+                style={{ '--tw-ring-color': theme.primary_color } as any as React.CSSProperties}
               >
                 <span className="font-semibold" style={{ color: theme.heading_color || theme.text_color }}>
                   {item.question}
@@ -842,6 +845,68 @@ function CategoryGrid({ content, theme, entrance }: { content: Record<string, an
             </a>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── SPLIT IMAGE/TEXT FEATURE ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function SplitFeature({ content, theme, entrance }: { content: Record<string, any>; theme: StoreTheme; entrance: Entrance }) {
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+  const btn = getButtonStyles(theme);
+  const layoutReversed = content.image_position === 'right';
+  const radiusClass = getBorderRadiusClass(theme.border_radius as any);
+
+  return (
+    <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center ${entrance.className}`} style={{ marginBottom: spacing.section }}>
+      {/* Target Image Container */}
+      <div className={`relative aspect-square md:aspect-[4/5] overflow-hidden ${radiusClass} ${layoutReversed ? 'md:order-2' : 'md:order-1'}`}>
+        {content.image_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={content.image_url} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
+        ) : (
+          <div className="absolute inset-0 bg-slate-100 flex items-center justify-center">
+            <span className="text-slate-400 text-sm tracking-widest uppercase">Feature Image</span>
+          </div>
+        )}
+      </div>
+
+      {/* Target Content Container */}
+      <div className={`flex flex-col justify-center px-4 md:px-0 ${layoutReversed ? 'md:order-1' : 'md:order-2'}`}>
+        {content.eyebrow && (
+          <span className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: theme.accent_color }}>
+            {content.eyebrow}
+          </span>
+        )}
+        <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight" style={{ color: theme.heading_color || theme.text_color, fontFamily: FONT_MAP[theme.heading_font] }}>
+          {content.title || 'Highlight Your Best Feature'}
+        </h2>
+        <p className="text-base md:text-lg opacity-80 leading-relaxed mb-8" style={{ color: theme.text_color }}>
+          {content.subtitle || 'Use this split layout to dynamically showcase a featured product, a new collection, or an important aspect of your brand story.'}
+        </p>
+        
+        {content.features && Array.isArray(content.features) && (
+          <ul className="space-y-3 mb-10">
+            {content.features.map((feature: string, idx: number) => (
+              <li key={idx} className="flex items-center gap-3 text-sm md:text-base" style={{ color: theme.text_color }}>
+                <CheckCircleIcon className="w-5 h-5 shrink-0" style={{ color: theme.accent_color }} />
+                <span className="opacity-90">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {content.cta_text && (
+          <div>
+            <a href={content.cta_link || '#'} className={`inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold shadow-lg ${btn.className} focus-visible:outline-none focus-visible:ring-2`} style={{ ...btn.style, ['--tw-ring-color' as any]: theme.primary_color } as React.CSSProperties}>
+              {content.cta_text}
+              <ArrowRightIcon className="w-4 h-4" />
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

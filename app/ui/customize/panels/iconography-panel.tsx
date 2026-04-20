@@ -123,6 +123,58 @@ export default function IconographyPanel({
         </div>
       </div>
 
+      <div className="space-y-4 pt-4 border-t border-slate-100">
+        <h3 className="text-sm font-semibold text-slate-800">Share Icon</h3>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { value: 'arrow-square', label: 'Box Arrow' },
+            { value: 'paper-plane', label: 'Plane' },
+            { value: 'arrow-curve', label: 'Curve' },
+            { value: 'dots', label: 'Dots' },
+            { value: 'nodes', label: 'Nodes' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange('share_icon', opt.value)}
+              className={`flex items-center justify-center rounded-lg border py-2 transition-all text-xs font-medium ${
+                theme.share_icon === opt.value
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4 pt-4 border-t border-slate-100">
+        <h3 className="text-sm font-semibold text-slate-800">Add to Cart Button Icon</h3>
+        <p className="text-[10px] text-slate-500 mb-2">The icon explicitly shown on product grids for quick-add.</p>
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { value: 'plus', label: 'Plus' },
+            { value: 'bag', label: 'Bag' },
+            { value: 'cart', label: 'Cart' },
+            { value: 'arrow', label: 'Arrow' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange('add_icon', opt.value)}
+              className={`flex items-center justify-center rounded-lg border py-2 transition-all text-xs font-medium ${
+                theme.add_icon === opt.value
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }

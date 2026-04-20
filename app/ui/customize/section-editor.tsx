@@ -20,12 +20,27 @@ export default function SectionEditor({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const dragRef = useRef<number | null>(null);
 
   const toggle = (id: string) => {
     onSectionsChange(
       sections.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
     );
+  };
+
+  const removeSection = (id: string) => {
+    const newSections = sections.filter((s) => s.id !== id);
+    onSectionsChange(newSections.map((s, i) => ({ ...s, order: i })));
+    if (expandedId === id) setExpandedId(null);
+  };
+
+  const addSection = (id: string) => {
+    if (sections.find(s => s.id === id)) return;
+    const newSection: TemplateSection = { id, enabled: true, order: sections.length };
+    onSectionsChange([...sections, newSection]);
+    setExpandedId(id);
+    setShowAddMenu(false);
   };
 
   const updateContent = (sectionId: string, key: string, value: any) => {
@@ -167,23 +182,38 @@ export default function SectionEditor({
                     </svg>
                   </button>
 
-                  {/* Toggle */}
-                  <label className="relative inline-flex cursor-pointer items-center shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={section.enabled}
-                      onChange={() => { if (!isProductGrid) toggle(section.id); }}
-                      disabled={isProductGrid}
-                      className="peer sr-only"
-                    />
-                    <div className={`h-5 w-9 rounded-full transition-colors peer-checked:bg-emerald-500 ${
-                      isProductGrid ? 'bg-emerald-500 opacity-60 cursor-not-allowed' : 'bg-slate-300'
-                    }`}>
-                      <div className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                        section.enabled ? 'translate-x-4' : 'translate-x-0'
-                      }`} />
-                    </div>
-                  </label>
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 shrink-0 ml-1">
+                    {meta.removable && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeSection(section.id); }}
+                        className="p-1 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 flex items-center justify-center cursor-pointer relative z-10"
+                        title="Remove section"
+                      >
+                        <span className="sr-only">Remove</span>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    )}
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={section.enabled}
+                        onChange={() => { if (!isProductGrid) toggle(section.id); }}
+                        disabled={isProductGrid}
+                        className="peer sr-only"
+                      />
+                      <div className={`h-5 w-9 rounded-full transition-colors peer-checked:bg-emerald-500 ${
+                        isProductGrid ? 'bg-emerald-500 opacity-60 cursor-not-allowed' : 'bg-slate-300'
+                      }`}>
+                        <div className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                          section.enabled ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </div>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Expandable content editor */}
@@ -359,6 +389,52 @@ export default function SectionEditor({
             </div>
           );
         })}
+      </div>
+
+      {/* Add Section area */}
+      <div className="pt-4 border-t border-slate-100">
+        {!showAddMenu ? (
+          <button
+            type="button"
+            onClick={() => setShowAddMenu(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Add New Section
+          </button>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 bg-slate-50">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">Section Library</span>
+              <button type="button" onClick={() => setShowAddMenu(false)} className="p-1 rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-600">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-2 max-h-60 overflow-y-auto space-y-1">
+              {SECTION_TYPES
+                .filter(st => !sections.find(existing => existing.id === st.id))
+                .map(st => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => addSection(st.id)}
+                  className="w-full flex items-center gap-3 p-2 rounded-lg text-left hover:bg-emerald-50 group border border-transparent hover:border-emerald-100 transition-all"
+                >
+                  <span className="text-lg opacity-80 group-hover:scale-110 transition-transform">{st.icon}</span>
+                  <div>
+                    <span className="block text-xs font-bold text-slate-800 group-hover:text-emerald-700">{st.label}</span>
+                    <span className="block text-[9px] text-slate-500 group-hover:text-emerald-600/70 truncate">{st.description}</span>
+                  </div>
+                </button>
+              ))}
+              {SECTION_TYPES.filter(st => !sections.find(existing => existing.id === st.id)).length === 0 && (
+                <div className="py-6 text-center text-xs text-slate-400">All available sections are already added!</div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

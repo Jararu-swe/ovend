@@ -16,7 +16,7 @@ import MultiImageUpload from './multi-image-upload';
 
 export default function CreateProductForm() {
   const initialState: State = { message: '', errors: {} };
-  const [state, formAction] = useActionState(createProduct, initialState);
+  const [state, formAction] = useActionState(createProduct as any, initialState as any);
   const [mainImage, setMainImage] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   

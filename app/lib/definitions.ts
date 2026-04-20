@@ -242,6 +242,8 @@ export type StoreTheme = {
   icon_weight: 'light' | 'regular' | 'bold';
   cart_icon: 'shopping-bag' | 'shopping-cart' | 'basket' | 'tote';
   user_icon: 'user' | 'face' | 'smile';
+  share_icon: 'dots' | 'paper-plane' | 'arrow-curve' | 'arrow-square' | 'nodes';
+  add_icon: 'plus' | 'bag' | 'cart' | 'arrow';
 
   created_at: string;
   updated_at: string;

@@ -19,6 +19,7 @@ import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefault
 import SectionRenderer from '@/app/ui/store/section-renderer';
 import ProductQuickView from '@/app/ui/store/product-quick-view';
 import DynamicNav from '@/app/ui/store/nav-renderers';
+import StoreIcon from '@/app/ui/store/storefront-icons';
 
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
@@ -740,7 +741,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                   ) : hasOptions ? (
                     'Options'
                   ) : (
-                    <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
+                    <StoreIcon name="add" theme={activeTheme} className="h-5 w-5" />
                   )}
                 </button>
               </div>
@@ -1133,8 +1134,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                            <button 
                             type="submit" 
                             disabled={isSubmitting}
-                            className={`flex-[2] p-4 font-bold text-white shadow-lg disabled:opacity-50 ${buttonRadiusClass} ${interactionAnimationStyle} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
-                            style={{ ...dynamicBtnStyle, ['--tw-ring-color' as any]: activeTheme.primary_color }}
+                            className={`flex-[2] p-4 font-bold text-white shadow-lg disabled:opacity-50 ${getButtonStyles(activeTheme).className} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
+                            style={{ ...getButtonStyles(activeTheme).style, ['--tw-ring-color' as any]: activeTheme.primary_color } as React.CSSProperties}
                            >
                             {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
                            </button>

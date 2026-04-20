@@ -89,6 +89,8 @@ const ThemeSchema = z.object({
   icon_weight: z.enum(['light', 'regular', 'bold']).optional().default('regular'),
   cart_icon: z.enum(['shopping-bag', 'shopping-cart', 'basket', 'tote']).optional().default('shopping-bag'),
   user_icon: z.enum(['user', 'face', 'smile']).optional().default('user'),
+  share_icon: z.enum(['dots', 'paper-plane', 'arrow-curve', 'arrow-square', 'nodes']).optional().default('arrow-square'),
+  add_icon: z.enum(['plus', 'bag', 'cart', 'arrow']).optional().default('plus'),
   sections: z.string().optional(),        // JSON string
   section_content: z.string().optional(),  // JSON string
 });
@@ -605,6 +607,8 @@ export async function updateThemeAction(
       icon_weight: formData.get('icon_weight') || 'regular',
       cart_icon: formData.get('cart_icon') || 'shopping-bag',
       user_icon: formData.get('user_icon') || 'user',
+      share_icon: formData.get('share_icon') || 'arrow-square',
+      add_icon: formData.get('add_icon') || 'plus',
       custom_css: formData.get('custom_css') as string,
       sections: formData.get('sections') as string,
       section_content: formData.get('section_content') as string,
@@ -653,6 +657,8 @@ export async function updateThemeAction(
         icon_weight = ${themeData.icon_weight},
         cart_icon = ${themeData.cart_icon},
         user_icon = ${themeData.user_icon},
+        share_icon = ${themeData.share_icon},
+        add_icon = ${themeData.add_icon},
         custom_css = ${themeData.custom_css ?? null},
         primary_gradient = ${themeData.primary_gradient ?? null},
         glass_effect = ${themeData.glass_effect ?? false},

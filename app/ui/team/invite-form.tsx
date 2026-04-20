@@ -6,9 +6,9 @@ import { EnvelopeIcon } from '@heroicons/react/24/outline';
 import { inviteTeamMemberAction, State } from '@/app/lib/actions';
 
 export default function InviteTeamForm({ vendorId }: { vendorId: string }) {
-  const initialState: State = { message: null, errors: {} };
+  const initialState: State = { message: '', errors: {} };
   const inviteWithVendor = inviteTeamMemberAction.bind(null, vendorId);
-  const [state, formAction] = useActionState(inviteWithVendor, initialState);
+  const [state, formAction] = useActionState(inviteWithVendor, initialState as any);
   const [role, setRole] = useState<'admin' | 'assistant'>('assistant');
   const [permissions, setPermissions] = useState({
     products: true,

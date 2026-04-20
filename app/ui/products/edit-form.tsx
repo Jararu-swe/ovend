@@ -28,7 +28,9 @@ function safeParseOptions(optsStr: string | null | undefined) {
 export default function EditProductForm({ product }: { product: ProductForm }) {
   const initialState: State = { message: '', errors: {} };
   const updateProductWithId = updateProduct.bind(null, product.id);
-  const [state, formAction] = useActionState(updateProductWithId, initialState);
+  const checkAny = updateProductWithId as any;
+  const initAny = initialState as any;
+  const [state, formAction] = useActionState(checkAny, initAny);
   
   const [mainImage, setMainImage] = useState(product.image_url || '');
   const [galleryImages, setGalleryImages] = useState<string[]>(

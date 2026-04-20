@@ -11,6 +11,12 @@ import {
   Smile as LucideSmile,
   CircleUserRound as LucideCircleUser,
   Share as LucideShare,
+  Share2 as LucideShare2,
+  Send as LucideSend,
+  Forward as LucideForward,
+  MoreHorizontal as LucideMoreHorizontal,
+  Plus as LucidePlus,
+  ArrowRight as LucideArrowRight,
   Search as LucideSearch,
   Menu as LucideMenu,
   X as LucideX
@@ -18,12 +24,12 @@ import {
 import { StoreTheme } from '@/app/lib/definitions';
 
 interface StoreIconProps extends React.SVGProps<SVGSVGElement> {
-  name: 'cart' | 'user' | 'share' | 'menu' | 'close' | 'search';
+  name: 'cart' | 'user' | 'share' | 'menu' | 'close' | 'search' | 'add';
   theme: StoreTheme;
 }
 
 export default function StoreIcon({ name, theme, ...props }: StoreIconProps) {
-  const { icon_library, icon_fill, icon_weight, cart_icon, user_icon } = theme;
+  const { icon_library, icon_fill, icon_weight, cart_icon, user_icon, share_icon, add_icon } = theme;
 
   // Determine standard Lucide stroke width based on weight selection
   const lucideStrokeWidth = icon_weight === 'light' ? 1 
@@ -55,7 +61,21 @@ export default function StoreIcon({ name, theme, ...props }: StoreIconProps) {
           : user_icon === 'smile' ? <LucideSmile strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />
           : <LucideUser strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />}
         </IconWrapper>;
-      case 'share': return <IconWrapper><LucideShare strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
+      case 'share':
+        return <IconWrapper>
+          {share_icon === 'paper-plane' ? <LucideSend strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />
+          : share_icon === 'arrow-curve' ? <LucideForward strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />
+          : share_icon === 'dots' ? <LucideMoreHorizontal strokeWidth={lucideStrokeWidth} className="w-full h-full" />
+          : share_icon === 'nodes' ? <LucideShare2 strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />
+          : <LucideShare strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />}
+        </IconWrapper>;
+      case 'add':
+        return <IconWrapper>
+          {add_icon === 'bag' ? <LucideShoppingBag strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />
+          : add_icon === 'cart' ? <LucideShoppingCart strokeWidth={lucideStrokeWidth} fill={fillStyle} className="w-full h-full" />
+          : add_icon === 'arrow' ? <LucideArrowRight strokeWidth={lucideStrokeWidth} className="w-full h-full" />
+          : <LucidePlus strokeWidth={lucideStrokeWidth} className="w-full h-full" />}
+        </IconWrapper>;
       case 'search': return <IconWrapper><LucideSearch strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
       case 'menu': return <IconWrapper><LucideMenu strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
       case 'close': return <IconWrapper><LucideX strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
@@ -81,7 +101,21 @@ export default function StoreIcon({ name, theme, ...props }: StoreIconProps) {
       const UserIcon = user_icon === 'face' ? IconSet.FaceSmileIcon : IconSet.UserIcon;
       return <UserIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
     }
-    case 'share': return <IconSet.ShareIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
+    case 'share': {
+      const ShareIconComponent = share_icon === 'paper-plane' ? IconSet.PaperAirplaneIcon
+        : share_icon === 'arrow-curve' ? IconSet.ArrowUturnRightIcon
+        : share_icon === 'dots' ? IconSet.EllipsisHorizontalIcon
+        : share_icon === 'nodes' ? IconSet.ShareIcon
+        : IconSet.ArrowUpOnSquareIcon;
+      return <ShareIconComponent className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
+    }
+    case 'add': {
+      const AddIconComponent = add_icon === 'bag' ? IconSet.ShoppingBagIcon
+        : add_icon === 'cart' ? IconSet.ShoppingCartIcon
+        : add_icon === 'arrow' ? IconSet.ArrowRightIcon
+        : IconSet.PlusIcon;
+      return <AddIconComponent className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
+    }
     case 'search': return <IconSet.MagnifyingGlassIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
     case 'menu': return <IconSet.Bars3Icon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
     case 'close': return <IconSet.XMarkIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
