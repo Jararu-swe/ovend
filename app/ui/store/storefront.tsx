@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, ArrowRightIcon, CheckCircleIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
 import {
   formatCurrency,
@@ -269,7 +269,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = headerIconBg; }}
         title="Share this store"
       >
-        <ShareIcon className="h-5 w-5" />
+        <StoreIcon name="share" theme={activeTheme} className="h-5 w-5" />
       </button>
       {/* Cart button */}
       <button
@@ -285,7 +285,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = headerIconHoverBg; }}
         onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = headerIconBg; }}
       >
-        <ShoppingBagIcon className="h-5 w-5" />
+        <StoreIcon name="cart" theme={activeTheme} className="h-5 w-5" />
         {cartCount > 0 && (
           <span
             className="ml-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-black text-white shadow-sm ring-1 ring-white/20"
@@ -624,7 +624,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       }`}>
         {activeProducts.length === 0 ? (
           <div className="col-span-1 sm:col-span-2 py-16 px-6 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
-            <ShoppingBagIcon className="mx-auto h-12 w-12 text-slate-300 mb-4" />
+            <StoreIcon name="cart" theme={activeTheme} className="mx-auto h-12 w-12 text-slate-300 mb-4" />
             <h4 className="text-lg font-bold text-slate-700 mb-2">No products available yet</h4>
             <p className="text-sm text-slate-500 max-w-sm mx-auto">
               This store looks amazing, but the vendor is still adding their products to the shelves. Please check back later!
@@ -672,7 +672,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                   />
                 ) : (
                   <>
-                    <ShoppingBagIcon className="h-12 w-12" />
+                    <StoreIcon name="cart" theme={activeTheme} className="h-12 w-12" />
                     <span className="text-xs font-medium mt-1">No image</span>
                   </>
                 )}
@@ -914,7 +914,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           >
             <span>{cartCount} items in cart</span>
             <span className="flex items-center gap-2">
-              View Cart <ArrowRightIcon className="h-5 w-5" strokeWidth={2.5} />
+              View Cart <StoreIcon name="chevron-right" theme={activeTheme} className="h-5 w-5" />
             </span>
           </button>
         </footer>
@@ -937,7 +937,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
               style={{ ...btnProps.style, backgroundColor: activeTheme.primary_color }}
             >
               Checkout
-              <ArrowRightIcon className="h-4 w-4" strokeWidth={3} />
+              <StoreIcon name="chevron-right" theme={activeTheme} className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -953,14 +953,14 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-6 font-bold text-slate-900">
                   <h2 className="text-xl">Your Cart</h2>
                   <button onClick={() => setIsCartOpen(false)} className="rounded-full p-2 hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
-                    <XMarkIcon className="h-6 w-6" />
+                    <StoreIcon name="close" theme={activeTheme} className="h-6 w-6" />
                   </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-6 py-4">
                   {cart.length === 0 ? (
                     <div className="flex h-full flex-col items-center justify-center text-center">
-                      <ShoppingBagIcon className="h-12 w-12 text-slate-300" />
+                      <StoreIcon name="cart" theme={activeTheme} className="h-12 w-12 text-slate-300" />
                       <p className="mt-4 text-slate-500">Your cart is empty.</p>
                       <button 
                          onClick={() => setIsCartOpen(false)}
@@ -983,7 +983,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                               className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                               aria-label="Decrease quantity"
                             >
-                              <MinusIcon className="h-4 w-4" strokeWidth={2.5} />
+                              <StoreIcon name="minus" theme={activeTheme} className="h-4 w-4" />
                             </button>
                             <span className="w-4 text-center font-bold text-slate-900">{item.quantity}</span>
                             <button 
@@ -991,7 +991,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                               className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                               aria-label="Increase quantity"
                             >
-                              <PlusIcon className="h-4 w-4" strokeWidth={2.5} />
+                              <StoreIcon name="plus" theme={activeTheme} className="h-4 w-4" />
                             </button>
                           </div>
                         </li>
@@ -1053,7 +1053,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                         className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                         style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
                       >
-                        Checkout Order <ArrowRightIcon className="h-5 w-5" strokeWidth={2.5} />
+                        Checkout Order <StoreIcon name="chevron-right" theme={activeTheme} className="h-5 w-5" />
                       </button>
                     ) : (
                       <form onSubmit={handleCheckoutSubmit} className="space-y-4">

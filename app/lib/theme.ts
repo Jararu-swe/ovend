@@ -124,6 +124,8 @@ function normalizeTheme(row: any): StoreTheme {
     icon_weight: row.icon_weight ?? 'regular',
     cart_icon: row.cart_icon ?? 'shopping-bag',
     user_icon: row.user_icon ?? 'user',
+    share_icon: row.share_icon ?? 'arrow-square',
+    add_icon: row.add_icon ?? 'plus',
     custom_css: row.custom_css ?? null,
     sections: hasSections
       ? (typeof rawSections === 'string' ? rawSections : JSON.stringify(rawSections))

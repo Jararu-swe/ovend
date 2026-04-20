@@ -205,7 +205,7 @@ function FeaturedProducts({
                 </div>
               ) : (
                 <div className="aspect-square flex items-center justify-center bg-slate-50 text-slate-200">
-                  <ShoppingBagIcon className="h-10 w-10" />
+                  <StoreIcon name="cart" theme={theme} className="h-10 w-10" />
                 </div>
               )}
               <div className="p-3">

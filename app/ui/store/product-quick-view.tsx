@@ -3,13 +3,7 @@
 import { Product, StoreTheme } from '@/app/lib/definitions';
 import { FONT_MAP } from '@/app/lib/template-presets';
 import { formatCurrency } from '@/app/lib/utils';
-import {
-  XMarkIcon,
-  PlusIcon,
-  MinusIcon,
-  ShoppingBagIcon,
-  ShareIcon,
-} from '@heroicons/react/24/outline';
+import StoreIcon from '@/app/ui/store/storefront-icons';
 import Image from 'next/image';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
@@ -173,7 +167,7 @@ export default function ProductQuickView({
             onClick={handleClose}
             className="absolute top-3 right-3 z-[70] flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition hover:bg-black/40 shadow-md"
           >
-            <XMarkIcon className="h-5 w-5" />
+            <StoreIcon name="close" theme={theme} className="h-5 w-5" />
           </button>
 
           {/* Scrollable content */}
@@ -245,7 +239,7 @@ export default function ProductQuickView({
               </div>
             ) : (
               <div className="aspect-square flex items-center justify-center bg-slate-50 text-slate-200 relative">
-                 <ShoppingBagIcon className="h-20 w-20" />
+                 <StoreIcon name="cart" theme={theme} className="h-20 w-20" />
                  {product.category && (
                   <div className="absolute bottom-4 left-4 z-10">
                     <span className="rounded-full bg-white/90 backdrop-blur-sm px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 border border-slate-200">
@@ -275,7 +269,7 @@ export default function ProductQuickView({
                     className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
                     title="Share product"
                   >
-                    <ShareIcon className="h-4 w-4" />
+                    <StoreIcon name="share" theme={theme} className="h-4 w-4" />
                   </button>
                 </div>
                 <div className="mt-2 flex items-end gap-3">
@@ -403,7 +397,7 @@ export default function ProductQuickView({
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                       className="flex h-12 w-12 items-center justify-center text-slate-500 transition hover:bg-slate-50 active:bg-slate-100"
                     >
-                      <MinusIcon className="h-5 w-5" strokeWidth={2.5} />
+                      <StoreIcon name="minus" theme={theme} className="h-5 w-5" />
                     </button>
                     <span
                       className="flex h-12 w-16 items-center justify-center border-x text-base font-bold"
@@ -419,7 +413,7 @@ export default function ProductQuickView({
                       disabled={quantity >= stockLimit}
                       className="flex h-12 w-12 items-center justify-center text-slate-500 transition hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:bg-slate-50"
                     >
-                      <PlusIcon className="h-5 w-5" strokeWidth={2.5} />
+                      <StoreIcon name="plus" theme={theme} className="h-5 w-5" />
                     </button>
                   </div>
                   <div className="flex flex-col">
@@ -465,7 +459,7 @@ export default function ProductQuickView({
                 </>
               ) : (
                 <>
-                  <ShoppingBagIcon className="h-5 w-5" />
+                  <StoreIcon name="add" theme={theme} className="h-5 w-5" />
                   Add {quantity} to Cart — {formatCurrency(activePrice * quantity)}
                 </>
               )}

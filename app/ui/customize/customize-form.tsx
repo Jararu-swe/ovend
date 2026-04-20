@@ -7,6 +7,8 @@ import { useActionState } from 'react';
 import LogoDropzone from '@/app/ui/customize/logo-dropzone';
 import TemplatePicker from '@/app/ui/customize/template-picker';
 import SectionEditor from '@/app/ui/customize/section-editor';
+import ButtonsPanel from '@/app/ui/customize/panels/buttons-panel';
+import IconographyPanel from '@/app/ui/customize/panels/iconography-panel';
 import { Template, TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent } from '@/app/lib/template-presets';
 
 // ─── WCAG Contrast Ratio Calculator ──────────────────────────
@@ -69,7 +71,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
 
   const [state, formAction] = useActionState(updateThemeAction, { message: '', errors: {} });
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'templates' | 'colors' | 'layout' | 'sections' | 'brand' | 'advanced'>('templates');
+  const [activeTab, setActiveTab] = useState<'templates' | 'colors' | 'layout' | 'buttons' | 'icons' | 'sections' | 'brand' | 'advanced'>('templates');
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   // ─── Undo / Redo ────────────────────────────────────────────
@@ -130,6 +132,8 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
       'show_product_images', 'show_product_description',
       'show_logo', 'logo_position', 'logo_frame', 'logo_url',
       'button_style', 'button_radius', 'animation_style', 'custom_css',
+      'icon_library', 'icon_fill', 'icon_weight', 'cart_icon', 'user_icon', 'share_icon', 'add_icon',
+      'primary_gradient', 'glass_effect', 'layout_width', 'show_mobile_checkout_bar',
     ];
     return keys.some((k) => String(localTheme[k] ?? '') !== String(theme[k] ?? ''));
   }, [localTheme, theme]);
@@ -171,6 +175,18 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
       spacing: t.spacing,
       header_style: t.header_style,
       image_aspect_ratio: t.image_aspect_ratio,
+      // Iconography & Advanced
+      icon_library: t.icon_library ?? prev.icon_library ?? 'heroicons',
+      icon_fill: t.icon_fill ?? prev.icon_fill ?? 'outline',
+      icon_weight: t.icon_weight ?? prev.icon_weight ?? 'regular',
+      cart_icon: t.cart_icon ?? prev.cart_icon ?? 'shopping-bag',
+      user_icon: t.user_icon ?? prev.user_icon ?? 'user',
+      share_icon: t.share_icon ?? prev.share_icon ?? 'arrow-square',
+      add_icon: t.add_icon ?? prev.add_icon ?? 'plus',
+      primary_gradient: t.primary_gradient ?? prev.primary_gradient ?? null,
+      glass_effect: t.glass_effect ?? prev.glass_effect ?? false,
+      layout_width: t.layout_width ?? prev.layout_width ?? 'standard',
+      show_mobile_checkout_bar: t.show_mobile_checkout_bar ?? prev.show_mobile_checkout_bar ?? false,
     }));
     setSections(template.sections);
     setSectionContent(template.sectionContent);
@@ -196,6 +212,8 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
     { id: 'templates' as const, label: '🎨 Templates' },
     { id: 'colors' as const, label: '🖌️ Colors' },
     { id: 'layout' as const, label: '📐 Layout' },
+    { id: 'buttons' as const, label: '🔘 Buttons' },
+    { id: 'icons' as const, label: '✨ Icons' },
     { id: 'sections' as const, label: '📦 Sections' },
     { id: 'brand' as const, label: '🏷️ Brand' },
     { id: 'advanced' as const, label: '⚙️ Advanced' },
@@ -211,6 +229,21 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
       <input type="hidden" name="card_shadow" value={localTheme.card_shadow} />
       <input type="hidden" name="sections" value={JSON.stringify(sections)} />
       <input type="hidden" name="section_content" value={JSON.stringify(sectionContent)} />
+      
+      {/* Iconography */}
+      <input type="hidden" name="icon_library" value={localTheme.icon_library ?? 'heroicons'} />
+      <input type="hidden" name="icon_fill" value={localTheme.icon_fill ?? 'outline'} />
+      <input type="hidden" name="icon_weight" value={localTheme.icon_weight ?? 'regular'} />
+      <input type="hidden" name="cart_icon" value={localTheme.cart_icon ?? 'shopping-bag'} />
+      <input type="hidden" name="user_icon" value={localTheme.user_icon ?? 'user'} />
+      <input type="hidden" name="share_icon" value={localTheme.share_icon ?? 'arrow-square'} />
+      <input type="hidden" name="add_icon" value={localTheme.add_icon ?? 'plus'} />
+
+      {/* Advanced Layout */}
+      <input type="hidden" name="primary_gradient" value={localTheme.primary_gradient ?? ''} />
+      <input type="hidden" name="glass_effect" value={localTheme.glass_effect ? 'true' : 'false'} />
+      <input type="hidden" name="layout_width" value={localTheme.layout_width ?? 'standard'} />
+      <input type="hidden" name="show_mobile_checkout_bar" value={localTheme.show_mobile_checkout_bar ? 'true' : 'false'} />
 
       {/* Existing form fields (for backward compat) */}
       <input type="hidden" name="primary_color" value={localTheme.primary_color} />
@@ -393,33 +426,6 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm mt-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-4">Interaction & Buttons</h2>
-                <div className="space-y-4">
-                  <SelectField label="Button Style" value={localTheme.button_style} onChange={(v) => updateLocalTheme('button_style', v as any)}
-                    options={[
-                      { value: 'solid', label: 'Solid' },
-                      { value: 'outline', label: 'Outline' },
-                      { value: 'soft', label: 'Soft' },
-                      { value: 'glass', label: 'Glassmorphism' },
-                    ]}
-                  />
-                  <SelectField label="Button Radius" value={localTheme.button_radius} onChange={(v) => updateLocalTheme('button_radius', v as any)}
-                    options={[
-                      { value: 'sharp', label: 'Sharp' },
-                      { value: 'rounded', label: 'Rounded' },
-                      { value: 'pill', label: 'Pill' },
-                    ]}
-                  />
-                  <SelectField label="Micro-Animations" value={localTheme.animation_style} onChange={(v) => updateLocalTheme('animation_style', v as any)}
-                    options={[
-                      { value: 'none', label: 'None' },
-                      { value: 'fade', label: 'Soft Fade' },
-                      { value: 'slide', label: 'Slide In' },
-                      { value: 'zoom', label: 'Zoom' },
-                      { value: 'bounce', label: 'Playful Bounce' },
-                    ]}
-                  />
                 </div>
               </div>
 
@@ -440,6 +446,34 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                   />
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ─── Buttons Tab ─── */}
+          {activeTab === 'buttons' && (
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+               <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+                <h2 className="text-lg font-bold text-slate-900">Interaction & Buttons</h2>
+                <p className="text-xs text-slate-500">Fine-tune how your customers interact with call-to-actions.</p>
+              </div>
+              <ButtonsPanel
+                theme={localTheme}
+                onChange={updateLocalTheme}
+              />
+            </div>
+          )}
+
+          {/* ─── Icons Tab ─── */}
+          {activeTab === 'icons' && (
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4">
+                <h2 className="text-lg font-bold text-slate-900">Iconography</h2>
+                <p className="text-xs text-slate-500">Choose your icon library and refine the visual weight of your UI.</p>
+              </div>
+              <IconographyPanel
+                theme={localTheme}
+                onChange={updateLocalTheme}
+              />
             </div>
           )}
 
@@ -538,6 +572,15 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                         heading_color: '#0f172a',
                         border_color: '#e2e8f0',
                         card_shadow: 'soft',
+                        button_style: 'solid',
+                        button_radius: 'rounded',
+                        icon_library: 'heroicons',
+                        icon_fill: 'outline',
+                        icon_weight: 'regular',
+                        cart_icon: 'shopping-bag',
+                        user_icon: 'user',
+                        share_icon: 'arrow-square',
+                        add_icon: 'plus',
                         custom_css: '',
                       } as StoreTheme);
                       setSections(getDefaultSections());

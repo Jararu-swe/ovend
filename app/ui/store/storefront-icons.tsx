@@ -16,6 +16,8 @@ import {
   Forward as LucideForward,
   MoreHorizontal as LucideMoreHorizontal,
   Plus as LucidePlus,
+  Minus as LucideMinus,
+  ChevronRight as LucideChevronRight,
   ArrowRight as LucideArrowRight,
   Search as LucideSearch,
   Menu as LucideMenu,
@@ -24,7 +26,7 @@ import {
 import { StoreTheme } from '@/app/lib/definitions';
 
 interface StoreIconProps extends React.SVGProps<SVGSVGElement> {
-  name: 'cart' | 'user' | 'share' | 'menu' | 'close' | 'search' | 'add';
+  name: 'cart' | 'user' | 'share' | 'menu' | 'close' | 'search' | 'add' | 'plus' | 'minus' | 'chevron-right';
   theme: StoreTheme;
 }
 
@@ -79,6 +81,9 @@ export default function StoreIcon({ name, theme, ...props }: StoreIconProps) {
       case 'search': return <IconWrapper><LucideSearch strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
       case 'menu': return <IconWrapper><LucideMenu strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
       case 'close': return <IconWrapper><LucideX strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
+      case 'plus': return <IconWrapper><LucidePlus strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
+      case 'minus': return <IconWrapper><LucideMinus strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
+      case 'chevron-right': return <IconWrapper><LucideChevronRight strokeWidth={lucideStrokeWidth} className="w-full h-full" /></IconWrapper>;
     }
   }
 
@@ -119,6 +124,9 @@ export default function StoreIcon({ name, theme, ...props }: StoreIconProps) {
     case 'search': return <IconSet.MagnifyingGlassIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
     case 'menu': return <IconSet.Bars3Icon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
     case 'close': return <IconSet.XMarkIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
+    case 'plus': return <IconSet.PlusIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
+    case 'minus': return <IconSet.MinusIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
+    case 'chevron-right': return <IconSet.ChevronRightIcon className={`w-full h-full ${heroStrokeClass}`} {...props as any} />;
   }
 
   return null;

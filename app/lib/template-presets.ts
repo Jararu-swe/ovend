@@ -57,6 +57,13 @@ export type Template = {
     show_mobile_checkout_bar: boolean;
     logo_position?: 'left' | 'center' | 'right';
     logo_frame?: 'plain' | 'none' | 'profile' | 'rounded' | 'minimal';
+    icon_library?: 'heroicons' | 'lucide';
+    icon_fill?: 'solid' | 'outline';
+    icon_weight?: 'light' | 'regular' | 'bold';
+    cart_icon?: 'shopping-bag' | 'shopping-cart' | 'basket' | 'tote';
+    user_icon?: 'user' | 'face' | 'smile';
+    share_icon?: 'dots' | 'paper-plane' | 'arrow-curve' | 'arrow-square' | 'nodes';
+    add_icon?: 'plus' | 'bag' | 'cart' | 'arrow';
   };
   sections: TemplateSection[];
   sectionContent: TemplateSectionContent;
@@ -296,6 +303,13 @@ export const TEMPLATES: Template[] = [
       show_mobile_checkout_bar: true,
       logo_position: 'center',
       logo_frame: 'minimal',
+      icon_library: 'lucide',
+      icon_fill: 'outline',
+      icon_weight: 'light',
+      cart_icon: 'shopping-bag',
+      user_icon: 'user',
+      share_icon: 'paper-plane',
+      add_icon: 'arrow',
     },
     sections: [
       { id: 'hero-banner',       enabled: true,  order: 0 },
@@ -698,6 +712,13 @@ export const TEMPLATES: Template[] = [
       show_mobile_checkout_bar: true,
       logo_position: 'left',
       logo_frame: 'none',
+      icon_library: 'lucide',
+      icon_fill: 'outline',
+      icon_weight: 'regular',
+      cart_icon: 'tote',
+      user_icon: 'face',
+      share_icon: 'dots',
+      add_icon: 'plus',
     },
     sections: [
       { id: 'hero-banner',       enabled: true,  order: 0 },
