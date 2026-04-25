@@ -29,6 +29,7 @@ export async function ensureNewColumns() {
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS user_icon VARCHAR(20) DEFAULT 'user'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS share_icon VARCHAR(20) DEFAULT 'arrow-square'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS add_icon VARCHAR(20) DEFAULT 'plus'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS draft_config JSONB DEFAULT NULL`,
       ];
       try {
         for (const stmt of alters) {
@@ -133,6 +134,7 @@ function normalizeTheme(row: any): StoreTheme {
     section_content: hasContent
       ? (typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent))
       : JSON.stringify(getDefaultSectionContent()),
+    draft_config: row.draft_config ?? null,
   };
 }
 

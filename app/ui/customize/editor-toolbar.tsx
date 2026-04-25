@@ -14,6 +14,7 @@ interface EditorToolbarProps {
   hasUnsavedChanges: boolean;
   isSaving: boolean;
   onSave: () => void;
+  onSaveDraft: () => void;
   statusMessage?: string;
 }
 
@@ -27,6 +28,7 @@ export default function EditorToolbar({
   hasUnsavedChanges,
   isSaving,
   onSave,
+  onSaveDraft,
   statusMessage,
 }: EditorToolbarProps) {
   const viewports: { id: Viewport; icon: React.ReactNode; label: string }[] = [
@@ -157,28 +159,42 @@ export default function EditorToolbar({
             )}
           </div>
 
-          {/* Primary Save Button */}
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={isSaving || !hasUnsavedChanges}
-            className={`group relative overflow-hidden rounded-xl h-10 px-6 text-xs font-black uppercase tracking-widest transition-all duration-500 active:scale-95 disabled:pointer-events-none ${
-              hasUnsavedChanges
-                ? 'bg-slate-900 text-white shadow-lg shadow-slate-200 hover:bg-emerald-600 hover:shadow-emerald-100'
-                : 'bg-slate-100 text-slate-400'
-            }`}
-          >
-            <span className="relative z-10">
-              {isSaving ? (
-                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                'Publish'
-              )}
-            </span>
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onSaveDraft}
+              disabled={isSaving || !hasUnsavedChanges}
+              className={`hidden sm:flex h-10 items-center justify-center rounded-xl px-5 text-xs font-bold transition-all active:scale-95 disabled:pointer-events-none ${
+                hasUnsavedChanges
+                  ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  : 'bg-slate-50 text-slate-300'
+              }`}
+            >
+              Save Draft
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={isSaving || !hasUnsavedChanges}
+              className={`group relative overflow-hidden rounded-xl h-10 px-6 text-xs font-black uppercase tracking-widest transition-all duration-500 active:scale-95 disabled:pointer-events-none ${
+                hasUnsavedChanges
+                  ? 'bg-slate-900 text-white shadow-lg shadow-slate-200 hover:bg-emerald-600 hover:shadow-emerald-100'
+                  : 'bg-slate-100 text-slate-400'
+              }`}
+            >
+              <span className="relative z-10">
+                {isSaving ? (
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  'Publish'
+                )}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

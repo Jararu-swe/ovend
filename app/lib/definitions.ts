@@ -247,4 +247,5 @@ export type StoreTheme = {
 
   created_at: string;
   updated_at: string;
+  draft_config: string | null;
 };

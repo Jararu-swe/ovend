@@ -23,23 +23,34 @@ function safeParse<T>(json: string | null | undefined, fallback: T): T {
 }
 
 export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; vendorSlug: string }) {
+  const draftData = useMemo(() => {
+    if (!theme.draft_config) return null;
+    try {
+      return typeof theme.draft_config === 'string' ? JSON.parse(theme.draft_config) : theme.draft_config;
+    } catch (e) {
+      console.error('Failed to parse draft_config', e);
+      return null;
+    }
+  }, [theme.draft_config]);
+
   const [localTheme, setLocalTheme] = useState<StoreTheme>(() => ({
     ...theme,
-    template_id: theme.template_id ?? 'fresh-market',
-    logo_position: theme.logo_position ?? 'left',
-    surface_color: theme.surface_color ?? '#ffffff',
-    heading_color: theme.heading_color ?? '#0f172a',
-    border_color: theme.border_color ?? '#e2e8f0',
-    card_shadow: theme.card_shadow ?? 'soft',
-    primary_gradient: theme.primary_gradient ?? null,
-    glass_effect: theme.glass_effect ?? false,
+    ...(draftData || {}),
+    template_id: draftData?.template_id ?? theme.template_id ?? 'fresh-market',
+    logo_position: draftData?.logo_position ?? theme.logo_position ?? 'left',
+    surface_color: draftData?.surface_color ?? theme.surface_color ?? '#ffffff',
+    heading_color: draftData?.heading_color ?? theme.heading_color ?? '#0f172a',
+    border_color: draftData?.border_color ?? theme.border_color ?? '#e2e8f0',
+    card_shadow: draftData?.card_shadow ?? theme.card_shadow ?? 'soft',
+    primary_gradient: draftData?.primary_gradient ?? theme.primary_gradient ?? null,
+    glass_effect: draftData?.glass_effect ?? theme.glass_effect ?? false,
   }));
 
   const [sections, setSections] = useState<TemplateSection[]>(() =>
-    safeParse(theme.sections, getDefaultSections())
+    safeParse(draftData?.sections ?? theme.sections, getDefaultSections())
   );
   const [sectionContent, setSectionContent] = useState<TemplateSectionContent>(() =>
-    safeParse(theme.section_content, getDefaultSectionContent())
+    safeParse(draftData?.section_content ?? theme.section_content, getDefaultSectionContent())
   );
 
   const [state, formAction] = useActionState(updateThemeAction, { message: '', errors: {} });
@@ -110,13 +121,22 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
       'button_style', 'button_radius', 'animation_style', 'custom_css',
       'primary_gradient', 'glass_effect',
     ];
-    return keys.some((k) => String(localTheme[k] ?? '') !== String(theme[k] ?? ''));
-  }, [localTheme, theme]);
+    const base = draftData || theme;
+    const baseSections = draftData?.sections ?? theme.sections;
+    const baseContent = draftData?.section_content ?? theme.section_content;
 
-  const handleSave = async () => {
-    if (!formRef.current || !hasUnsavedChanges) return;
+    const themeChanged = keys.some((k) => String(localTheme[k] ?? '') !== String(base[k] ?? ''));
+    const sectionsChanged = JSON.stringify(sections) !== (typeof baseSections === 'string' ? baseSections : JSON.stringify(baseSections));
+    const contentChanged = JSON.stringify(sectionContent) !== (typeof baseContent === 'string' ? baseContent : JSON.stringify(baseContent));
+
+    return themeChanged || sectionsChanged || contentChanged;
+  }, [localTheme, theme, draftData, sections, sectionContent]);
+
+  const handleSave = async (isPublish: boolean = true) => {
+    if (!formRef.current) return;
     setIsSaving(true);
     const formData = new FormData(formRef.current);
+    formData.set('is_publish', isPublish ? 'true' : 'false');
     await formAction(formData);
     setIsSaving(false);
   };
@@ -241,7 +261,8 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
         onRedo={redo}
         hasUnsavedChanges={hasUnsavedChanges}
         isSaving={isSaving}
-        onSave={handleSave}
+        onSave={() => handleSave(true)}
+        onSaveDraft={() => handleSave(false)}
         statusMessage={state.message}
       />
 

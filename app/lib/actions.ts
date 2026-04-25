@@ -93,6 +93,7 @@ const ThemeSchema = z.object({
   add_icon: z.enum(['plus', 'bag', 'cart', 'arrow']).optional().default('plus'),
   sections: z.string().optional(),        // JSON string
   section_content: z.string().optional(),  // JSON string
+  is_publish: z.preprocess((v) => v === 'true' || v === true, z.boolean()).optional().default(true),
 });
 
 export type State = {
@@ -609,7 +610,7 @@ export async function updateThemeAction(
       glass_effect: getBool('glass_effect'),
       layout_width: getV('layout_width'),
       show_mobile_checkout_bar: getBool('show_mobile_checkout_bar'),
-      show_logo: formData.get('show_logo'), // z.preprocess handles this
+      show_logo: formData.get('show_logo'),
       logo_position: getV('logo_position'),
       logo_frame: getV('logo_frame'),
       logo_url: getV('logo_url'),
@@ -623,6 +624,7 @@ export async function updateThemeAction(
       custom_css: getV('custom_css'),
       sections: getV('sections'),
       section_content: getV('section_content'),
+      is_publish: getBool('is_publish'),
     });
 
     if (!parsed.success) {
@@ -630,56 +632,70 @@ export async function updateThemeAction(
       return { message: 'Invalid customization values submitted.', errors: {} };
     }
 
-    const themeData = parsed.data;
+    const { is_publish, ...themeData } = parsed.data;
 
-    await sql`
-      UPDATE store_theme
-      SET 
-        template_id = ${themeData.template_id ?? 'fresh-market'},
-        primary_color = ${themeData.primary_color},
-        secondary_color = ${themeData.secondary_color},
-        background_color = ${themeData.background_color},
-        text_color = ${themeData.text_color},
-        accent_color = ${themeData.accent_color},
-        surface_color = ${themeData.surface_color ?? '#ffffff'},
-        heading_color = ${themeData.heading_color ?? '#0f172a'},
-        border_color = ${themeData.border_color ?? '#e2e8f0'},
-        layout_style = ${themeData.layout_style},
-        card_style = ${themeData.card_style},
-        border_radius = ${themeData.border_radius},
-        card_shadow = ${themeData.card_shadow ?? 'soft'},
-        button_style = ${themeData.button_style ?? 'solid'},
-        button_radius = ${themeData.button_radius ?? 'rounded'},
-        animation_style = ${themeData.animation_style ?? 'fade'},
-        font_family = ${themeData.font_family},
-        heading_font = ${themeData.heading_font},
-        font_size = ${themeData.font_size},
-        header_style = ${themeData.header_style},
-        show_product_images = ${themeData.show_product_images},
-        show_product_description = ${themeData.show_product_description},
-        image_aspect_ratio = ${themeData.image_aspect_ratio},
-        spacing = ${themeData.spacing},
-        show_logo = ${themeData.show_logo},
-        logo_position = ${themeData.logo_position},
-        logo_frame = ${themeData.logo_frame},
-        logo_url = ${themeData.logo_url},
-        icon_library = ${themeData.icon_library},
-        icon_fill = ${themeData.icon_fill},
-        icon_weight = ${themeData.icon_weight},
-        cart_icon = ${themeData.cart_icon},
-        user_icon = ${themeData.user_icon},
-        share_icon = ${themeData.share_icon},
-        add_icon = ${themeData.add_icon},
-        custom_css = ${themeData.custom_css ?? null},
-        primary_gradient = ${themeData.primary_gradient ?? null},
-        glass_effect = ${themeData.glass_effect ?? false},
-        layout_width = ${themeData.layout_width ?? 'standard'},
-        show_mobile_checkout_bar = ${themeData.show_mobile_checkout_bar ?? false},
-        sections = ${themeData.sections ?? '[]'},
-        section_content = ${themeData.section_content ?? '{}'},
-        updated_at = CURRENT_TIMESTAMP
-      WHERE vendor_id = ${session.user.id}
-    `;
+    if (is_publish) {
+      // PUBLISH: Update all columns and clear draft_config
+      await sql`
+        UPDATE store_theme
+        SET 
+          template_id = ${themeData.template_id ?? 'fresh-market'},
+          primary_color = ${themeData.primary_color},
+          secondary_color = ${themeData.secondary_color},
+          background_color = ${themeData.background_color},
+          text_color = ${themeData.text_color},
+          accent_color = ${themeData.accent_color},
+          surface_color = ${themeData.surface_color ?? '#ffffff'},
+          heading_color = ${themeData.heading_color ?? '#0f172a'},
+          border_color = ${themeData.border_color ?? '#e2e8f0'},
+          layout_style = ${themeData.layout_style},
+          card_style = ${themeData.card_style},
+          border_radius = ${themeData.border_radius},
+          card_shadow = ${themeData.card_shadow ?? 'soft'},
+          button_style = ${themeData.button_style ?? 'solid'},
+          button_radius = ${themeData.button_radius ?? 'rounded'},
+          animation_style = ${themeData.animation_style ?? 'fade'},
+          font_family = ${themeData.font_family},
+          heading_font = ${themeData.heading_font},
+          font_size = ${themeData.font_size},
+          header_style = ${themeData.header_style},
+          show_product_images = ${themeData.show_product_images},
+          show_product_description = ${themeData.show_product_description},
+          image_aspect_ratio = ${themeData.image_aspect_ratio},
+          spacing = ${themeData.spacing},
+          show_logo = ${themeData.show_logo},
+          logo_position = ${themeData.logo_position},
+          logo_frame = ${themeData.logo_frame},
+          logo_url = ${themeData.logo_url},
+          icon_library = ${themeData.icon_library},
+          icon_fill = ${themeData.icon_fill},
+          icon_weight = ${themeData.icon_weight},
+          cart_icon = ${themeData.cart_icon},
+          user_icon = ${themeData.user_icon},
+          share_icon = ${themeData.share_icon},
+          add_icon = ${themeData.add_icon},
+          custom_css = ${themeData.custom_css ?? null},
+          primary_gradient = ${themeData.primary_gradient ?? null},
+          glass_effect = ${themeData.glass_effect ?? false},
+          layout_width = ${themeData.layout_width ?? 'standard'},
+          show_mobile_checkout_bar = ${themeData.show_mobile_checkout_bar ?? false},
+          sections = ${themeData.sections ?? '[]'},
+          section_content = ${themeData.section_content ?? '{}'},
+          draft_config = NULL,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE vendor_id = ${session.user.id}
+      `;
+    } else {
+      // SAVE DRAFT: Only update draft_config
+      const draftConfig = JSON.stringify(themeData);
+      await sql`
+        UPDATE store_theme
+        SET 
+          draft_config = ${draftConfig},
+          updated_at = CURRENT_TIMESTAMP
+        WHERE vendor_id = ${session.user.id}
+      `;
+    }
 
     revalidatePath('/dashboard/customize');
     const [slugRow] = await sql<{ store_slug: string }[]>`
@@ -689,7 +705,7 @@ export async function updateThemeAction(
       revalidatePath(`/s/${slugRow.store_slug}`);
     }
 
-    return { message: 'Theme updated successfully!', errors: {} };
+    return { message: is_publish ? 'Theme published successfully!' : 'Draft saved successfully!', errors: {} };
   } catch (error) {
     console.error('Database Error:', error);
     return { message: 'Database Error: Failed to update theme.' };
