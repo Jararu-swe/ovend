@@ -51,28 +51,72 @@ function safeParse<T>(json: string | null | undefined, fallback: T): T {
 }
 
 export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme; vendorSlug: string }) {
-  const [localTheme, setLocalTheme] = useState<StoreTheme>(() => ({
-    ...theme,
-    template_id: theme.template_id ?? 'fresh-market',
-    logo_position: theme.logo_position ?? 'left',
-    logo_frame: theme.logo_frame ?? 'profile',
-    surface_color: theme.surface_color ?? '#ffffff',
-    heading_color: theme.heading_color ?? '#0f172a',
-    border_color: theme.border_color ?? '#e2e8f0',
-    card_shadow: theme.card_shadow ?? 'soft',
-  }));
+  const [localTheme, setLocalTheme] = useState<StoreTheme>(() => {
+    // Try to load from localStorage first
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`ovend_theme_draft_${vendorSlug}`);
+      if (saved) {
+        try {
+          const draft = JSON.parse(saved);
+          return draft.theme;
+        } catch (e) {
+          console.error('Failed to parse theme draft', e);
+        }
+      }
+    }
+    return {
+      ...theme,
+      template_id: theme.template_id ?? 'fresh-market',
+      logo_position: theme.logo_position ?? 'left',
+      logo_frame: theme.logo_frame ?? 'profile',
+      surface_color: theme.surface_color ?? '#ffffff',
+      heading_color: theme.heading_color ?? '#0f172a',
+      border_color: theme.border_color ?? '#e2e8f0',
+      card_shadow: theme.card_shadow ?? 'soft',
+    };
+  });
 
-  const [sections, setSections] = useState<TemplateSection[]>(() =>
-    safeParse(theme.sections, getDefaultSections())
-  );
-  const [sectionContent, setSectionContent] = useState<TemplateSectionContent>(() =>
-    safeParse(theme.section_content, getDefaultSectionContent())
-  );
+  const [sections, setSections] = useState<TemplateSection[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`ovend_theme_draft_${vendorSlug}`);
+      if (saved) {
+        try {
+          const draft = JSON.parse(saved);
+          if (draft.sections) return draft.sections;
+        } catch (e) {}
+      }
+    }
+    return safeParse(theme.sections, getDefaultSections());
+  });
+
+  const [sectionContent, setSectionContent] = useState<TemplateSectionContent>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`ovend_theme_draft_${vendorSlug}`);
+      if (saved) {
+        try {
+          const draft = JSON.parse(saved);
+          if (draft.sectionContent) return draft.sectionContent;
+        } catch (e) {}
+      }
+    }
+    return safeParse(theme.section_content, getDefaultSectionContent());
+  });
 
   const [state, formAction] = useActionState(updateThemeAction, { message: '', errors: {} });
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'templates' | 'colors' | 'layout' | 'buttons' | 'icons' | 'sections' | 'brand' | 'advanced'>('templates');
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
+
+  // ─── Auto-save to LocalStorage ──────────────────────────────
+  useEffect(() => {
+    const draft = {
+      theme: localTheme,
+      sections,
+      sectionContent,
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(`ovend_theme_draft_${vendorSlug}`, JSON.stringify(draft));
+  }, [localTheme, sections, sectionContent, vendorSlug]);
 
   // ─── Undo / Redo ────────────────────────────────────────────
   const MAX_HISTORY = 20;
@@ -137,6 +181,13 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
     ];
     return keys.some((k) => String(localTheme[k] ?? '') !== String(theme[k] ?? ''));
   }, [localTheme, theme]);
+
+  // Clear localStorage on successful save
+  useEffect(() => {
+    if (state.message && (state.message.toLowerCase().includes('success'))) {
+      localStorage.removeItem(`ovend_theme_draft_${vendorSlug}`);
+    }
+  }, [state.message, vendorSlug]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

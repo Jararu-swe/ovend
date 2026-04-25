@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Template, TEMPLATES, TEMPLATE_CATEGORIES, FONT_MAP } from '@/app/lib/template-presets';
 
 interface TemplatePickerProps {
@@ -84,11 +84,23 @@ function ThemePreview({ template, isActive }: { template: Template; isActive: bo
 }
 
 export default function TemplatePicker({ activeTemplateId, onSelect }: TemplatePickerProps) {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const activeRef = useRef<HTMLButtonElement>(null);
+  const [activeCategory, setActiveCategory] = useState(() => {
+    // Default to the category of the active theme if it exists, otherwise 'all'
+    const activeTemplate = TEMPLATES.find(t => t.id === activeTemplateId);
+    return activeTemplate?.category || 'all';
+  });
 
   const filtered = activeCategory === 'all'
     ? TEMPLATES
     : TEMPLATES.filter((t) => t.category === activeCategory);
+
+  // Auto-scroll to the active theme on mount and when category changes
+  useEffect(() => {
+    if (activeRef.current) {
+      activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [activeCategory]);
 
   return (
     <div className="p-3 space-y-3">
@@ -117,6 +129,7 @@ export default function TemplatePicker({ activeTemplateId, onSelect }: TemplateP
           return (
             <button
               key={tpl.id}
+              ref={isActive ? activeRef : null}
               type="button"
               onClick={() => onSelect(tpl)}
               className={`group w-full overflow-hidden text-left transition-all ${
