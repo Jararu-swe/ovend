@@ -201,7 +201,7 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
     if (!vendorSlug || !previewFrameRef.current?.contentWindow) return;
     previewFrameRef.current.contentWindow.postMessage(
       {
-        type: 'OVEND_PREVIEW_THEME_UPDATE',
+        type: 'VENDLE_PREVIEW_THEME_UPDATE',
         payload: {
           ...localTheme,
           sections: JSON.stringify(sections),

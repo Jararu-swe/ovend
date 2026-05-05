@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document covers the implementation of post-MVP features for Ovend:
+This document covers the implementation of post-MVP features for Vendle:
 1. ✅ Enhanced WhatsApp Deep-Linking
 2. ✅ Payment Integration (Paystack)
 3. ✅ Discount Codes System
@@ -27,7 +27,7 @@ Enhanced the WhatsApp message template to include detailed order information.
 ```
 Hello *Amaka's Fashion*! 👋
 
-I just placed an order on your Ovend store:
+I just placed an order on your Vendle store:
 
 📦 *Order ID:* a1b2c3d4
 

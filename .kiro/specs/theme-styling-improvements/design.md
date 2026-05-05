@@ -2,7 +2,7 @@
 
 ## Overview
 
-This feature enhances the visual styling system for the 8 existing theme templates in the Ovend MVP storefront. The current implementation has several styling inconsistencies: hardcoded red headings throughout sections, hero banners not respecting theme heading colors, basic product cards lacking theme-specific personality, and unprofessional emoji usage in section headers.
+This feature enhances the visual styling system for the 8 existing theme templates in the Vendle MVP storefront. The current implementation has several styling inconsistencies: hardcoded red headings throughout sections, hero banners not respecting theme heading colors, basic product cards lacking theme-specific personality, and unprofessional emoji usage in section headers.
 
 The design addresses these issues by systematically applying theme properties (`heading_color`, `heading_font`, `card_style`, `button_style`, etc.) across all storefront sections. Each theme will maintain its distinctive personality while achieving professional polish comparable to Shopify themes.
 

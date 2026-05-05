@@ -39,7 +39,7 @@ export default function ImageUpload({ value, onChange, onRemove }: ImageUploadPr
         </div>
       ) : (
         <CldUploadWidget
-          uploadPreset="ovend_products"
+          uploadPreset="vendle_products"
           onUpload={onUpload}
           onOpen={() => setIsUploading(true)}
           onClose={() => setIsUploading(false)}

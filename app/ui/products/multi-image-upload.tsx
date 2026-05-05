@@ -43,7 +43,7 @@ export default function MultiImageUpload({ value, onChange, onRemove, maxImages 
         
         {value.length < maxImages && (
           <CldUploadWidget
-            uploadPreset="ovend_products"
+            uploadPreset="vendle_products"
             onUpload={onUpload}
             onOpen={() => setIsUploading(true)}
             onClose={() => setIsUploading(false)}

@@ -1,7 +1,7 @@
 # WCAG AA Contrast Verification Report
 
 ## Overview
-This document verifies WCAG AA contrast compliance (4.5:1 ratio for normal text, 3:1 for large text) across all 8 themes in the Ovend storefront.
+This document verifies WCAG AA contrast compliance (4.5:1 ratio for normal text, 3:1 for large text) across all 8 themes in the Vendle storefront.
 
 **Verification Date**: December 2024  
 **Standard**: WCAG 2.1 Level AA  

@@ -1,6 +1,6 @@
-# Ovend - Digital Storefront for Nigerian Vendors
+# Vendle - Digital Storefront for Nigerian Vendors
 
-Ovend is a mobile-responsive web platform where Nigerian vendors can quickly create a simple storefront, share one link across social platforms (WhatsApp, Instagram, TikTok), and manage orders from a clean, mobile-first dashboard.
+Vendle is a mobile-responsive web platform where Nigerian vendors can quickly create a simple storefront, share one link across social platforms (WhatsApp, Instagram, TikTok), and manage orders from a clean, mobile-first dashboard.
 
 ## 🚀 Quick Start
 
@@ -68,7 +68,7 @@ Ovend is a mobile-responsive web platform where Nigerian vendors can quickly cre
 ## 📁 Project Structure
 
 ```
-ovend/
+vendle/
 ├── app/
 │   ├── api/              # API routes
 │   ├── dashboard/        # Vendor dashboard pages

@@ -1,18 +1,18 @@
 \\\\---
-name: ovend-mvp-product-and-tech-plan
-overview: High-level product and technical plan to build Ovend, a digital storefront platform for Nigerian small and medium vendors, starting as a responsive web app MVP.
+name: vendle-mvp-product-and-tech-plan
+overview: High-level product and technical plan to build Vendle, a digital storefront platform for Nigerian small and medium vendors, starting as a responsive web app MVP.
 todos: []
 isProject: false
 ---
 
 ### 1. Goal
 
-Build **Ovend**, a mobile‑responsive web platform where Nigerian vendors can quickly create a simple storefront, share one link across social platforms (WhatsApp, Instagram, TikTok), and manage basic orders and payments from a clean, mobile‑first dashboard.
+Build **Vendle**, a mobile‑responsive web platform where Nigerian vendors can quickly create a simple storefront, share one link across social platforms (WhatsApp, Instagram, TikTok), and manage basic orders and payments from a clean, mobile‑first dashboard.
 
 The MVP should feel:
 
 - **Trustworthy** (clear branding, clean UI, no clutter)
-- **Fast to understand** (what Ovend does in a few seconds)w
+- **Fast to understand** (what Vendle does in a few seconds)w
 - **Fast to try** (low-friction onboarding and setup)
 
 ---
@@ -39,7 +39,7 @@ Non-goals for MVP:
 **3.1. Public landing + marketing layer**
 
 - Hero section (already implemented, Shopify‑inspired) clearly stating:
-  - What Ovend is.
+  - What Vendle is.
   - Who it’s for (Nigerian vendors).
   - Primary benefit (turn chats into storefront orders).
 - Lightweight explanation of:
@@ -122,7 +122,7 @@ Core pages (mostly exist via Next.js dashboard starter and can be adapted):
   - App Router.
   - Tailwind.
   - Typescript.
-- Implement **marketing landing page** (Shopify‑like, white background, Ovend branding).
+- Implement **marketing landing page** (Shopify‑like, white background, Vendle branding).
 - Add top‑nav with `brandname.svg` logo and clear CTAs.
 
 **Phase 2 – Auth + dashboard shell**

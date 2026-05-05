@@ -39,7 +39,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
       {/* Logo */}
       <div className="mb-8 flex justify-center">
         <Link href="/">
-          <Image src="/brandname.svg" alt="Ovend" width={120} height={38} priority />
+          <Image src="/brandname.svg" alt="Vendle" width={120} height={38} priority />
         </Link>
       </div>
 
@@ -65,7 +65,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               <div className="inline-flex items-center justify-center rounded-full bg-emerald-100 p-4 mb-4">
                 <BuildingStorefrontIcon className="h-8 w-8 text-emerald-600" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">Welcome to Ovend, {user.name.split(' ')[0]}! 🎉</h2>
+              <h2 className="text-xl font-bold text-slate-900">Welcome to Vendle, {user.name.split(' ')[0]}! 🎉</h2>
               <p className="mt-2 text-sm text-slate-500">
                 Let&apos;s get your store ready. First, make sure your details are set up so customers can find and contact you.
               </p>
@@ -213,7 +213,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="grid grid-cols-2 gap-3">
               <a
-                href={`https://wa.me/?text=Check out my store on Ovend! ${encodeURIComponent(storeUrl)}`}
+                href={`https://wa.me/?text=Check out my store on Vendle! ${encodeURIComponent(storeUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3 text-sm font-bold text-white transition hover:opacity-90"
@@ -221,7 +221,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
                 WhatsApp
               </a>
               <a
-                href={`https://twitter.com/intent/tweet?text=Check out my store on Ovend!&url=${encodeURIComponent(storeUrl)}`}
+                href={`https://twitter.com/intent/tweet?text=Check out my store on Vendle!&url=${encodeURIComponent(storeUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-sm font-bold text-white transition hover:opacity-90"

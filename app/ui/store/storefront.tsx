@@ -235,7 +235,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
   const handleShare = async () => {
     const url = window.location.href.split('?')[0]; // strip preview params
-    const title = `${vendor.store_name} on Ovend`;
+    const title = `${vendor.store_name} on Vendle`;
     if (navigator.share) {
       try { await navigator.share({ title, url }); } catch {}
     } else {
@@ -349,7 +349,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
         className="font-mono text-[9px] font-bold uppercase tracking-[0.12em] mt-1.5 opacity-60 line-clamp-1"
         style={{ color: activeTheme.header_style === 'transparent' ? '#ffffff' : activeTheme.text_color }}
       >
-        ovend.app/s/{vendor.store_slug}
+        vendle.app/s/{vendor.store_slug}
       </p>
     </div>
   );
@@ -359,7 +359,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
     function handlePreviewMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'OVEND_PREVIEW_THEME_UPDATE') return;
+      if (event.data?.type !== 'VENDLE_PREVIEW_THEME_UPDATE') return;
       setPreviewTheme(event.data.payload as StoreTheme);
     }
 
@@ -495,7 +495,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
       `• ${item.quantity}x ${item.name} - ${formatCurrency(item.price * item.quantity)}`
     ).join('%0A');
     
-    const message = `Hello *${vendor.store_name}*! 👋%0A%0AI just placed an order on your Ovend store:%0A%0A📦 *Order ID:* ${placedOrder.id.slice(0, 8)}%0A%0A*Items:*%0A${orderItemsList}%0A%0A💰 *Total:* ${formatCurrency(placedOrder.total)}%0A%0APlease confirm my order. Thank you!`;
+    const message = `Hello *${vendor.store_name}*! 👋%0A%0AI just placed an order on your Vendle store:%0A%0A📦 *Order ID:* ${placedOrder.id.slice(0, 8)}%0A%0A*Items:*%0A${orderItemsList}%0A%0A💰 *Total:* ${formatCurrency(placedOrder.total)}%0A%0APlease confirm my order. Thank you!`;
     
     const whatsappLink = vendor.whatsapp_number 
       ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}?text=${message}`
@@ -890,13 +890,13 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           <p className="text-xs" style={{ color: activeTheme.text_color, opacity: 0.5 }}>
             Powered by{' '}
             <a
-              href="https://ovend.app"
+              href="https://vendle.app"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded"
               style={{ color: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
             >
-              Ovend
+              Vendle
             </a>
             {' · '}
             {new Date().getFullYear()}

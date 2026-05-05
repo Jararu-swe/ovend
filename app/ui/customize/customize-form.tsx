@@ -54,7 +54,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
   const [localTheme, setLocalTheme] = useState<StoreTheme>(() => {
     // Try to load from localStorage first
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`ovend_theme_draft_${vendorSlug}`);
+      const saved = localStorage.getItem(`vendle_theme_draft_${vendorSlug}`);
       if (saved) {
         try {
           const draft = JSON.parse(saved);
@@ -78,7 +78,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
 
   const [sections, setSections] = useState<TemplateSection[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`ovend_theme_draft_${vendorSlug}`);
+      const saved = localStorage.getItem(`vendle_theme_draft_${vendorSlug}`);
       if (saved) {
         try {
           const draft = JSON.parse(saved);
@@ -91,7 +91,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
 
   const [sectionContent, setSectionContent] = useState<TemplateSectionContent>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`ovend_theme_draft_${vendorSlug}`);
+      const saved = localStorage.getItem(`vendle_theme_draft_${vendorSlug}`);
       if (saved) {
         try {
           const draft = JSON.parse(saved);
@@ -115,7 +115,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
       sectionContent,
       updatedAt: new Date().toISOString(),
     };
-    localStorage.setItem(`ovend_theme_draft_${vendorSlug}`, JSON.stringify(draft));
+    localStorage.setItem(`vendle_theme_draft_${vendorSlug}`, JSON.stringify(draft));
   }, [localTheme, sections, sectionContent, vendorSlug]);
 
   // ─── Undo / Redo ────────────────────────────────────────────
@@ -185,7 +185,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
   // Clear localStorage on successful save
   useEffect(() => {
     if (state.message && (state.message.toLowerCase().includes('success'))) {
-      localStorage.removeItem(`ovend_theme_draft_${vendorSlug}`);
+      localStorage.removeItem(`vendle_theme_draft_${vendorSlug}`);
     }
   }, [state.message, vendorSlug]);
 
@@ -248,7 +248,7 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
     if (!vendorSlug || !previewFrameRef.current?.contentWindow) return;
     previewFrameRef.current.contentWindow.postMessage(
       {
-        type: 'OVEND_PREVIEW_THEME_UPDATE',
+        type: 'VENDLE_PREVIEW_THEME_UPDATE',
         payload: {
           ...localTheme,
           sections: JSON.stringify(sections),
@@ -474,9 +474,6 @@ export default function CustomizeForm({ theme, vendorSlug }: { theme: StoreTheme
                       { value: 'transparent', label: 'Transparent' },
                     ]}
                   />
-                </div>
-              </div>
-
                 </div>
               </div>
 

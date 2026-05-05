@@ -1,9 +1,9 @@
-# Ovend MVP - Implementation Complete! 🎉
+# Vendle MVP - Implementation Complete! 🎉
 
 ## ✅ All Features Implemented
 
 ### Phase 1-5: Core MVP ✅
-- [x] Landing page with Ovend branding
+- [x] Landing page with Vendle branding
 - [x] Authentication (sign up, sign in, session)
 - [x] Dashboard with sidebar navigation
 - [x] Products CRUD (create, read, update, delete)
@@ -150,7 +150,7 @@ Create test vendor accounts to try all features.
 ## 📁 Project Structure
 
 ```
-ovend/
+vendle/
 ├── app/
 │   ├── api/
 │   │   ├── auth/
@@ -296,7 +296,7 @@ For issues or questions:
 
 ## 🎉 Congratulations!
 
-The Ovend MVP is complete and production-ready!
+The Vendle MVP is complete and production-ready!
 
 **What you've built:**
 - Full-featured e-commerce platform

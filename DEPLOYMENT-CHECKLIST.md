@@ -1,4 +1,4 @@
-# Ovend MVP Deployment Checklist
+# Vendle MVP Deployment Checklist
 
 ## Pre-Deployment
 
@@ -15,7 +15,7 @@
 ### Environment Variables
 - [ ] Set `POSTGRES_URL` with production database credentials
 - [ ] Set `NEXTAUTH_SECRET` (generate with: `openssl rand -base64 32`)
-- [ ] Set `NEXTAUTH_URL` to production domain (e.g., `https://ovend.app`)
+- [ ] Set `NEXTAUTH_URL` to production domain (e.g., `https://vendle.app`)
 - [ ] Verify all environment variables are properly configured
 
 ### Code Review

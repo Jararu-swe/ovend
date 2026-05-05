@@ -51,7 +51,7 @@ export default function LoginForm() {
       {/* Logo */}
       <div className="mb-8 flex justify-center">
         <Link href="/">
-          <Image src="/brandname.svg" alt="Ovend" width={120} height={38} priority />
+          <Image src="/brandname.svg" alt="Vendle" width={120} height={38} priority />
         </Link>
       </div>
 

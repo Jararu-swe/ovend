@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This feature improves the visual styling of the 8 existing theme templates in the Ovend MVP to achieve a sleek, professional appearance comparable to Shopify themes. Each theme should have distinctive personality while maintaining professional polish across all sections including hero banners, product cards, section headings, and interactive elements.
+This feature improves the visual styling of the 8 existing theme templates in the Vendle MVP to achieve a sleek, professional appearance comparable to Shopify themes. Each theme should have distinctive personality while maintaining professional polish across all sections including hero banners, product cards, section headings, and interactive elements.
 
 ## Glossary
 

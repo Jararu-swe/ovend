@@ -49,7 +49,7 @@ export default function SettingsForm({ user }: { user: User }) {
             </label>
             <div className="flex overflow-hidden rounded-xl border border-slate-200 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20">
               <span className="flex items-center bg-slate-50 px-3 text-sm text-slate-500 border-r border-slate-200">
-                ovend.app/s/
+                vendle.app/s/
               </span>
               <input
                 id="store_slug"
@@ -64,7 +64,7 @@ export default function SettingsForm({ user }: { user: User }) {
               <p className="mt-2 text-sm text-red-500">{state.errors.store_slug[0]}</p>
             )}
             <p className="mt-2 text-xs text-slate-400">
-              Your public store link: <span className="font-medium text-emerald-600">ovend.app/s/{user.store_slug}</span>
+              Your public store link: <span className="font-medium text-emerald-600">vendle.app/s/{user.store_slug}</span>
             </p>
           </div>
         </div>

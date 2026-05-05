@@ -1,4 +1,4 @@
-# Ovend MVP Testing Guide
+# Vendle MVP Testing Guide
 
 ## Setup
 

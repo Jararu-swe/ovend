@@ -1,4 +1,4 @@
-# Ovend MVP - Current Status
+# Vendle MVP - Current Status
 
 ## ✅ FULLY OPERATIONAL
 
@@ -77,7 +77,7 @@ None currently. All features working as expected.
 
 ## Support
 
-- Documentation: See `README-OVEND.md`
+- Documentation: See `README-VENDLE.md`
 - Testing: See `TESTING-GUIDE.md`
 - Deployment: See `DEPLOYMENT-CHECKLIST.md`
 - Summary: See `MVP-COMPLETION-SUMMARY.md`

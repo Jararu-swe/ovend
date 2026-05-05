@@ -1,4 +1,4 @@
-# Ovend - Quick Start Guide
+# Vendle - Quick Start Guide
 
 ## 🚀 Get Started in 5 Minutes
 
@@ -200,7 +200,7 @@ vercel --prod
 
 ## 🎉 You're Ready!
 
-Your Ovend store is set up and ready to accept orders!
+Your Vendle store is set up and ready to accept orders!
 
 **Next steps:**
 1. Add your products
