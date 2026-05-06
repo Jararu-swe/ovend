@@ -2,6 +2,11 @@ import { auth } from '@/auth';
 import { fetchUserById } from '@/app/lib/data';
 import SettingsForm from '@/app/ui/dashboard/settings-form';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Settings',
+};
 
 export default async function SettingsPage() {
   const session = await auth();
