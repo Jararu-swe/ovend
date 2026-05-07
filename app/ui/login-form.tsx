@@ -9,8 +9,8 @@ import {
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import VendleLogo from '@/app/ui/vendle-logo';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -51,7 +51,7 @@ export default function LoginForm() {
       {/* Logo */}
       <div className="mb-8 flex justify-center">
         <Link href="/">
-          <Image src="/brandname.svg" alt="Vendle" width={120} height={38} priority />
+          <VendleLogo />
         </Link>
       </div>
 

@@ -84,12 +84,24 @@ export default function CreateProductForm() {
 
             {/* Category */}
             <div>
-              <label htmlFor="category" className="mb-2 block text-sm font-medium text-slate-700">Category Tag (Optional)</label>
+              <label htmlFor="category" className="mb-2 block text-sm font-medium text-slate-700">Category Tag</label>
               <div className="relative">
-                <input
-                  id="category" name="category" type="text" placeholder="e.g. Thrift Wears, Soups"
-                  className="peer block w-full rounded-xl border border-slate-200 py-2.5 px-4 text-sm outline-none focus:border-emerald-500"
-                />
+                <select
+                  id="category"
+                  name="category"
+                  className="peer block w-full rounded-xl border border-slate-200 py-2.5 px-4 text-sm outline-none focus:border-emerald-500 bg-white"
+                >
+                  <option value="">Select Category</option>
+                  <option value="Food & Drinks">Food & Drinks</option>
+                  <option value="Cosmetics & Beauty">Cosmetics & Beauty</option>
+                  <option value="Clothing & Fashion">Clothing & Fashion</option>
+                  <option value="Electronics & Gadgets">Electronics & Gadgets</option>
+                  <option value="Home & Living">Home & Living</option>
+                  <option value="Art & Craft">Art & Craft</option>
+                  <option value="Health & Wellness">Health & Wellness</option>
+                  <option value="Services">Services</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
             </div>
           </div>

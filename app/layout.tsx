@@ -1,5 +1,5 @@
 import '@/app/ui/global.css';
-import {inter} from '@/app/ui/fonts'
+import {inter, pacifico} from '@/app/ui/fonts'
 import Script from 'next/script';
 import { Metadata } from 'next';
 
@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${inter.className} ${pacifico.variable} antialiased`}>
         {children}
         <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
       </body>

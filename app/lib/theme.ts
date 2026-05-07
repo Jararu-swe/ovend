@@ -29,6 +29,7 @@ export async function ensureNewColumns() {
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS user_icon VARCHAR(20) DEFAULT 'user'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS share_icon VARCHAR(20) DEFAULT 'arrow-square'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS add_icon VARCHAR(20) DEFAULT 'plus'`,
+        `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS layout_width VARCHAR(20) DEFAULT 'wide'`,
         `ALTER TABLE store_theme ADD COLUMN IF NOT EXISTS draft_config JSONB DEFAULT NULL`,
       ];
       try {
@@ -84,6 +85,7 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     user_icon: 'user',
     share_icon: 'arrow-square',
     add_icon: 'plus',
+    layout_width: 'wide',
     sections: JSON.stringify(getDefaultSections()),
     section_content: JSON.stringify(getDefaultSectionContent()),
   };
@@ -127,6 +129,7 @@ function normalizeTheme(row: any): StoreTheme {
     user_icon: row.user_icon ?? 'user',
     share_icon: row.share_icon ?? 'arrow-square',
     add_icon: row.add_icon ?? 'plus',
+    layout_width: row.layout_width ?? 'wide',
     custom_css: row.custom_css ?? null,
     sections: hasSections
       ? (typeof rawSections === 'string' ? rawSections : JSON.stringify(rawSections))
@@ -194,6 +197,7 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       cart_icon,
       user_icon,
       custom_css,
+      layout_width,
       sections,
       section_content
     ) VALUES (
@@ -232,6 +236,7 @@ export async function createVendorTheme(vendorId: string): Promise<StoreTheme> {
       ${d.cart_icon},
       ${d.user_icon},
       ${d.custom_css},
+      ${d.layout_width},
       ${d.sections},
       ${d.section_content}
     )

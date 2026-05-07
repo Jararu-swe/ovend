@@ -20,6 +20,7 @@ import SectionRenderer from '@/app/ui/store/section-renderer';
 import ProductQuickView from '@/app/ui/store/product-quick-view';
 import DynamicNav from '@/app/ui/store/nav-renderers';
 import StoreIcon from '@/app/ui/store/storefront-icons';
+import { CldImage } from 'next-cloudinary';
 
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
@@ -301,12 +302,24 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const logoOrInitial =
     !(activeTheme.show_logo ?? true) ? null : activeTheme.logo_url ? (
       <div className={logoFrameClass} style={logoFrameStyle}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={activeTheme.logo_url}
-          alt=""
-          className={`h-full w-full object-contain ${hasLogoFrame ? 'p-1' : ''}`}
-        />
+        {activeTheme.logo_url.includes('cloudinary.com') ? (
+          <CldImage
+            src={activeTheme.logo_url}
+            alt={vendor.store_name || vendor.name}
+            width={100}
+            height={100}
+            crop="thumb"
+            gravity="center"
+            className={`h-full w-full object-contain ${hasLogoFrame ? 'p-1' : ''}`}
+          />
+        ) : (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={activeTheme.logo_url}
+            alt=""
+            className={`h-full w-full object-contain ${hasLogoFrame ? 'p-1' : ''}`}
+          />
+        )}
       </div>
     ) : (
       // Initial letter avatar — always uses primary color as bg for brand consistency

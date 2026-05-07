@@ -10,4 +10,6 @@ export const lusitana = Lusitana({
 export const pacifico = Pacifico({
     weight: '400',
     subsets: ['latin'],
+    variable: '--font-pacifico',
+    display: 'swap',
 });

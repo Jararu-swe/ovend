@@ -10,15 +10,8 @@ import { pacifico } from '@/app/ui/fonts';
 import { FadeInUp, StaggerContainer, StaggerItem, ParallaxScroll } from '@/app/ui/scroll-animations';
 import { HorizontalScrollStory } from '@/app/ui/horizontal-scroll-story';
 import { MouseTrailer } from '@/app/ui/mouse-trailer';
+import VendleLogo from '@/app/ui/vendle-logo';
 
-function VendleLogo({ className = '' }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-1 ${pacifico.className} ${className}`}>
-      <span className="text-3xl text-emerald-600 leading-none">V</span>
-      <span className="text-2xl text-emerald-600 leading-none tracking-tight">endle</span>
-    </div>
-  );
-}
 
 export default async function Page() {
   // Fetch featured stores for the showcase section

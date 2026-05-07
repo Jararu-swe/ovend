@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { StoreTheme, User } from '@/app/lib/definitions';
 import { FONT_MAP } from '@/app/lib/template-presets';
 import StoreIcon from './storefront-icons';
+import { CldImage } from 'next-cloudinary';
 
 interface NavProps {
   vendor: User;
@@ -48,7 +49,19 @@ function LogoBlock({ vendor, theme, scrolled = false, isTransparent = false }: {
 
   const logoContent = theme.logo_url ? (
     <div className={logoFrameClass} style={logoFrameStyle}>
-      <img src={theme.logo_url} alt="" className={`h-full w-full object-contain ${hasLogoFrame ? 'p-1' : ''}`} />
+      {theme.logo_url.includes('cloudinary.com') ? (
+        <CldImage
+          src={theme.logo_url}
+          alt={vendor.store_name || vendor.name}
+          width={80}
+          height={80}
+          crop="thumb"
+          gravity="center"
+          className={`h-full w-full object-contain ${hasLogoFrame ? 'p-1' : ''}`}
+        />
+      ) : (
+        <img src={theme.logo_url} alt="" className={`h-full w-full object-contain ${hasLogoFrame ? 'p-1' : ''}`} />
+      )}
     </div>
   ) : (
     <div

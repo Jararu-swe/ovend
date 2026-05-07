@@ -19,7 +19,7 @@ export default function ExploreSearch({
     const params = new URLSearchParams();
     if (query.trim()) params.set('q', query.trim());
     if (currentCategory && currentCategory !== 'All') params.set('category', currentCategory);
-    router.push(`/explore${params.toString() ? '?' + params.toString() : ''}`);
+    router.push(`/explore${params.toString() ? '?' + params.toString() : ''}`, { scroll: false });
   }
 
   return (

@@ -6,15 +6,8 @@ import ExploreSearch from '@/app/ui/explore-search';
 import { pacifico, lusitana } from '@/app/ui/fonts';
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/app/ui/scroll-animations';
 import { MudclothPattern, ArewaSymbol } from '@/app/ui/landing-patterns';
+import VendleLogo from '@/app/ui/vendle-logo';
 
-function VendleLogo({ className = '' }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-1 ${pacifico.className} ${className}`}>
-      <span className="text-3xl text-emerald-600 leading-none">V</span>
-      <span className="text-2xl text-emerald-600 leading-none tracking-tight">endle</span>
-    </div>
-  );
-}
 
 function generateStoreDescription(storeName: string, topProducts: { name: string }[], productCount: number) {
   if (topProducts.length >= 2) {
@@ -134,6 +127,7 @@ export default async function ExplorePage({
                 <Link
                   key={cat}
                   href={href}
+                  scroll={false}
                   className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
                     isActive
                       ? 'bg-emerald-500 text-white shadow-[0_10px_20px_rgba(16,185,129,0.2)] scale-105'

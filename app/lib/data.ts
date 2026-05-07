@@ -453,13 +453,36 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
         u.store_name,
         u.store_slug,
         u.category,
-        COUNT(p.id)::text AS product_count
+        COUNT(DISTINCT p.id)::text AS product_count
       FROM users u
       LEFT JOIN products p ON p.vendor_id = u.id AND p.status = 'active'
       WHERE u.store_name IS NOT NULL
         AND u.store_name != ''
-        AND u.store_name ILIKE ${searchFilter}
-        ${categoryFilter ? sql`AND u.category = ${categoryFilter}` : sql``}
+        -- Inclusive Search: Name, Category, Owner, or Products
+        AND (
+          u.store_name ILIKE ${searchFilter} 
+          OR u.category ILIKE ${searchFilter}
+          OR u.name ILIKE ${searchFilter}
+          OR EXISTS (
+            SELECT 1 FROM products p_search 
+            WHERE p_search.vendor_id = u.id 
+            AND p_search.status = 'active' 
+            AND (
+              p_search.name ILIKE ${searchFilter}
+              OR p_search.category ILIKE ${searchFilter}
+            )
+          )
+        )
+        -- Robust Category Filter: Store Category OR Product Category
+        ${categoryFilter ? sql`AND (
+          u.category = ${categoryFilter} 
+          OR EXISTS (
+            SELECT 1 FROM products p_cat 
+            WHERE p_cat.vendor_id = u.id 
+            AND p_cat.status = 'active' 
+            AND p_cat.category = ${categoryFilter}
+          )
+        )` : sql``}
       GROUP BY u.id, u.store_name, u.store_slug, u.category
       HAVING COUNT(p.id) > 0
       ORDER BY COUNT(p.id) DESC, u.store_name ASC

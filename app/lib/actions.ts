@@ -681,7 +681,7 @@ export async function updateThemeAction(
           custom_css = ${themeData.custom_css ?? null},
           primary_gradient = ${themeData.primary_gradient ?? null},
           glass_effect = ${themeData.glass_effect ?? false},
-          layout_width = ${themeData.layout_width ?? 'standard'},
+          layout_width = ${themeData.layout_width ?? 'wide'},
           show_mobile_checkout_bar = ${themeData.show_mobile_checkout_bar ?? false},
           sections = ${themeData.sections ?? '[]'},
           section_content = ${themeData.section_content ?? '{}'},

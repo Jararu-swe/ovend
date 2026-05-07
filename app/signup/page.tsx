@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+import VendleLogo from '@/app/ui/vendle-logo';
 import {
   AtSymbolIcon,
   KeyIcon,
@@ -69,7 +69,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="mb-8 flex justify-center">
           <Link href="/">
-            <Image src="/brandname.svg" alt="Vendle" width={120} height={38} priority />
+            <VendleLogo />
           </Link>
         </div>
 
