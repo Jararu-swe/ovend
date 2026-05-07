@@ -36,6 +36,20 @@ export async function ensureProductColumns() {
   await ensureProductColumnsPromise;
 }
 
+let ensureStoreColumnsPromise: Promise<void> | null = null;
+export async function ensureStoreColumns() {
+  if (!ensureStoreColumnsPromise) {
+    ensureStoreColumnsPromise = (async () => {
+      try {
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL`);
+      } catch (e) {
+        console.error('ensureStoreColumns error:', e);
+      }
+    })();
+  }
+  await ensureStoreColumnsPromise;
+}
+
 export async function fetchProductsList(vendorId: string) {
   console.log('fetchProductsList called with vendorId:', vendorId);
   if (!vendorId) {
@@ -417,30 +431,36 @@ export type PublicStore = {
   store_slug: string;
   logo_url: string | null;
   product_count: number;
+  category: string | null;
   top_products: { name: string; image_url: string | null; price: number }[];
 };
 
-export async function fetchAllPublicStores(search?: string): Promise<PublicStore[]> {
+export async function fetchAllPublicStores(search?: string, category?: string): Promise<PublicStore[]> {
   try {
+    await ensureStoreColumns();
     const searchFilter = search ? `%${search}%` : '%';
+    const categoryFilter = category && category !== 'All' ? category : null;
 
     const stores = await sql<{
       id: string;
       store_name: string;
       store_slug: string;
+      category: string | null;
       product_count: string;
     }[]>`
       SELECT 
         u.id,
         u.store_name,
         u.store_slug,
+        u.category,
         COUNT(p.id)::text AS product_count
       FROM users u
       LEFT JOIN products p ON p.vendor_id = u.id AND p.status = 'active'
       WHERE u.store_name IS NOT NULL
         AND u.store_name != ''
         AND u.store_name ILIKE ${searchFilter}
-      GROUP BY u.id, u.store_name, u.store_slug
+        ${categoryFilter ? sql`AND u.category = ${categoryFilter}` : sql``}
+      GROUP BY u.id, u.store_name, u.store_slug, u.category
       HAVING COUNT(p.id) > 0
       ORDER BY COUNT(p.id) DESC, u.store_name ASC
       LIMIT 50
@@ -466,6 +486,7 @@ export async function fetchAllPublicStores(search?: string): Promise<PublicStore
           store_slug: store.store_slug,
           logo_url: logoRow?.logo_url || null,
           product_count: Number(store.product_count),
+          category: store.category,
           top_products: topProducts,
         };
       })

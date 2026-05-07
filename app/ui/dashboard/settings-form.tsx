@@ -44,6 +44,27 @@ export default function SettingsForm({ user }: { user: User }) {
             />
           </div>
           <div>
+            <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-1">
+              Store Category / Niche
+            </label>
+            <select
+              id="category"
+              name="category"
+              defaultValue={user.category || 'Other'}
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
+            >
+              <option value="Food & Drinks">Food & Drinks</option>
+              <option value="Cosmetics & Beauty">Cosmetics & Beauty</option>
+              <option value="Clothing & Fashion">Clothing & Fashion</option>
+              <option value="Electronics & Gadgets">Electronics & Gadgets</option>
+              <option value="Home & Living">Home & Living</option>
+              <option value="Art & Craft">Art & Craft</option>
+              <option value="Health & Wellness">Health & Wellness</option>
+              <option value="Services">Services</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
             <label htmlFor="store_slug" className="block text-sm font-medium text-slate-700 mb-1">
               Store URL Slug
             </label>

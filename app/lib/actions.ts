@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ensureLogoLayoutColumns } from '@/app/lib/theme';
-import { ensureProductColumns } from '@/app/lib/data';
+import { ensureProductColumns, ensureStoreColumns } from '@/app/lib/data';
 import { validateDiscountCode, incrementDiscountUse } from '@/app/lib/discounts';
 
 const FormSchema = z.object({
@@ -37,6 +37,7 @@ const ProfileSchema = z.object({
   bank_name: z.string().optional().nullable(),
   account_number: z.string().optional().nullable(),
   account_name: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
 });
 
 const ThemeSchema = z.object({
@@ -125,6 +126,7 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     bank_name: formData.get('bank_name'),
     account_number: formData.get('account_number'),
     account_name: formData.get('account_name'),
+    category: formData.get('category'),
   });
 
   if (!validatedFields.success) {
@@ -134,9 +136,10 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     };
   }
 
-  const { store_name, store_slug, whatsapp_number, bank_name, account_number, account_name } = validatedFields.data;
+  const { store_name, store_slug, whatsapp_number, bank_name, account_number, account_name, category } = validatedFields.data;
 
   try {
+    await ensureStoreColumns();
     // Check if slug is already taken by another user
     const existingUser = await sql`
       SELECT id FROM users 
@@ -158,7 +161,8 @@ export async function updateProfile(prevState: State | undefined, formData: Form
           whatsapp_number = ${whatsapp_number ?? null},
           bank_name = ${bank_name ?? null},
           account_number = ${account_number ?? null},
-          account_name = ${account_name ?? null}
+          account_name = ${account_name ?? null},
+          category = ${category ?? null}
       WHERE id = ${session.user.id}
     `;
     

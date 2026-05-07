@@ -9,6 +9,9 @@ export const metadata: Metadata = {
     default: 'Vendle',
   },
   description: 'Empowering African Craft & Commerce.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

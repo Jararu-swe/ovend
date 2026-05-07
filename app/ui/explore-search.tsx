@@ -4,7 +4,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useState, FormEvent } from 'react';
 
-export default function ExploreSearch({ defaultValue }: { defaultValue: string }) {
+export default function ExploreSearch({ 
+  defaultValue, 
+  currentCategory 
+}: { 
+  defaultValue: string;
+  currentCategory?: string;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
 
@@ -12,6 +18,7 @@ export default function ExploreSearch({ defaultValue }: { defaultValue: string }
     e.preventDefault();
     const params = new URLSearchParams();
     if (query.trim()) params.set('q', query.trim());
+    if (currentCategory && currentCategory !== 'All') params.set('category', currentCategory);
     router.push(`/explore${params.toString() ? '?' + params.toString() : ''}`);
   }
 

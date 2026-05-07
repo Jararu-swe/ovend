@@ -35,11 +35,25 @@ export const metadata = {
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; category?: string }>;
 }) {
   const params = await searchParams;
   const search = params.q || '';
-  const stores = await fetchAllPublicStores(search || undefined);
+  const category = params.category || 'All';
+  const stores = await fetchAllPublicStores(search || undefined, category);
+
+  const CATEGORIES = [
+    'All',
+    'Food & Drinks',
+    'Cosmetics & Beauty',
+    'Clothing & Fashion',
+    'Electronics & Gadgets',
+    'Home & Living',
+    'Art & Craft',
+    'Health & Wellness',
+    'Services',
+    'Other'
+  ];
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-slate-600 relative overflow-hidden">
@@ -102,7 +116,35 @@ export default async function ExplorePage({
 
         {/* Search */}
         <FadeInUp delay={0.3}>
-          <ExploreSearch defaultValue={search} />
+          <ExploreSearch defaultValue={search} currentCategory={category} />
+        </FadeInUp>
+
+        {/* Categories */}
+        <FadeInUp delay={0.35}>
+          <div className="mt-12 flex flex-wrap justify-center gap-3">
+            {CATEGORIES.map((cat) => {
+              const isActive = category === cat;
+              // Build URL for the chip
+              const chipParams = new URLSearchParams();
+              if (search) chipParams.set('q', search);
+              if (cat !== 'All') chipParams.set('category', cat);
+              const href = `/explore${chipParams.toString() ? '?' + chipParams.toString() : ''}`;
+
+              return (
+                <Link
+                  key={cat}
+                  href={href}
+                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
+                    isActive
+                      ? 'bg-emerald-500 text-white shadow-[0_10px_20px_rgba(16,185,129,0.2)] scale-105'
+                      : 'bg-white border border-slate-200 text-slate-500 hover:border-emerald-500/50 hover:text-emerald-600'
+                  }`}
+                >
+                  {cat}
+                </Link>
+              );
+            })}
+          </div>
         </FadeInUp>
 
         {/* Results count */}
@@ -111,6 +153,7 @@ export default async function ExplorePage({
             <p className="text-sm text-slate-500 font-bold uppercase tracking-widest">
               <span className="text-slate-900">{stores.length}</span> {stores.length === 1 ? 'store' : 'stores'} found
               {search && <span> for <span className="text-emerald-600 italic">"{search}"</span></span>}
+              {category !== 'All' && <span> in <span className="text-emerald-600 italic">{category}</span></span>}
             </p>
           </div>
         </FadeInUp>
@@ -230,7 +273,7 @@ export default async function ExplorePage({
                         {store.store_name}
                       </h3>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/70 mt-1">
-                        {store.product_count} {store.product_count === 1 ? 'Product' : 'Products'}
+                        {store.category || 'Vendor'} • {store.product_count} {store.product_count === 1 ? 'Product' : 'Products'}
                       </p>
                     </div>
 
