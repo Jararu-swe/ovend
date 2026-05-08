@@ -9,6 +9,8 @@ const RegisterSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  location_state: z.string().min(1, 'Please select a state'),
+  category: z.string().min(1, 'Please select a category'),
 });
 
 export async function POST(req: NextRequest) {
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, password } = parsed.data;
+    const { name, email, password, location_state, category } = parsed.data;
 
     // Check if email already exists
     const existingUsers = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
@@ -51,8 +53,8 @@ export async function POST(req: NextRequest) {
     }
 
     await sql`
-      INSERT INTO users (id, name, email, password, store_slug, store_name)
-      VALUES (${id}, ${name}, ${email}, ${hashedPassword}, ${storeSlug}, ${name})
+      INSERT INTO users (id, name, email, password, store_slug, store_name, location_state, category)
+      VALUES (${id}, ${name}, ${email}, ${hashedPassword}, ${storeSlug}, ${name}, ${location_state}, ${category})
     `;
 
     return NextResponse.json({ success: true }, { status: 201 });

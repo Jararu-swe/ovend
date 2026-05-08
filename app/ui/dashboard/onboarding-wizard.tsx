@@ -11,6 +11,8 @@ import {
   PhoneIcon,
   BuildingStorefrontIcon,
   SparklesIcon,
+  MapPinIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline';
 import { User } from '@/app/lib/definitions';
 
@@ -99,6 +101,42 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
                     <p className="text-xs text-slate-500 font-mono">/s/{user.store_slug || '...'}</p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 rounded-xl bg-slate-50 p-5 mt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${user.location_state ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                    {user.location_state ? <CheckCircleIcon className="h-5 w-5" /> : <MapPinIcon className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Store Location</p>
+                    <p className="text-xs text-slate-500">{user.location_state || 'Not set'}</p>
+                  </div>
+                </div>
+                {!user.location_state && (
+                  <Link href="/dashboard/settings" className="text-xs font-bold text-emerald-600 hover:text-emerald-500">
+                    Set up →
+                  </Link>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${user.category ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                    {user.category ? <CheckCircleIcon className="h-5 w-5" /> : <TagIcon className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Store Category</p>
+                    <p className="text-xs text-slate-500">{user.category || 'Not set'}</p>
+                  </div>
+                </div>
+                {!user.category && (
+                  <Link href="/dashboard/settings" className="text-xs font-bold text-emerald-600 hover:text-emerald-500">
+                    Set up →
+                  </Link>
+                )}
               </div>
 
               <div className="flex items-center justify-between">

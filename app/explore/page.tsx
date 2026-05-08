@@ -267,7 +267,7 @@ export default async function ExplorePage({
                         {store.store_name}
                       </h3>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/70 mt-1">
-                        {store.category || 'Vendor'} • {store.product_count} {store.product_count === 1 ? 'Product' : 'Products'}
+                        {store.category || 'Vendor'} • {store.location_state || 'Nigeria'} • {store.product_count} {store.product_count === 1 ? 'Product' : 'Products'}
                       </p>
                     </div>
 

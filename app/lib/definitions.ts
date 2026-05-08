@@ -14,6 +14,7 @@ export type User = {
   account_number?: string;
   account_name?: string;
   category?: string | null;
+  location_state?: string | null;
 };
 
 export type Customer = {

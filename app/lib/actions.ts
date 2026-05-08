@@ -40,6 +40,7 @@ const ProfileSchema = z.object({
   account_number: z.string().optional().nullable(),
   account_name: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
+  location_state: z.string().optional().nullable(),
 });
 
 const ThemeSchema = z.object({
@@ -138,7 +139,7 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     };
   }
 
-  const { store_name, store_slug, whatsapp_number, bank_name, account_number, account_name, category } = validatedFields.data;
+  const { store_name, store_slug, whatsapp_number, bank_name, account_number, account_name, category, location_state } = validatedFields.data;
 
   try {
     await ensureStoreColumns();
@@ -164,7 +165,8 @@ export async function updateProfile(prevState: State | undefined, formData: Form
           bank_name = ${bank_name ?? null},
           account_number = ${account_number ?? null},
           account_name = ${account_name ?? null},
-          category = ${category ?? null}
+          category = ${category ?? null},
+          location_state = ${location_state ?? null}
       WHERE id = ${session.user.id}
     `;
     

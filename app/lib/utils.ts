@@ -181,3 +181,23 @@ export function getSectionSpacing(
     default: return { section: '4rem', internal: '2rem' };
   }
 }
+
+export const NIGERIAN_STATES = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT - Abuja', 'Gombe',
+  'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
+  'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
+  'Taraba', 'Yobe', 'Zamfara'
+];
+
+export const STORE_CATEGORIES = [
+  'Food & Drinks',
+  'Cosmetics & Beauty',
+  'Clothing & Fashion',
+  'Electronics & Gadgets',
+  'Home & Living',
+  'Art & Craft',
+  'Health & Wellness',
+  'Services',
+  'Other'
+];

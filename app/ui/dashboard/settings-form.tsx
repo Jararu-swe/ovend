@@ -4,6 +4,7 @@ import { User } from '@/app/lib/definitions';
 import { updateProfile, State } from '@/app/lib/actions';
 import { useActionState } from 'react';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 
 export default function SettingsForm({ user }: { user: User }) {
   const initialState: State = { message: null, errors: {} };
@@ -53,15 +54,25 @@ export default function SettingsForm({ user }: { user: User }) {
               defaultValue={user.category || 'Other'}
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
             >
-              <option value="Food & Drinks">Food & Drinks</option>
-              <option value="Cosmetics & Beauty">Cosmetics & Beauty</option>
-              <option value="Clothing & Fashion">Clothing & Fashion</option>
-              <option value="Electronics & Gadgets">Electronics & Gadgets</option>
-              <option value="Home & Living">Home & Living</option>
-              <option value="Art & Craft">Art & Craft</option>
-              <option value="Health & Wellness">Health & Wellness</option>
-              <option value="Services">Services</option>
-              <option value="Other">Other</option>
+              {STORE_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="location_state" className="block text-sm font-medium text-slate-700 mb-1">
+              Store Location (State)
+            </label>
+            <select
+              id="location_state"
+              name="location_state"
+              defaultValue={user.location_state || ''}
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
+            >
+              <option value="">Select a state</option>
+              {NIGERIAN_STATES.map((state) => (
+                <option key={state} value={state}>{state}</option>
+              ))}
             </select>
           </div>
           <div>

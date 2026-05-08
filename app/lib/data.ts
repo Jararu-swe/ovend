@@ -42,6 +42,7 @@ export async function ensureStoreColumns() {
     ensureStoreColumnsPromise = (async () => {
       try {
         await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL`);
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS location_state VARCHAR(100) DEFAULT NULL`);
       } catch (e) {
         console.error('ensureStoreColumns error:', e);
       }
@@ -432,6 +433,7 @@ export type PublicStore = {
   logo_url: string | null;
   product_count: number;
   category: string | null;
+  location_state: string | null;
   top_products: { name: string; image_url: string | null; price: number }[];
 };
 
@@ -453,6 +455,7 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
         u.store_name,
         u.store_slug,
         u.category,
+        u.location_state,
         COUNT(DISTINCT p.id)::text AS product_count
       FROM users u
       LEFT JOIN products p ON p.vendor_id = u.id AND p.status = 'active'
@@ -483,7 +486,7 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
             AND p_cat.category = ${categoryFilter}
           )
         )` : sql``}
-      GROUP BY u.id, u.store_name, u.store_slug, u.category
+      GROUP BY u.id, u.store_name, u.store_slug, u.category, u.location_state
       HAVING COUNT(p.id) > 0
       ORDER BY COUNT(p.id) DESC, u.store_name ASC
       LIMIT 50
@@ -510,6 +513,7 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
           logo_url: logoRow?.logo_url || null,
           product_count: Number(store.product_count),
           category: store.category,
+          location_state: store.location_state,
           top_products: topProducts,
         };
       })
