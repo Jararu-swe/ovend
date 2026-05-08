@@ -12,8 +12,17 @@ type Props = {
 export default function LogoDropzone({ logoUrl, onLogoUrlChange }: Props) {
   const [isUploading, setIsUploading] = useState(false);
 
-  const onUpload = (result: any) => {
-    onLogoUrlChange(result.info.secure_url);
+  const onSuccess = (result: any) => {
+    console.log('Logo upload success result:', result);
+    if (result && result.event === 'success') {
+      const url = result.info?.secure_url || result.info?.url;
+      if (url) {
+        console.log('Setting logo URL:', url);
+        onLogoUrlChange(url);
+      } else {
+        console.warn('No URL found in logo-upload result.info:', result.info);
+      }
+    }
     setIsUploading(false);
   };
 
@@ -28,8 +37,8 @@ export default function LogoDropzone({ logoUrl, onLogoUrlChange }: Props) {
 
       {!logoUrl ? (
         <CldUploadWidget
-          uploadPreset="vendle_products" // Using the same preset for simplicity, or "vendle_logos" if created
-          onUpload={onUpload}
+          uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+          onSuccess={onSuccess}
           onOpen={() => setIsUploading(true)}
           onClose={() => setIsUploading(false)}
         >

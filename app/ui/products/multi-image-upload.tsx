@@ -15,8 +15,17 @@ interface MultiImageUploadProps {
 export default function MultiImageUpload({ value, onChange, onRemove, maxImages = 5 }: MultiImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
 
-  const onUpload = (result: any) => {
-    onChange([...value, result.info.secure_url]);
+  const onSuccess = (result: any) => {
+    console.log('Multi upload success result:', result);
+    if (result && result.event === 'success') {
+      const url = result.info?.secure_url || result.info?.url;
+      if (url) {
+        console.log('Adding gallery image URL:', url);
+        onChange([...value, url]);
+      } else {
+        console.warn('No URL found in multi-upload result.info:', result.info);
+      }
+    }
     setIsUploading(false);
   };
 
@@ -43,8 +52,8 @@ export default function MultiImageUpload({ value, onChange, onRemove, maxImages 
         
         {value.length < maxImages && (
           <CldUploadWidget
-            uploadPreset="vendle_products"
-            onUpload={onUpload}
+            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+            onSuccess={onSuccess}
             onOpen={() => setIsUploading(true)}
             onClose={() => setIsUploading(false)}
           >

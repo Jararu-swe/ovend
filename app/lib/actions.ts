@@ -8,6 +8,8 @@ import { auth } from '@/auth';
 import { ensureLogoLayoutColumns } from '@/app/lib/theme';
 import { ensureProductColumns, ensureStoreColumns } from '@/app/lib/data';
 import { validateDiscountCode, incrementDiscountUse } from '@/app/lib/discounts';
+import { deleteCloudinaryImage, deleteCloudinaryImages } from './cloudinary';
+import { signOut } from '@/auth';
 
 const FormSchema = z.object({
   id: z.string(),
@@ -201,6 +203,7 @@ export async function createProduct(prevState: State | undefined, formData: Form
   }
 
   const { name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options } = validatedFields.data;
+  console.log('Creating product with image_url:', image_url);
 
   try {
     await ensureProductColumns();
@@ -248,9 +251,32 @@ export async function updateProduct(
   }
 
   const { name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options } = validatedFields.data;
+  console.log('Updating product with image_url:', image_url);
 
   try {
     await ensureProductColumns();
+    
+    // Fetch old images to check for changes
+    const [oldProduct] = await sql`
+      SELECT image_url, gallery_images FROM products 
+      WHERE id = ${id} AND vendor_id = ${session.user.id}
+    `;
+
+    if (oldProduct) {
+      // If main image changed, delete old one
+      if (oldProduct.image_url && oldProduct.image_url !== image_url) {
+        await deleteCloudinaryImage(oldProduct.image_url);
+      }
+
+      // If gallery images changed, delete those no longer present
+      const oldGallery: string[] = JSON.parse(oldProduct.gallery_images || '[]');
+      const newGallery: string[] = JSON.parse(gallery_images);
+      const toDelete = oldGallery.filter(url => !newGallery.includes(url));
+      if (toDelete.length > 0) {
+        await deleteCloudinaryImages(toDelete);
+      }
+    }
+
     await sql`
       UPDATE products
       SET name = ${name}, description = ${description}, price = ${price}, compare_at_price = ${compare_at_price ?? null}, status = ${status}, 
@@ -273,6 +299,24 @@ export async function deleteProduct(id: string) {
   }
 
   try {
+    // Fetch product to get image URLs before deleting
+    const [product] = await sql`
+      SELECT image_url, gallery_images FROM products 
+      WHERE id = ${id} AND vendor_id = ${session.user.id}
+    `;
+
+    if (product) {
+      // Delete main image
+      if (product.image_url) {
+        await deleteCloudinaryImage(product.image_url);
+      }
+      // Delete gallery images
+      const gallery: string[] = JSON.parse(product.gallery_images || '[]');
+      if (gallery.length > 0) {
+        await deleteCloudinaryImages(gallery);
+      }
+    }
+
     await sql`DELETE FROM products WHERE id = ${id} AND vendor_id = ${session.user.id}`;
     revalidatePath('/dashboard/products');
   } catch (error) {
@@ -714,4 +758,51 @@ export async function updateThemeAction(
     console.error('Database Error:', error);
     return { message: 'Database Error: Failed to update theme.' };
   }
+}
+
+export async function deleteStore() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized.');
+  }
+
+  const vendorId = session.user.id;
+
+  try {
+    // 1. Fetch all products to delete images from Cloudinary
+    const products = await sql`SELECT image_url, gallery_images FROM products WHERE vendor_id = ${vendorId}`;
+    for (const product of products) {
+      if (product.image_url) {
+        await deleteCloudinaryImage(product.image_url);
+      }
+      const gallery: string[] = JSON.parse(product.gallery_images || '[]');
+      if (gallery.length > 0) {
+        await deleteCloudinaryImages(gallery);
+      }
+    }
+
+    // 2. Fetch theme to delete logo
+    const [theme] = await sql`SELECT logo_url FROM store_theme WHERE vendor_id = ${vendorId}`;
+    if (theme?.logo_url) {
+      await deleteCloudinaryImage(theme.logo_url);
+    }
+
+    // 3. Delete everything associated with the vendor
+    // Note: We use a transaction to ensure all or nothing
+    await sql.begin(async (sql) => {
+      await sql`DELETE FROM products WHERE vendor_id = ${vendorId}`;
+      await sql`DELETE FROM orders WHERE vendor_id = ${vendorId}`;
+      await sql`DELETE FROM store_theme WHERE vendor_id = ${vendorId}`;
+      await sql`DELETE FROM store_analytics WHERE vendor_id = ${vendorId}`;
+      await sql`DELETE FROM discounts WHERE vendor_id = ${vendorId}`;
+      await sql`DELETE FROM users WHERE id = ${vendorId}`;
+    });
+
+  } catch (error) {
+    console.error('Database Error during store deletion:', error);
+    throw new Error('Failed to delete store.');
+  }
+
+  // 4. Sign out
+  await signOut({ redirectTo: '/' });
 }

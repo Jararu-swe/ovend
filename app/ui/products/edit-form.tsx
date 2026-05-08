@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import {
   TagIcon,
-  CurrencyDollarIcon,
+  BanknotesIcon,
   DocumentTextIcon,
   CheckIcon,
   PlusIcon,
@@ -127,7 +127,7 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
                   id="price" name="price" type="number" step="1" defaultValue={product.price}
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
                 />
-                <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               </div>
               {state.errors?.price && <p className="mt-1 text-xs text-red-500">{state.errors.price[0]}</p>}
             </div>
@@ -140,7 +140,7 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
                   placeholder="e.g. 50000"
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
                 />
-                <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
           </div>

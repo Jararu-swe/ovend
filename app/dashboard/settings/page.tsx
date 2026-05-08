@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { fetchUserById } from '@/app/lib/data';
 import SettingsForm from '@/app/ui/dashboard/settings-form';
+import DeleteStoreCard from '@/app/ui/dashboard/delete-store-card';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 
@@ -32,6 +33,8 @@ export default async function SettingsPage() {
 
       <div className="space-y-4">
         <SettingsForm user={user} />
+
+        <DeleteStoreCard />
 
         {/* Account section (Keep static or read-only for now) */}
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">

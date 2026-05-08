@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
-import { TicketIcon, CurrencyDollarIcon, CalendarIcon, HashtagIcon } from '@heroicons/react/24/outline';
+import { TicketIcon, BanknotesIcon, CalendarIcon, HashtagIcon } from '@heroicons/react/24/outline';
 import { createDiscountAction, State } from '@/app/lib/actions';
 
 export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
@@ -81,7 +81,7 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
               {discountType === 'percentage' ? (
                 <HashtagIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               ) : (
-                <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               )}
             </div>
           </div>
@@ -96,10 +96,10 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
                 name="min_purchase"
                 type="number"
                 step="0.01"
-                placeholder="0.00"
+                placeholder="0"
                 className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
               />
-              <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
 

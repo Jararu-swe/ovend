@@ -14,8 +14,17 @@ interface ImageUploadProps {
 export default function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
 
-  const onUpload = (result: any) => {
-    onChange(result.info.secure_url);
+  const onSuccess = (result: any) => {
+    console.log('Upload success result:', result);
+    if (result && result.event === 'success') {
+      const url = result.info?.secure_url || result.info?.url;
+      if (url) {
+        console.log('Setting image URL:', url);
+        onChange(url);
+      } else {
+        console.warn('No URL found in result.info:', result.info);
+      }
+    }
     setIsUploading(false);
   };
 
@@ -39,8 +48,8 @@ export default function ImageUpload({ value, onChange, onRemove }: ImageUploadPr
         </div>
       ) : (
         <CldUploadWidget
-          uploadPreset="vendle_products"
-          onUpload={onUpload}
+          uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+          onSuccess={onSuccess}
           onOpen={() => setIsUploading(true)}
           onClose={() => setIsUploading(false)}
         >
