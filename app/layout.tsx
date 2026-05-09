@@ -1,4 +1,5 @@
 import '@/app/ui/global.css';
+import 'leaflet/dist/leaflet.css';
 import {inter, pacifico} from '@/app/ui/fonts'
 import Script from 'next/script';
 import { Metadata } from 'next';

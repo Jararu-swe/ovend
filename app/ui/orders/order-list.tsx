@@ -4,7 +4,10 @@ import { useState } from 'react';
 import { Order } from '@/app/lib/definitions';
 import { formatCurrency } from '@/app/lib/utils';
 import { updateOrderStatus } from '@/app/lib/actions';
-import { ChevronDownIcon, CheckCircleIcon, XCircleIcon, ClockIcon, PlayCircleIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, CheckCircleIcon, XCircleIcon, ClockIcon, PlayCircleIcon, MapPinIcon, ShareIcon } from '@heroicons/react/24/outline';
+import dynamic from 'next/dynamic';
+
+const OrderMap = dynamic(() => import('./order-map'), { ssr: false });
 
 const statusStyles: Record<string, string> = {
   new: 'bg-sky-100 text-sky-700',
@@ -27,7 +30,11 @@ export default function OrderList({ orders }: { orders: Order[] }) {
   const getWhatsAppUrl = (order: Order) => {
     const itemsArray: any[] = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
     const itemsText = itemsArray.map(i => `${i.quantity}x ${i.name}`).join('%0A- ');
-    const message = `Hello ${order.customer_name}!%0A%0AThank you for your order.%0AHere is a quick summary:%0A- ${itemsText}%0A%0ATotal: ${formatCurrency(order.total_amount)}%0A%0AWe are processing this right away!`;
+    let locationText = '';
+    if (order.delivery_latitude && order.delivery_longitude) {
+      locationText = `%0A%0ADelivery Location: https://www.google.com/maps/search/?api=1&query=${order.delivery_latitude},${order.delivery_longitude}`;
+    }
+    const message = `Hello ${order.customer_name}!%0A%0AThank you for your order.%0AHere is a quick summary:%0A- ${itemsText}%0A%0ATotal: ${formatCurrency(order.total_amount)}${locationText}%0A%0AWe are processing this right away!`;
     
     // Naively format Nigerian phone numbers for MVP
     let phone = order.customer_phone.replace(/\D/g, '');
@@ -35,6 +42,28 @@ export default function OrderList({ orders }: { orders: Order[] }) {
       phone = '234' + phone.substring(1);
     }
     return `https://wa.me/${phone}?text=${message}`;
+  };
+
+  const getGoogleMapsUrl = (lat: number, lng: number) => {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  };
+
+  const handleShareLocation = (order: Order) => {
+    if (!order.delivery_latitude || !order.delivery_longitude) return;
+    const url = getGoogleMapsUrl(order.delivery_latitude, order.delivery_longitude);
+    const text = `Delivery Location for ${order.customer_name}: ${url}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Order #${order.id.slice(0, 8)} Location`,
+        text: text,
+        url: url,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Location link copied to clipboard!');
+      });
+    }
   };
 
   const filteredOrders = filter === 'All' 
@@ -152,10 +181,55 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                               Chat on WhatsApp
                             </a>
                           </div>
-                          <p className="text-sm text-slate-500 mt-2">{order.customer_address || 'No address provided'}</p>
-                          <span className="inline-block mt-2 px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase">
-                            {order.delivery_type}
-                          </span>
+                          <p className="text-sm text-slate-500 mt-2">{order.customer_address || 'No general address provided'}</p>
+                          {order.delivery_address_details && (
+                            <p className="text-xs text-slate-400 mt-1 italic">Note: {order.delivery_address_details}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                              {order.delivery_type}
+                            </span>
+                            {order.delivery_latitude && (
+                              <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-[10px] font-bold text-emerald-600 uppercase tracking-tight flex items-center gap-1">
+                                <MapPinIcon className="h-3 w-3" /> Pin Set
+                              </span>
+                            )}
+                          </div>
+
+                          {order.delivery_latitude && order.delivery_longitude && (
+                            <div className="mt-4 space-y-3">
+                              <div className="h-40 w-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
+                                <OrderMap lat={order.delivery_latitude} lng={order.delivery_longitude} />
+                                <a  
+                                  href={getGoogleMapsUrl(order.delivery_latitude, order.delivery_longitude)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/0 hover:bg-slate-900/10 transition-colors group/maplink"
+                                >
+                                  <span className="bg-white/90 px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-700 shadow-lg opacity-0 group-hover/maplink:opacity-100 transition-opacity">
+                                    Open in Google Maps
+                                  </span>
+                                </a>
+                              </div>
+                              
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleShareLocation(order)}
+                                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800"
+                                >
+                                  <ShareIcon className="h-4 w-4" /> Share with Courier
+                                </button>
+                                <a
+                                  href={getGoogleMapsUrl(order.delivery_latitude, order.delivery_longitude)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                                >
+                                  <MapPinIcon className="h-4 w-4 text-emerald-500" /> Google Maps
+                                </a>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div>

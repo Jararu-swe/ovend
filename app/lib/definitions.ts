@@ -146,6 +146,9 @@ export type Order = {
   payment_method: 'cash' | 'card' | 'transfer';
   payment_reference: string | null;
   payment_status: 'pending' | 'paid' | 'failed';
+  delivery_latitude: number | null;
+  delivery_longitude: number | null;
+  delivery_address_details: string | null;
   created_at: string;
 };
 

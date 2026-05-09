@@ -340,6 +340,9 @@ export async function createOrder(
   const customer_phone = formData.get('customer_phone') as string;
   const customer_address = formData.get('customer_address') as string;
   const delivery_type = formData.get('delivery_type') as string;
+  const delivery_latitude = formData.get('delivery_latitude') ? parseFloat(formData.get('delivery_latitude') as string) : null;
+  const delivery_longitude = formData.get('delivery_longitude') ? parseFloat(formData.get('delivery_longitude') as string) : null;
+  const delivery_address_details = formData.get('delivery_address_details') as string;
 
   if (!customer_name || !customer_phone || !delivery_type) {
     throw new Error('Missing required customer information.');
@@ -362,7 +365,10 @@ export async function createOrder(
         payment_reference,
         payment_status,
         discount_code,
-        discount_amount
+        discount_amount,
+        delivery_latitude,
+        delivery_longitude,
+        delivery_address_details
       )
       VALUES (
         ${vendorId}, 
@@ -377,7 +383,10 @@ export async function createOrder(
         ${paymentReference || null},
         ${paymentStatus},
         ${discountCode || null},
-        ${discountAmount || 0}
+        ${discountAmount || 0},
+        ${delivery_latitude},
+        ${delivery_longitude},
+        ${delivery_address_details || null}
       )
       RETURNING id
     `;

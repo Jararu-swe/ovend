@@ -14,7 +14,10 @@ import {
   getBorderRadiusClass,
 } from '@/app/lib/utils';
 import { createOrder, validateDiscountAction } from '@/app/lib/actions';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
+
+const LocationPicker = dynamic(() => import('./location-picker'), { ssr: false });
 import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefaultSectionContent, FONT_MAP } from '@/app/lib/template-presets';
 import SectionRenderer from '@/app/ui/store/section-renderer';
 import ProductQuickView from '@/app/ui/store/product-quick-view';
@@ -74,6 +77,8 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const [placedOrder, setPlacedOrder] = useState<{ id: string; total: number; paymentMethod: 'cash' | 'card' } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number; lng: number; details?: string } | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const [discountCodeInput, setDiscountCodeInput] = useState('');
@@ -432,6 +437,11 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           amount: grandTotal * 100,
           currency: 'NGN',
           ref: `OVD-${Date.now()}`,
+          metadata: {
+            delivery_latitude: deliveryLocation?.lat,
+            delivery_longitude: deliveryLocation?.lng,
+            delivery_address_details: deliveryLocation?.details
+          },
           onClose: function() {
             setIsSubmitting(false);
           },
@@ -444,6 +454,11 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
             .then(res => res.json())
             .then(data => {
               if (data.success) {
+                if (deliveryLocation) {
+                  formData.append('delivery_latitude', deliveryLocation.lat.toString());
+                  formData.append('delivery_longitude', deliveryLocation.lng.toString());
+                  formData.append('delivery_address_details', deliveryLocation.details || '');
+                }
                 return createOrder(vendor.id, cart, grandTotal, formData, 'card', response.reference, appliedDiscount?.code, appliedDiscount?.amount);
               } else {
                 throw new Error('Payment verification failed');
@@ -468,21 +483,32 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
 
         handler.openIframe();
       } else {
-        const result = await createOrder(vendor.id, cart, grandTotal, formData, 'cash', undefined, appliedDiscount?.code, appliedDiscount?.amount);
-        if (result?.success) {
-          setPlacedOrder({ id: result.id, total: grandTotal, paymentMethod: 'cash' });
-          setCart([]);
-          setAppliedDiscount(null);
-          setIsCheckingOut(false);
-        }
+        await handleCashCheckout(formData);
         setIsSubmitting(false);
+        setIsCheckingOut(false);
       }
     } catch (err) {
-      console.error('Payment error:', err);
-      alert('Failed to place order. Please try again.');
+      console.error(err);
+      alert('Order failed. Please try again.');
+    } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleCashCheckout = async (formData: FormData) => {
+    if (deliveryLocation) {
+      formData.append('delivery_latitude', deliveryLocation.lat.toString());
+      formData.append('delivery_longitude', deliveryLocation.lng.toString());
+      formData.append('delivery_address_details', deliveryLocation.details || '');
+    }
+    const result = await createOrder(vendor.id, cart, grandTotal, formData, 'cash', undefined, appliedDiscount?.code, appliedDiscount?.amount);
+    if (result.success) {
+      setPlacedOrder({ id: result.id, total: grandTotal, paymentMethod: 'cash' });
+      setCart([]);
+      setIsCartOpen(true);
+    }
+  };
+
 
   // Inject keyframes for product grid animations (must be before any early returns)
   useEffect(() => {
@@ -983,178 +1009,205 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                       </button>
                     </div>
                   ) : (
-                    <ul className="space-y-6">
-                      {cart.map((item) => (
-                        <li key={item.productId} className="flex items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <h4 className="font-bold text-slate-900">{item.name}</h4>
-                            <p className="text-sm font-semibold" style={{ color: activeTheme.primary_color }}>{formatCurrency(item.price)}</p>
+                    <div className="space-y-8 pb-10">
+                      <ul className="space-y-6">
+                        {cart.map((item) => (
+                          <li key={item.productId} className="flex items-center justify-between gap-4">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-slate-900">{item.name}</h4>
+                              <p className="text-sm font-semibold" style={{ color: activeTheme.primary_color }}>{formatCurrency(item.price)}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button 
+                                onClick={() => removeFromCart(item.productId)}
+                                className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                aria-label="Decrease quantity"
+                              >
+                                <StoreIcon name="minus" theme={activeTheme} className="h-4 w-4" />
+                              </button>
+                              <span className="w-4 text-center font-bold text-slate-900">{item.quantity}</span>
+                              <button 
+                                onClick={() => addToCart({ id: item.productId, name: item.name, price: item.price } as Product)}
+                                className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                aria-label="Increase quantity"
+                              >
+                                <StoreIcon name="plus" theme={activeTheme} className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* Summary Section (Moved inside scrollable area) */}
+                      <div className="pt-8 border-t border-slate-100">
+                        {!isCheckingOut && !appliedDiscount && (
+                          <div className="mb-6 flex flex-col gap-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Promo Code"
+                                value={discountCodeInput}
+                                onChange={(e) => setDiscountCodeInput(e.target.value.toUpperCase())}
+                                className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm uppercase outline-none focus:border-emerald-500 transition"
+                              />
+                              <button
+                                onClick={applyDiscountCode}
+                                disabled={isApplyingDiscount || !discountCodeInput.trim()}
+                                className="rounded-xl px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                                style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
+                              >
+                                {isApplyingDiscount ? '...' : 'Apply'}
+                              </button>
+                            </div>
+                            {discountError && <p className="text-xs font-medium px-2" style={{ color: activeTheme.accent_color }}>{discountError}</p>}
                           </div>
-                          <div className="flex items-center gap-3">
-                            <button 
-                              onClick={() => removeFromCart(item.productId)}
-                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                              aria-label="Decrease quantity"
-                            >
-                              <StoreIcon name="minus" theme={activeTheme} className="h-4 w-4" />
-                            </button>
-                            <span className="w-4 text-center font-bold text-slate-900">{item.quantity}</span>
-                            <button 
-                              onClick={() => addToCart({ id: item.productId, name: item.name, price: item.price } as Product)}
-                              className="h-8 w-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                              aria-label="Increase quantity"
-                            >
-                              <StoreIcon name="plus" theme={activeTheme} className="h-4 w-4" />
-                            </button>
+                        )}
+
+                        <div className="flex flex-col gap-2 mb-6">
+                          <div className="flex items-center justify-between text-sm text-slate-500 font-medium tracking-wide">
+                            <span>Subtotal</span>
+                            <span>{formatCurrency(cartTotal)}</span>
                           </div>
-                        </li>
-                      ))}
-                    </ul>
+                          
+                          {appliedDiscount && (
+                            <div className="flex items-center justify-between text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-2.5 rounded-xl border border-emerald-100">
+                              <div className="flex items-center gap-2">
+                                <span>Discount ({appliedDiscount.code})</span>
+                                <button onClick={removeDiscount} className="rounded-full bg-emerald-200 text-emerald-700 hover:bg-emerald-300 w-5 h-5 flex items-center justify-center text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500" aria-label="Remove discount">×</button>
+                              </div>
+                              <span>-{formatCurrency(appliedDiscount.amount)}</span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between text-lg font-black text-slate-900 mt-2 pt-4 border-t border-slate-100">
+                            <span>Total</span>
+                            <span>{formatCurrency(grandTotal)}</span>
+                          </div>
+                        </div>
+
+                        {/* Checkout Form (Moved inside scrollable area) */}
+                        {isCheckingOut && (
+                          <div className="pt-8 border-t border-slate-100">
+                            <form onSubmit={handleCheckoutSubmit} className="space-y-6">
+                              <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1 italic">Full Name</label>
+                                <input 
+                                  name="customer_name" 
+                                  required 
+                                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
+                                  placeholder="Amaka Obi"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1 italic">Email Address</label>
+                                <input 
+                                  name="customer_email" 
+                                  type="email"
+                                  required 
+                                  value={customerEmail}
+                                  onChange={(e) => setCustomerEmail(e.target.value)}
+                                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
+                                  placeholder="you@example.com"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1 italic">WhatsApp Number</label>
+                                <input 
+                                  name="customer_phone" 
+                                  required 
+                                  type="tel"
+                                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
+                                  placeholder="+234 801 234 5678"
+                                />
+                              </div>
+                              
+                              {/* Payment Method */}
+                              <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 italic">Payment Method</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio" name="payment_method" value="cash" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} className="hidden sr-only" />
+                                    <span className="text-sm font-bold text-slate-700">Cash/Transfer</span>
+                                  </label>
+                                  <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                    <input type="radio" name="payment_method" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="hidden sr-only" />
+                                    <span className="text-sm font-bold text-slate-700">💳 Card</span>
+                                  </label>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                  <input type="radio" name="delivery_type" value="delivery" checked={deliveryType === 'delivery'} onChange={() => setDeliveryType('delivery')} className="hidden sr-only" />
+                                  <span className="text-sm font-bold text-slate-700">Delivery</span>
+                                </label>
+                                <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                  <input type="radio" name="delivery_type" value="pickup" checked={deliveryType === 'pickup'} onChange={() => setDeliveryType('pickup')} className="hidden sr-only" />
+                                  <span className="text-sm font-bold text-slate-700">Pickup</span>
+                                </label>
+                              </div>
+                              
+                              {deliveryType === 'delivery' ? (
+                                <div className="space-y-4">
+                                  <LocationPicker 
+                                    onLocationSelect={(lat, lng, details) => setDeliveryLocation({ lat, lng, details })} 
+                                  />
+                                  <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1 italic">General Address (optional)</label>
+                                    <textarea 
+                                      name="customer_address" 
+                                      rows={2}
+                                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
+                                      placeholder="Enter your general neighborhood or area..."
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <label className="block text-sm font-bold text-slate-700 mb-1 italic">Pickup Note (optional)</label>
+                                  <textarea 
+                                    name="customer_address" 
+                                    rows={2}
+                                    className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
+                                    placeholder="Any note about your pickup..."
+                                  />
+                                </div>
+                              )}
+
+                              <div className="flex gap-3">
+                                <button 
+                                  type="button" 
+                                  onClick={() => setIsCheckingOut(false)}
+                                  className="flex-1 rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200"
+                                >
+                                  Back
+                                </button>
+                                <button 
+                                  type="submit" 
+                                  disabled={isSubmitting}
+                                  className={`flex-[2] p-4 font-bold text-white shadow-lg disabled:opacity-50 ${getButtonStyles(activeTheme).className}`}
+                                  style={{ ...getButtonStyles(activeTheme).style, backgroundColor: activeTheme.primary_color }}
+                                >
+                                  {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {cart.length > 0 && (
+                {!isCheckingOut && cart.length > 0 && (
                   <div className="border-t border-slate-100 px-6 py-8">
-                    {!isCheckingOut && !appliedDiscount && (
-                      <div className="mb-6 flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Promo Code"
-                            value={discountCodeInput}
-                            onChange={(e) => setDiscountCodeInput(e.target.value.toUpperCase())}
-                            className="flex-1 rounded-xl border border-slate-200 px-4 py-2 text-sm uppercase outline-none focus:border-emerald-500 transition"
-                          />
-                          <button
-                            onClick={applyDiscountCode}
-                            disabled={isApplyingDiscount || !discountCodeInput.trim()}
-                            className="rounded-xl px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                            style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
-                          >
-                            {isApplyingDiscount ? '...' : 'Apply'}
-                          </button>
-                        </div>
-                        {discountError && <p className="text-xs font-medium px-2" style={{ color: activeTheme.accent_color }}>{discountError}</p>}
-                      </div>
-                    )}
-
-                    <div className="flex flex-col gap-2 mb-6">
-                      <div className="flex items-center justify-between text-sm text-slate-500 font-medium tracking-wide">
-                        <span>Subtotal</span>
-                        <span>{formatCurrency(cartTotal)}</span>
-                      </div>
-                      
-                      {appliedDiscount && (
-                        <div className="flex items-center justify-between text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-2.5 rounded-xl border border-emerald-100">
-                          <div className="flex items-center gap-2">
-                            <span>Discount ({appliedDiscount.code})</span>
-                            <button onClick={removeDiscount} className="rounded-full bg-emerald-200 text-emerald-700 hover:bg-emerald-300 w-5 h-5 flex items-center justify-center text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500" aria-label="Remove discount">×</button>
-                          </div>
-                          <span>-{formatCurrency(appliedDiscount.amount)}</span>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between text-lg font-black text-slate-900 mt-2 pt-4 border-t border-slate-100">
-                        <span>Total</span>
-                        <span>{formatCurrency(grandTotal)}</span>
-                      </div>
-                    </div>
-                    
-                    {!isCheckingOut ? (
-                      <button 
-                        onClick={() => setIsCheckingOut(true)}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                        style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
-                      >
-                        Checkout Order <StoreIcon name="chevron-right" theme={activeTheme} className="h-5 w-5" />
-                      </button>
-                    ) : (
-                      <form onSubmit={handleCheckoutSubmit} className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-1 italic">Full Name</label>
-                          <input 
-                            name="customer_name" 
-                            required 
-                            className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
-                            placeholder="Amaka Obi"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-1 italic">Email Address</label>
-                          <input 
-                            name="customer_email" 
-                            type="email"
-                            required 
-                            value={customerEmail}
-                            onChange={(e) => setCustomerEmail(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
-                            placeholder="you@example.com"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-1 italic">WhatsApp Number</label>
-                          <input 
-                            name="customer_phone" 
-                            required 
-                            type="tel"
-                            className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
-                            placeholder="+234 801 234 5678"
-                          />
-                        </div>
-                        
-                        {/* Payment Method */}
-                        <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-2 italic">Payment Method</label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
-                              <input type="radio" name="payment_method" value="cash" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} className="hidden sr-only" />
-                              <span className="text-sm font-bold text-slate-700">Cash/Transfer</span>
-                            </label>
-                            <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
-                              <input type="radio" name="payment_method" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="hidden sr-only" />
-                              <span className="text-sm font-bold text-slate-700">💳 Card</span>
-                            </label>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
-                            <input type="radio" name="delivery_type" value="delivery" defaultChecked className="hidden sr-only" />
-                            <span className="text-sm font-bold text-slate-700">Delivery</span>
-                          </label>
-                          <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-emerald-500 has-[:focus-visible]:ring-offset-2">
-                            <input type="radio" name="delivery_type" value="pickup" className="hidden sr-only" />
-                            <span className="text-sm font-bold text-slate-700">Pickup</span>
-                          </label>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-1 italic">Delivery Address (optional)</label>
-                          <textarea 
-                            name="customer_address" 
-                            rows={2}
-                            className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
-                            placeholder="Enter your delivery address..."
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                           <button 
-                            type="button" 
-                            onClick={() => setIsCheckingOut(false)}
-                            className="flex-1 rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
-                           >
-                            Back
-                           </button>
-                           <button 
-                            type="submit" 
-                            disabled={isSubmitting}
-                            className={`flex-[2] p-4 font-bold text-white shadow-lg disabled:opacity-50 ${getButtonStyles(activeTheme).className} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
-                            style={{ ...getButtonStyles(activeTheme).style, ['--tw-ring-color' as any]: activeTheme.primary_color } as React.CSSProperties}
-                           >
-                            {isSubmitting ? 'Processing...' : paymentMethod === 'card' ? 'Pay Now' : 'Confirm Order'}
-                           </button>
-                        </div>
-                      </form>
-                    )}
+                    <button 
+                      onClick={() => setIsCheckingOut(true)}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                      style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
+                    >
+                      Checkout Order <StoreIcon name="chevron-right" theme={activeTheme} className="h-5 w-5" />
+                    </button>
                   </div>
                 )}
               </div>
