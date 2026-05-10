@@ -66,7 +66,7 @@ function useButtonProps(theme: StoreTheme) {
 
 
 
-export default function Storefront({ vendor, products, theme }: { vendor: User; products: Product[]; theme: StoreTheme }) {
+export default function Storefront({ vendor, products, theme, customer }: { vendor: User; products: Product[]; theme: StoreTheme; customer?: any }) {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
   const [previewTheme, setPreviewTheme] = useState<StoreTheme | null>(null);
@@ -76,10 +76,15 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [placedOrder, setPlacedOrder] = useState<{ id: string; total: number; paymentMethod: 'cash' | 'card' } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
-  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerEmail, setCustomerEmail] = useState(customer?.email || '');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
-  const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number; lng: number; details?: string } | null>(null);
+  const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number; lng: number; details?: string } | null>(
+    customer?.delivery_latitude && customer?.delivery_longitude
+      ? { lat: customer.delivery_latitude, lng: customer.delivery_longitude, details: customer.delivery_address_details || '' }
+      : null
+  );
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [discountCodeInput, setDiscountCodeInput] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; amount: number } | null>(null);
@@ -1094,6 +1099,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                                 <input 
                                   name="customer_name" 
                                   required 
+                                  defaultValue={customer?.name || ''}
                                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
                                   placeholder="Amaka Obi"
                                 />
@@ -1116,6 +1122,7 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                                   name="customer_phone" 
                                   required 
                                   type="tel"
+                                  defaultValue={customer?.whatsapp_number || ''}
                                   className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition" 
                                   placeholder="+234 801 234 5678"
                                 />
@@ -1202,7 +1209,13 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
                 {!isCheckingOut && cart.length > 0 && (
                   <div className="border-t border-slate-100 px-6 py-8">
                     <button 
-                      onClick={() => setIsCheckingOut(true)}
+                      onClick={() => {
+                        if (!customer) {
+                          setShowAuthModal(true);
+                        } else {
+                          setIsCheckingOut(true);
+                        }
+                      }}
                       className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                       style={{ backgroundColor: activeTheme.primary_color, '--tw-ring-color': activeTheme.primary_color } as React.CSSProperties}
                     >
@@ -1215,6 +1228,58 @@ export default function Storefront({ vendor, products, theme }: { vendor: User; 
           </div>
         </div>
       )}
+      {/* Auth Gate Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowAuthModal(false)} />
+          {/* Modal */}
+          <div className="relative w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl">
+            {/* Close */}
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              aria-label="Close"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: `${activeTheme.primary_color}18` }}>
+                <svg className="h-7 w-7" style={{ color: activeTheme.primary_color }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+              </div>
+              <h2 className="text-xl font-black text-slate-900">Sign in to checkout faster</h2>
+              <p className="mt-1.5 text-sm text-slate-500">Save your details and track your order history, or continue as a guest.</p>
+            </div>
+
+            <div className="space-y-3">
+              <a
+                href={`/customer/login?callbackUrl=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '/')}`}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-bold text-white transition hover:opacity-90 active:scale-95"
+                style={{ backgroundColor: activeTheme.primary_color }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                Sign In
+              </a>
+              <a
+                href={`/customer/signup?callbackUrl=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '/')}`}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 py-3 font-bold transition hover:bg-slate-50 active:scale-95"
+                style={{ borderColor: activeTheme.primary_color, color: activeTheme.primary_color }}
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                Create Account
+              </a>
+              <button
+                onClick={() => { setShowAuthModal(false); setIsCheckingOut(true); }}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-200 active:scale-95"
+              >
+                Continue as Guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Product Quick View Modal */}
       <ProductQuickView
         product={quickViewProduct}

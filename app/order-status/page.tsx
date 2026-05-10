@@ -89,6 +89,9 @@ export default function OrderStatusPage() {
           <Link href="/explore" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition">
             Browse Stores
           </Link>
+          <Link href="/profile" className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 transition">
+            My Profile
+          </Link>
         </div>
       </header>
 
@@ -222,6 +225,20 @@ export default function OrderStatusPage() {
                   <p className="text-slate-700 font-bold mt-0.5 capitalize">{order.delivery_type}</p>
                 </div>
               </div>
+            </div>
+
+            {/* Profile CTA */}
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-bold text-emerald-900 text-sm">Have an account?</p>
+                <p className="text-xs text-emerald-700 mt-0.5">Sign in to see your full order history and track all deliveries in one place.</p>
+              </div>
+              <Link
+                href="/profile"
+                className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700 transition"
+              >
+                My Profile
+              </Link>
             </div>
           </div>
         )}

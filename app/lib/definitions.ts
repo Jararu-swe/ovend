@@ -15,6 +15,11 @@ export type User = {
   account_name?: string;
   category?: string | null;
   location_state?: string | null;
+  role?: string;
+  delivery_address?: string | null;
+  delivery_latitude?: number | null;
+  delivery_longitude?: number | null;
+  delivery_address_details?: string | null;
 };
 
 export type Customer = {

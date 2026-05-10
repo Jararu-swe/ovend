@@ -17,12 +17,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = (user as any).role || 'vendor';
       }
       return token;
     },
     session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
+        (session.user as any).role = token.role as string;
       }
       return session;
     },
@@ -47,9 +49,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               name: string;
               email: string;
               password: string;
+              role: string;
             }[]
           >`
-            SELECT id, name, email, password
+            SELECT id, name, email, password, role
             FROM users
             WHERE email = ${email}
             LIMIT 1
@@ -64,6 +67,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               id: user.id,
               name: user.name,
               email: user.email,
+              role: user.role,
             };
           }
         }

@@ -10,6 +10,7 @@ import { ensureProductColumns, ensureStoreColumns } from '@/app/lib/data';
 import { validateDiscountCode, incrementDiscountUse } from '@/app/lib/discounts';
 import { deleteCloudinaryImage, deleteCloudinaryImages } from './cloudinary';
 import { signOut } from '@/auth';
+import bcrypt from 'bcryptjs';
 
 const FormSchema = z.object({
   id: z.string(),
@@ -344,6 +345,9 @@ export async function createOrder(
   const delivery_longitude = formData.get('delivery_longitude') ? parseFloat(formData.get('delivery_longitude') as string) : null;
   const delivery_address_details = formData.get('delivery_address_details') as string;
 
+  const session = await auth();
+  const customer_account_id = session?.user?.id && (session.user as any).role === 'customer' ? session.user.id : null;
+
   if (!customer_name || !customer_phone || !delivery_type) {
     throw new Error('Missing required customer information.');
   }
@@ -368,7 +372,8 @@ export async function createOrder(
         discount_amount,
         delivery_latitude,
         delivery_longitude,
-        delivery_address_details
+        delivery_address_details,
+        customer_account_id
       )
       VALUES (
         ${vendorId}, 
@@ -386,7 +391,8 @@ export async function createOrder(
         ${discountAmount || 0},
         ${delivery_latitude},
         ${delivery_longitude},
-        ${delivery_address_details || null}
+        ${delivery_address_details || null},
+        ${customer_account_id}
       )
       RETURNING id
     `;
