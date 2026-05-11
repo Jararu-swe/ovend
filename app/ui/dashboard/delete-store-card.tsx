@@ -19,7 +19,11 @@ export default function DeleteStoreCard() {
       await deleteStore();
     } catch (error) {
       console.error('Failed to delete store:', error);
-      alert('Failed to delete store. Please try again.');
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to delete store. Please try again.';
+      alert(message);
       setIsDeleting(false);
       setIsConfirming(false);
     }

@@ -7,6 +7,7 @@ import {
   TicketIcon,
   UsersIcon,
   PaintBrushIcon,
+  CreditCardIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -19,6 +20,7 @@ const links = [
   { name: 'Discounts', href: '/dashboard/discounts', icon: TicketIcon },
   { name: 'Team', href: '/dashboard/team', icon: UsersIcon },
   { name: 'Customize', href: '/dashboard/customize', icon: PaintBrushIcon },
+  { name: 'Billing', href: '/dashboard/billing', icon: CreditCardIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
 ];
 

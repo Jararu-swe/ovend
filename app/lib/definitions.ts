@@ -20,6 +20,10 @@ export type User = {
   delivery_latitude?: number | null;
   delivery_longitude?: number | null;
   delivery_address_details?: string | null;
+  subscription_status?: 'active' | 'past_due' | 'inactive' | 'trial' | string | null;
+  subscription_expires_at?: string | null;
+  subscription_last_payment_reference?: string | null;
+  subscription_updated_at?: string | null;
 };
 
 export type Customer = {

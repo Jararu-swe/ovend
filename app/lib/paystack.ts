@@ -67,6 +67,54 @@ export async function verifyPayment(reference: string): Promise<boolean> {
   }
 }
 
+export type PaystackVerifyDetails =
+  | {
+      ok: true;
+      reference: string;
+      status: string;
+      amount: number;
+      currency: string;
+      metadata: any;
+      paid_at?: string;
+    }
+  | { ok: false; error: string };
+
+export async function verifyPaymentDetails(reference: string): Promise<PaystackVerifyDetails> {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY;
+
+  if (!secretKey) {
+    return { ok: false, error: 'Paystack secret key not configured' };
+  }
+
+  try {
+    const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    });
+
+    const data = await response.json();
+    if (!data?.status || !data?.data) {
+      return { ok: false, error: 'Invalid Paystack verification response' };
+    }
+
+    const d = data.data;
+    return {
+      ok: d.status === 'success',
+      ...(d.status === 'success'
+        ? {
+            reference: String(d.reference ?? reference),
+            status: String(d.status),
+            amount: Number(d.amount ?? 0),
+            currency: String(d.currency ?? 'NGN'),
+            metadata: d.metadata ?? null,
+            paid_at: d.paid_at ?? d.paidAt ?? undefined,
+          }
+        : { error: `Payment status is ${String(d.status)}` }),
+    } as PaystackVerifyDetails;
+  } catch (error: any) {
+    return { ok: false, error: error?.message || 'Payment verification error' };
+  }
+}
+
 export function generatePaymentReference(orderId: string): string {
   return `OVD-${orderId.slice(0, 8)}-${Date.now()}`;
 }

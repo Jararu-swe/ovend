@@ -51,6 +51,42 @@ export async function ensureStoreColumns() {
   await ensureStoreColumnsPromise;
 }
 
+let ensureVendorSubscriptionSchemaPromise: Promise<void> | null = null;
+export async function ensureVendorSubscriptionSchema() {
+  if (!ensureVendorSubscriptionSchemaPromise) {
+    ensureVendorSubscriptionSchemaPromise = (async () => {
+      try {
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'inactive'`,
+        );
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL`);
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_last_payment_reference VARCHAR(255) DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+        );
+
+        await sql.unsafe(`
+          CREATE TABLE IF NOT EXISTS vendor_subscription_payments (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            vendor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            amount_kobo INTEGER NOT NULL,
+            reference VARCHAR(255) NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'paid',
+            paid_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (vendor_id, reference)
+          )
+        `);
+      } catch (e) {
+        console.error('ensureVendorSubscriptionSchema error:', e);
+      }
+    })();
+  }
+  await ensureVendorSubscriptionSchemaPromise;
+}
+
 export async function fetchProductsList(vendorId: string) {
   console.log('fetchProductsList called with vendorId:', vendorId);
   if (!vendorId) {
@@ -320,8 +356,19 @@ export async function fetchProducts(vendorId: string) {
 
 export async function fetchUserById(id: string) {
   try {
+    await ensureVendorSubscriptionSchema();
     const user = await sql<User[]>`
-      SELECT id, name, email, store_slug, store_name, whatsapp_number
+      SELECT
+        id,
+        name,
+        email,
+        store_slug,
+        store_name,
+        whatsapp_number,
+        subscription_status,
+        subscription_expires_at,
+        subscription_last_payment_reference,
+        subscription_updated_at
       FROM users
       WHERE id = ${id}
     `;

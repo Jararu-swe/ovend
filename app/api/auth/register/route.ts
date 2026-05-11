@@ -5,12 +5,12 @@ import { z } from 'zod';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
+const TRIAL_DAYS = 7;
+
 const RegisterSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  location_state: z.string().min(1, 'Please select a state'),
-  category: z.string().min(1, 'Please select a category'),
 });
 
 export async function POST(req: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, password, location_state, category } = parsed.data;
+    const { name, email, password } = parsed.data;
 
     // Check if email already exists
     const existingUsers = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
@@ -39,22 +39,50 @@ export async function POST(req: NextRequest) {
     // Hash password and create user
     const hashedPassword = await bcrypt.hash(password, 10);
     const id = crypto.randomUUID();
-    
-    // Generate initial slug from name
-    let storeSlug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    
-    // Check if slug exists, if so append short id
-    const existingSlug = await sql`SELECT id FROM users WHERE store_slug = ${storeSlug} LIMIT 1`;
-    if (existingSlug.length > 0) {
-      storeSlug = `${storeSlug}-${id.slice(0, 4)}`;
+
+    // Use neutral placeholders; vendor sets these manually during onboarding.
+    const storeSlug = `store-${id.slice(0, 8)}`;
+    const storeName = 'My Store';
+
+    // Ensure subscription columns exist (older DBs)
+    try {
+      await sql.unsafe(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'inactive'`,
+      );
+      await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL`);
+      await sql.unsafe(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_last_payment_reference VARCHAR(255) DEFAULT NULL`,
+      );
+      await sql.unsafe(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+      );
+    } catch (e) {
+      console.error('Register ensure subscription columns error:', e);
     }
 
     await sql`
-      INSERT INTO users (id, name, email, password, store_slug, store_name, location_state, category)
-      VALUES (${id}, ${name}, ${email}, ${hashedPassword}, ${storeSlug}, ${name}, ${location_state}, ${category})
+      INSERT INTO users (
+        id,
+        name,
+        email,
+        password,
+        store_slug,
+        store_name,
+        subscription_status,
+        subscription_expires_at,
+        subscription_updated_at
+      )
+      VALUES (
+        ${id},
+        ${name},
+        ${email},
+        ${hashedPassword},
+        ${storeSlug},
+        ${storeName},
+        'trial',
+        (CURRENT_TIMESTAMP + (${TRIAL_DAYS} * INTERVAL '1 day')),
+        CURRENT_TIMESTAMP
+      )
     `;
 
     return NextResponse.json({ success: true }, { status: 201 });

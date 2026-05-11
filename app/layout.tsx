@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} ${pacifico.variable} antialiased`}>
         {children}
-        <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+        <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
       </body>
     </html>
   );

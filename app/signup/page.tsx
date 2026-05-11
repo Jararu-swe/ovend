@@ -8,12 +8,9 @@ import {
   UserIcon,
   ExclamationCircleIcon,
   ArrowRightIcon,
-  TagIcon,
-  MapPinIcon,
 } from '@heroicons/react/24/outline';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,14 +26,12 @@ export default function SignupPage() {
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const location_state = formData.get('location_state') as string;
-    const category = formData.get('category') as string;
 
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, location_state, category }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
@@ -138,48 +133,6 @@ export default function SignupPage() {
                   className="peer w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
                 />
                 <KeyIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 peer-focus:text-emerald-500" />
-              </div>
-            </div>
-
-            {/* State */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="location_state">
-                Store Location (State)
-              </label>
-              <div className="relative">
-                <select
-                  id="location_state"
-                  name="location_state"
-                  required
-                  className="peer w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
-                >
-                  <option value="">Select a state</option>
-                  {NIGERIAN_STATES.map((state) => (
-                    <option key={state} value={state}>{state}</option>
-                  ))}
-                </select>
-                <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 peer-focus:text-emerald-500" />
-              </div>
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="category">
-                Store Category
-              </label>
-              <div className="relative">
-                <select
-                  id="category"
-                  name="category"
-                  required
-                  className="peer w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
-                >
-                  <option value="">Select a category</option>
-                  {STORE_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                <TagIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 peer-focus:text-emerald-500" />
               </div>
             </div>
 

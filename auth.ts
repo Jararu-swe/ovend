@@ -14,17 +14,50 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: 'jwt',
   },
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || 'vendor';
+        token.subscription_expires_at = (user as any).subscription_expires_at ?? null;
+        token.subscription_status = (user as any).subscription_status ?? null;
+        return token;
       }
+
+      // Keep subscription info fresh so middleware gating updates immediately after payment.
+      // We only do this for vendors to avoid extra DB load for customers.
+      const role = (token as any).role as string | undefined;
+      const id = token.id as string | undefined;
+      if (role === 'vendor' && id) {
+        try {
+          // Ensure subscription columns exist (older DBs)
+          await sql.unsafe(
+            `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'inactive'`,
+          );
+          await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL`);
+
+          const [row] = await sql<{ subscription_status: string; subscription_expires_at: string | null }[]>`
+            SELECT subscription_status, subscription_expires_at
+            FROM users
+            WHERE id = ${id}
+            LIMIT 1
+          `;
+          if (row) {
+            (token as any).subscription_status = row.subscription_status ?? null;
+            (token as any).subscription_expires_at = row.subscription_expires_at ?? null;
+          }
+        } catch (e) {
+          console.error('JWT subscription refresh error:', e);
+        }
+      }
+
       return token;
     },
     session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
         (session.user as any).role = token.role as string;
+        (session.user as any).subscription_expires_at = (token as any).subscription_expires_at ?? null;
+        (session.user as any).subscription_status = (token as any).subscription_status ?? null;
       }
       return session;
     },
@@ -43,6 +76,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (parsedCredentials.success) {
           const { email, password } = parsedCredentials.data;
+          // Ensure subscription columns exist (avoids query failures on older DBs)
+          try {
+            await sql.unsafe(
+              `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'inactive'`,
+            );
+            await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL`);
+          } catch (e) {
+            console.error('Auth ensure subscription columns error:', e);
+          }
+
           const [user] = await sql<
             {
               id: string;
@@ -50,9 +93,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               email: string;
               password: string;
               role: string;
+              subscription_status: string | null;
+              subscription_expires_at: string | null;
             }[]
           >`
-            SELECT id, name, email, password, role
+            SELECT id, name, email, password, role, subscription_status, subscription_expires_at
             FROM users
             WHERE email = ${email}
             LIMIT 1
@@ -68,6 +113,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               name: user.name,
               email: user.email,
               role: user.role,
+              subscription_status: user.subscription_status,
+              subscription_expires_at: user.subscription_expires_at,
             };
           }
         }

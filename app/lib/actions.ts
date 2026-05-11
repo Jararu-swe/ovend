@@ -6,11 +6,35 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ensureLogoLayoutColumns } from '@/app/lib/theme';
-import { ensureProductColumns, ensureStoreColumns } from '@/app/lib/data';
+import { ensureProductColumns, ensureStoreColumns, ensureVendorSubscriptionSchema } from '@/app/lib/data';
 import { validateDiscountCode, incrementDiscountUse } from '@/app/lib/discounts';
 import { deleteCloudinaryImage, deleteCloudinaryImages } from './cloudinary';
 import { signOut } from '@/auth';
 import bcrypt from 'bcryptjs';
+
+async function requireActiveVendorSubscription() {
+  const session = await auth();
+  const role = (session?.user as any)?.role;
+  if (!session?.user?.id || role !== 'vendor') {
+    throw new Error('Unauthorized.');
+  }
+
+  await ensureVendorSubscriptionSchema();
+  const [row] = await sql<{ subscription_expires_at: string | null }[]>`
+    SELECT subscription_expires_at
+    FROM users
+    WHERE id = ${session.user.id}
+    LIMIT 1
+  `;
+
+  const expiresAt = row?.subscription_expires_at ? new Date(row.subscription_expires_at) : null;
+  const active = !!expiresAt && expiresAt.getTime() > Date.now();
+  if (!active) {
+    throw new Error('Subscription required. Please pay ₦3,000 to continue.');
+  }
+
+  return { vendorId: session.user.id };
+}
 
 const FormSchema = z.object({
   id: z.string(),
@@ -131,6 +155,7 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     account_number: formData.get('account_number'),
     account_name: formData.get('account_name'),
     category: formData.get('category'),
+    location_state: formData.get('location_state'),
   });
 
   if (!validatedFields.success) {
@@ -184,6 +209,11 @@ export async function createProduct(prevState: State | undefined, formData: Form
   if (!session?.user?.id) {
     return { message: 'Unauthorized. Please log in.' };
   }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
+  }
 
   const validatedFields = CreateProduct.safeParse({
     name: formData.get('name'),
@@ -231,6 +261,11 @@ export async function updateProduct(
   const session = await auth();
   if (!session?.user?.id) {
     return { message: 'Unauthorized. Please log in.' };
+  }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
   }
 
   const validatedFields = UpdateProduct.safeParse({
@@ -300,6 +335,7 @@ export async function deleteProduct(id: string) {
   if (!session?.user?.id) {
     throw new Error('Unauthorized.');
   }
+  await requireActiveVendorSubscription();
 
   try {
     // Fetch product to get image URLs before deleting
@@ -445,6 +481,7 @@ export async function updateOrderStatus(id: string, status: string) {
   if (!session?.user?.id) {
     throw new Error('Unauthorized.');
   }
+  await requireActiveVendorSubscription();
 
   try {
     await sql`
@@ -475,6 +512,11 @@ export async function createDiscountAction(
   prevState: State | undefined,
   formData: FormData
 ) {
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
+  }
   const validatedFields = DiscountSchema.safeParse({
     code: formData.get('code'),
     discount_type: formData.get('discount_type'),
@@ -522,6 +564,11 @@ export async function toggleDiscountAction(
   if (!session?.user?.id) {
     return { message: 'Unauthorized' };
   }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
+  }
 
   try {
     await sql`
@@ -557,6 +604,11 @@ export async function inviteTeamMemberAction(
   const session = await auth();
   if (!session?.user?.id) {
     return { message: 'Unauthorized' };
+  }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
   }
 
   const email = formData.get('email') as string;
@@ -607,6 +659,11 @@ export async function removeTeamMemberAction(
   if (!session?.user?.id) {
     return { message: 'Unauthorized' };
   }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
+  }
 
   try {
     await sql`
@@ -631,6 +688,11 @@ export async function updateThemeAction(
   const session = await auth();
   if (!session?.user?.id) {
     return { message: 'Unauthorized' };
+  }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
   }
 
   try {
@@ -789,35 +851,61 @@ export async function deleteStore() {
     // 1. Fetch all products to delete images from Cloudinary
     const products = await sql`SELECT image_url, gallery_images FROM products WHERE vendor_id = ${vendorId}`;
     for (const product of products) {
-      if (product.image_url) {
-        await deleteCloudinaryImage(product.image_url);
-      }
-      const gallery: string[] = JSON.parse(product.gallery_images || '[]');
-      if (gallery.length > 0) {
-        await deleteCloudinaryImages(gallery);
+      try {
+        if (product.image_url) {
+          await deleteCloudinaryImage(product.image_url);
+        }
+        const gallery: string[] = JSON.parse(product.gallery_images || '[]');
+        if (gallery.length > 0) {
+          await deleteCloudinaryImages(gallery);
+        }
+      } catch (e) {
+        // Best-effort cleanup: a Cloudinary failure should not block deleting the store.
+        console.error('Cloudinary cleanup error (product):', e);
       }
     }
 
     // 2. Fetch theme to delete logo
     const [theme] = await sql`SELECT logo_url FROM store_theme WHERE vendor_id = ${vendorId}`;
     if (theme?.logo_url) {
-      await deleteCloudinaryImage(theme.logo_url);
+      try {
+        await deleteCloudinaryImage(theme.logo_url);
+      } catch (e) {
+        console.error('Cloudinary cleanup error (logo):', e);
+      }
     }
 
     // 3. Delete everything associated with the vendor
     // Note: We use a transaction to ensure all or nothing
     await sql.begin(async (sql) => {
+      // Optional tables (may not exist in older DBs) - delete best-effort.
+      try {
+        await sql`DELETE FROM vendor_subscription_payments WHERE vendor_id = ${vendorId}`;
+      } catch (e) {
+        console.error('Delete vendor_subscription_payments error:', e);
+      }
+
+      try {
+        await sql`DELETE FROM team_members WHERE vendor_id = ${vendorId} OR user_id = ${vendorId}`;
+      } catch (e) {
+        console.error('Delete team_members error:', e);
+      }
+
       await sql`DELETE FROM products WHERE vendor_id = ${vendorId}`;
       await sql`DELETE FROM orders WHERE vendor_id = ${vendorId}`;
       await sql`DELETE FROM store_theme WHERE vendor_id = ${vendorId}`;
       await sql`DELETE FROM store_analytics WHERE vendor_id = ${vendorId}`;
-      await sql`DELETE FROM discounts WHERE vendor_id = ${vendorId}`;
+      try {
+        await sql`DELETE FROM discount_codes WHERE vendor_id = ${vendorId}`;
+      } catch (e) {
+        console.error('Delete discount_codes error:', e);
+      }
       await sql`DELETE FROM users WHERE id = ${vendorId}`;
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Database Error during store deletion:', error);
-    throw new Error('Failed to delete store.');
+    throw new Error(`Failed to delete store: ${error?.message || String(error)}`);
   }
 
   // 4. Sign out
