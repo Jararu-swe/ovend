@@ -24,6 +24,13 @@ export type User = {
   subscription_expires_at?: string | null;
   subscription_last_payment_reference?: string | null;
   subscription_updated_at?: string | null;
+  /** IANA timezone for store hours (e.g. Africa/Lagos) */
+  store_timezone?: string | null;
+  /** Weekly schedule JSON; shape defined in store-availability helpers */
+  store_hours?: unknown;
+  /** When false, storefront shows as closed / not accepting orders */
+  accepting_orders?: boolean | null;
+  store_closed_note?: string | null;
 };
 
 export type Customer = {

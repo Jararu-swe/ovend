@@ -141,6 +141,36 @@ export type State = {
   message?: string | null;
 };
 
+export type AvailabilityState = {
+  message?: string | null;
+  /** Set on every submit so the UI does not rely on parsing the message string */
+  status?: 'success' | 'error' | null;
+};
+
+const StoreHoursDayKeyZ = z.enum(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
+const StoreHoursSchema = z
+  .record(
+    StoreHoursDayKeyZ,
+    z
+      .array(
+        z.object({
+          open: z.string().regex(/^\d{2}:\d{2}$/),
+          close: z.string().regex(/^\d{2}:\d{2}$/),
+        }),
+      )
+      .max(3),
+  )
+  .nullable();
+
+function isValidIanaTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz }).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function updateProfile(prevState: State | undefined, formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -201,6 +231,95 @@ export async function updateProfile(prevState: State | undefined, formData: Form
   } catch (error) {
     console.error('Database Error:', error);
     return { message: 'Database Error: Failed to Update Profile.' };
+  }
+}
+
+export async function updateStoreAvailability(
+  _prevState: AvailabilityState | undefined,
+  formData: FormData,
+): Promise<AvailabilityState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { message: 'Unauthorized. Please log in.', status: 'error' };
+  }
+
+  const role = (session?.user as { role?: string }).role;
+  if (role !== 'vendor') {
+    return { message: 'Only vendors can update store hours.', status: 'error' };
+  }
+
+  const tzRaw = String(formData.get('store_timezone') ?? '').trim();
+  const store_timezone = tzRaw || 'Africa/Lagos';
+  if (!isValidIanaTimeZone(store_timezone)) {
+    return { message: 'Invalid timezone.', status: 'error' };
+  }
+
+  const accepting_orders = formData.get('accepting_orders') === 'on';
+  const noteRaw = String(formData.get('store_closed_note') ?? '').trim();
+  const store_closed_note = noteRaw.length ? noteRaw.slice(0, 280) : null;
+
+  let parsedHours: unknown = null;
+  const hoursJson = formData.get('store_hours_json');
+  if (typeof hoursJson === 'string' && hoursJson.trim()) {
+    try {
+      parsedHours = JSON.parse(hoursJson);
+    } catch {
+      return { message: 'Invalid hours data.', status: 'error' };
+    }
+  }
+
+  const hoursCheck = StoreHoursSchema.safeParse(parsedHours);
+  if (!hoursCheck.success) {
+    return { message: 'Invalid weekly hours format.', status: 'error' };
+  }
+
+  let store_hours = hoursCheck.data;
+  if (store_hours && typeof store_hours === 'object' && Object.keys(store_hours).length === 0) {
+    store_hours = null;
+  }
+
+  try {
+    await ensureStoreColumns();
+    const [row] = await sql<{ store_slug: string }[]>`
+      SELECT store_slug FROM users WHERE id = ${session.user.id} LIMIT 1
+    `;
+    if (!row) {
+      return { message: 'Account not found.', status: 'error' };
+    }
+
+    if (store_hours === null) {
+      await sql`
+        UPDATE users
+        SET
+          store_timezone = ${store_timezone},
+          store_hours = NULL,
+          accepting_orders = ${accepting_orders},
+          store_closed_note = ${store_closed_note}
+        WHERE id = ${session.user.id}
+      `;
+    } else {
+      await sql`
+        UPDATE users
+        SET
+          store_timezone = ${store_timezone},
+          store_hours = ${sql.json(store_hours)},
+          accepting_orders = ${accepting_orders},
+          store_closed_note = ${store_closed_note}
+        WHERE id = ${session.user.id}
+      `;
+    }
+
+    revalidatePath('/dashboard/settings');
+    revalidatePath('/explore');
+    revalidatePath('/');
+    revalidatePath(`/s/${row.store_slug}`);
+    return {
+      message: 'Saved. Customers will see your updated hours and open/closed status.',
+      status: 'success',
+    };
+  } catch (error) {
+    console.error('updateStoreAvailability:', error);
+    return { message: 'Could not save availability. Try again.', status: 'error' };
   }
 }
 

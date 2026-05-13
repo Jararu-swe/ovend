@@ -12,6 +12,7 @@ import {
   Order,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { getStoreAvailability, type StoreAvailability } from './store-availability';
 
 let ensureProductColumnsPromise: Promise<void> | null = null;
 export async function ensureProductColumns() {
@@ -43,6 +44,12 @@ export async function ensureStoreColumns() {
       try {
         await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL`);
         await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS location_state VARCHAR(100) DEFAULT NULL`);
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS store_timezone VARCHAR(100) NOT NULL DEFAULT 'Africa/Lagos'`,
+        );
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS store_hours JSONB DEFAULT NULL`);
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS accepting_orders BOOLEAN NOT NULL DEFAULT true`);
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS store_closed_note VARCHAR(280) DEFAULT NULL`);
       } catch (e) {
         console.error('ensureStoreColumns error:', e);
       }
@@ -337,8 +344,18 @@ export async function fetchFilteredCustomers(query: string) {
 
 export async function fetchVendorBySlug(slug: string) {
   try {
+    await ensureStoreColumns();
     const data = await sql<User[]>`
-      SELECT id, name, store_slug, store_name, whatsapp_number
+      SELECT
+        id,
+        name,
+        store_slug,
+        store_name,
+        whatsapp_number,
+        store_timezone,
+        store_hours,
+        accepting_orders,
+        store_closed_note
       FROM users
       WHERE store_slug = ${slug}
       LIMIT 1
@@ -357,6 +374,7 @@ export async function fetchProducts(vendorId: string) {
 export async function fetchUserById(id: string) {
   try {
     await ensureVendorSubscriptionSchema();
+    await ensureStoreColumns();
     const user = await sql<User[]>`
       SELECT
         id,
@@ -368,7 +386,11 @@ export async function fetchUserById(id: string) {
         subscription_status,
         subscription_expires_at,
         subscription_last_payment_reference,
-        subscription_updated_at
+        subscription_updated_at,
+        store_timezone,
+        store_hours,
+        accepting_orders,
+        store_closed_note
       FROM users
       WHERE id = ${id}
     `;
@@ -482,6 +504,7 @@ export type PublicStore = {
   category: string | null;
   location_state: string | null;
   top_products: { name: string; image_url: string | null; price: number }[];
+  availability: StoreAvailability;
 };
 
 export async function fetchAllPublicStores(search?: string, category?: string): Promise<PublicStore[]> {
@@ -495,7 +518,12 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
       store_name: string;
       store_slug: string;
       category: string | null;
+      location_state: string | null;
       product_count: string;
+      store_timezone: string | null;
+      store_hours: unknown;
+      accepting_orders: boolean | null;
+      store_closed_note: string | null;
     }[]>`
       SELECT 
         u.id,
@@ -503,6 +531,10 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
         u.store_slug,
         u.category,
         u.location_state,
+        u.store_timezone,
+        u.store_hours,
+        u.accepting_orders,
+        u.store_closed_note,
         COUNT(DISTINCT p.id)::text AS product_count
       FROM users u
       LEFT JOIN products p ON p.vendor_id = u.id AND p.status = 'active'
@@ -533,7 +565,7 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
             AND p_cat.category = ${categoryFilter}
           )
         )` : sql``}
-      GROUP BY u.id, u.store_name, u.store_slug, u.category, u.location_state
+      GROUP BY u.id, u.store_name, u.store_slug, u.category, u.location_state, u.store_timezone, u.store_hours, u.accepting_orders, u.store_closed_note
       HAVING COUNT(p.id) > 0
       ORDER BY COUNT(p.id) DESC, u.store_name ASC
       LIMIT 50
@@ -562,6 +594,12 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
           category: store.category,
           location_state: store.location_state,
           top_products: topProducts,
+          availability: getStoreAvailability({
+            timeZone: store.store_timezone,
+            store_hours: store.store_hours,
+            accepting_orders: store.accepting_orders,
+            store_closed_note: store.store_closed_note,
+          }),
         };
       })
     );

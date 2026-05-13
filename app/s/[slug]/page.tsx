@@ -1,5 +1,6 @@
 import { fetchVendorBySlug, fetchProducts, trackStoreVisit } from '@/app/lib/data';
 import { getOrCreateVendorTheme } from '@/app/lib/theme';
+import { getStoreAvailability } from '@/app/lib/store-availability';
 import { notFound } from 'next/navigation';
 import Storefront from '@/app/ui/store/storefront';
 
@@ -34,5 +35,12 @@ export default async function StorePage(props: { params: Promise<{ slug: string 
   // Track store visit (non-blocking)
   trackStoreVisit(vendor.id).catch(() => {});
 
-  return <Storefront vendor={vendor} products={products} theme={theme} customer={customer} />;
+  const availability = getStoreAvailability({
+    timeZone: vendor.store_timezone,
+    store_hours: vendor.store_hours,
+    accepting_orders: vendor.accepting_orders,
+    store_closed_note: vendor.store_closed_note,
+  });
+
+  return <Storefront vendor={vendor} products={products} theme={theme} customer={customer} availability={availability} />;
 }

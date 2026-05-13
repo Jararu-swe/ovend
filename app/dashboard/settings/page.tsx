@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { fetchUserById } from '@/app/lib/data';
 import SettingsForm from '@/app/ui/dashboard/settings-form';
+import StoreAvailabilityForm from '@/app/ui/dashboard/store-availability-form';
 import DeleteStoreCard from '@/app/ui/dashboard/delete-store-card';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -33,6 +34,8 @@ export default async function SettingsPage() {
 
       <div className="space-y-4">
         <SettingsForm user={user} />
+
+        <StoreAvailabilityForm user={user} />
 
         <DeleteStoreCard />
 

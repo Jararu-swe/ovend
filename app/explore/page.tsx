@@ -7,6 +7,7 @@ import { pacifico, lusitana } from '@/app/ui/fonts';
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/app/ui/scroll-animations';
 import { MudclothPattern, ArewaSymbol } from '@/app/ui/landing-patterns';
 import VendleLogo from '@/app/ui/vendle-logo';
+import { StoreAvailabilityPill } from '@/app/ui/store/store-availability-badge';
 
 
 function generateStoreDescription(storeName: string, topProducts: { name: string }[], productCount: number) {
@@ -262,13 +263,17 @@ export default async function ExplorePage({
                       </div>
                     </div>
 
-                    <div className="mb-4">
-                      <h3 className={`${lusitana.className} text-2xl font-bold text-slate-900 truncate group-hover:text-emerald-600 transition-colors`}>
-                        {store.store_name}
-                      </h3>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/70 mt-1">
-                        {store.category || 'Vendor'} • {store.location_state || 'Nigeria'} • {store.product_count} {store.product_count === 1 ? 'Product' : 'Products'}
-                      </p>
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className={`${lusitana.className} text-2xl font-bold text-slate-900 truncate group-hover:text-emerald-600 transition-colors`}>
+                          {store.store_name}
+                        </h3>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/70 mt-1">
+                          {store.category || 'Vendor'} • {store.location_state || 'Nigeria'} • {store.product_count}{' '}
+                          {store.product_count === 1 ? 'Product' : 'Products'}
+                        </p>
+                      </div>
+                      <StoreAvailabilityPill availability={store.availability} className="shrink-0 mt-0.5" />
                     </div>
 
                     <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed font-light mt-auto">

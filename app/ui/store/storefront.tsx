@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
+import type { StoreAvailability } from '@/app/lib/store-availability';
 import {
   formatCurrency,
   getCardStyleClasses,
@@ -22,6 +23,7 @@ import { TemplateSection, TemplateSectionContent, getDefaultSections, getDefault
 import SectionRenderer from '@/app/ui/store/section-renderer';
 import ProductQuickView from '@/app/ui/store/product-quick-view';
 import DynamicNav from '@/app/ui/store/nav-renderers';
+import { StoreAvailabilityBanner } from '@/app/ui/store/store-availability-badge';
 import StoreIcon from '@/app/ui/store/storefront-icons';
 import { CldImage } from 'next-cloudinary';
 
@@ -66,7 +68,19 @@ function useButtonProps(theme: StoreTheme) {
 
 
 
-export default function Storefront({ vendor, products, theme, customer }: { vendor: User; products: Product[]; theme: StoreTheme; customer?: any }) {
+export default function Storefront({
+  vendor,
+  products,
+  theme,
+  customer,
+  availability,
+}: {
+  vendor: User;
+  products: Product[];
+  theme: StoreTheme;
+  customer?: any;
+  availability: StoreAvailability;
+}) {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
   const [previewTheme, setPreviewTheme] = useState<StoreTheme | null>(null);
@@ -898,6 +912,14 @@ export default function Storefront({ vendor, products, theme, customer }: { vend
         setIsCartOpen={setIsCartOpen}
         layoutWidthClass={layoutWidthClass}
       />
+
+      <div className={`mx-auto w-full px-4 ${layoutWidthClass}`}>
+        <StoreAvailabilityBanner
+          availability={availability}
+          borderColor={activeTheme.border_color || '#e2e8f0'}
+          textColor={activeTheme.text_color}
+        />
+      </div>
 
       <main 
         className={`mx-auto px-4 pb-32 ${layoutWidthClass} ${
