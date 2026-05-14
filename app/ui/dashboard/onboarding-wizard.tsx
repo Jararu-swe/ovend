@@ -12,11 +12,19 @@ import {
   SparklesIcon,
   MapPinIcon,
   TagIcon,
+  ClockIcon,
+  GlobeAltIcon,
 } from '@heroicons/react/24/outline';
 import { User } from '@/app/lib/definitions';
 import VendleLogo from '@/app/ui/vendle-logo';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 import { TEMPLATES } from '@/app/lib/template-presets';
+import {
+  STORE_DAY_KEYS,
+  type StoreHoursDayKey,
+  type StoreHoursJson,
+  parseHHMM,
+} from '@/app/lib/store-availability';
 
 interface OnboardingWizardProps {
   user: User;
@@ -41,7 +49,31 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
   const [themeError, setThemeError] = useState<string | null>(null);
 
   const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${storeSlug || user.store_slug}`;
-  const totalSteps = 4;
+  const totalSteps = 5;
+
+  // Availability State
+  const [timezone, setTimezone] = useState(user.store_timezone || 'Africa/Lagos');
+  const [days, setDays] = useState<Record<StoreHoursDayKey, { enabled: boolean; open: string; close: string }>>(() => {
+    const base = {} as Record<StoreHoursDayKey, { enabled: boolean; open: string; close: string }>;
+    for (const k of STORE_DAY_KEYS) {
+      // Default to 9-5 for weekdays, closed for weekends
+      const isWeekend = k === 'sat' || k === 'sun';
+      base[k] = { enabled: !isWeekend, open: '09:00', close: '17:00' };
+    }
+    return base;
+  });
+  const [isSavingAvailability, setIsSavingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+
+  const DAY_LABELS: Record<StoreHoursDayKey, string> = {
+    mon: 'Mon',
+    tue: 'Tue',
+    wed: 'Wed',
+    thu: 'Thu',
+    fri: 'Fri',
+    sat: 'Sat',
+    sun: 'Sun',
+  };
 
   const canProceedFromStep1 = useMemo(() => {
     return storeName.trim().length >= 2 && storeSlug.trim().length >= 2 && /^[a-z0-9-]+$/.test(storeSlug.trim());
@@ -107,6 +139,48 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
     } catch (e: any) {
       setThemeError(e?.message || 'Failed to save theme.');
       setIsSavingTheme(false);
+      return false;
+    }
+  };
+
+  const saveAvailability = async () => {
+    setAvailabilityError(null);
+    setIsSavingAvailability(true);
+
+    const out: StoreHoursJson = {};
+    for (const k of STORE_DAY_KEYS) {
+      const row = days[k];
+      if (!row.enabled) continue;
+      const o = parseHHMM(row.open);
+      const c = parseHHMM(row.close);
+      if (o == null || c == null || c <= o) continue;
+      out[k] = [{ open: row.open.trim().slice(0, 5), close: row.close.trim().slice(0, 5) }];
+    }
+
+    try {
+      const resp = await fetch('/api/vendor/onboarding-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          store_timezone: timezone,
+          store_hours: Object.keys(out).length ? out : null,
+          accepting_orders: true,
+        }),
+      });
+
+      const body = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setAvailabilityError(body?.error || 'Failed to save availability.');
+        setIsSavingAvailability(false);
+        return false;
+      }
+
+      setIsSavingAvailability(false);
+      router.refresh();
+      return true;
+    } catch (e: any) {
+      setAvailabilityError(e?.message || 'Failed to save availability.');
+      setIsSavingAvailability(false);
       return false;
     }
   };
@@ -240,14 +314,128 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               disabled={isSaving}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60"
             >
-              {isSaving ? 'Saving…' : 'Next: Add Products'}
+              {isSaving ? 'Saving…' : 'Next: Store Hours'}
               <ArrowRightIcon className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        {/* Step 2: Choose Theme */}
+        {/* Step 2: Store Availability */}
         {step === 2 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center rounded-full bg-amber-100 p-4 mb-4">
+                <ClockIcon className="h-8 w-8 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Store Hours</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Let customers know when you&apos;re open. Your store will show an &quot;Open&quot; or &quot;Closed&quot; badge automatically.
+              </p>
+            </div>
+
+            <div className="space-y-4 rounded-xl bg-slate-50 p-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                  <GlobeAltIcon className="h-3.5 w-3.5" />
+                  Your Timezone
+                </label>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+                >
+                  <option value="Africa/Lagos">Africa/Lagos (GMT+1)</option>
+                  <option value="Africa/Accra">Africa/Accra (GMT)</option>
+                  <option value="Africa/Nairobi">Africa/Nairobi (GMT+3)</option>
+                  <option value="Africa/Johannesburg">Africa/Johannesburg (GMT+2)</option>
+                  <option value="UTC">UTC</option>
+                  <option value="Europe/London">Europe/London (GMT/BST)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-600">Weekly Schedule</label>
+                <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden">
+                  {STORE_DAY_KEYS.map((key) => (
+                    <div key={key} className="flex items-center justify-between px-3 py-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={days[key].enabled}
+                          onChange={(e) =>
+                            setDays((d) => ({
+                              ...d,
+                              [key]: { ...d[key], enabled: e.target.checked },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-sm font-medium text-slate-700">{DAY_LABELS[key]}</span>
+                      </label>
+                      
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="time"
+                          disabled={!days[key].enabled}
+                          value={days[key].open}
+                          onChange={(e) =>
+                            setDays((d) => ({
+                              ...d,
+                              [key]: { ...d[key], open: e.target.value },
+                            }))
+                          }
+                          className="rounded-lg border border-slate-200 px-2 py-1 text-xs disabled:opacity-30 bg-slate-50"
+                        />
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">to</span>
+                        <input
+                          type="time"
+                          disabled={!days[key].enabled}
+                          value={days[key].close}
+                          onChange={(e) =>
+                            setDays((d) => ({
+                              ...d,
+                              [key]: { ...d[key], close: e.target.value },
+                            }))
+                          }
+                          className="rounded-lg border border-slate-200 px-2 py-1 text-xs disabled:opacity-30 bg-slate-50"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {availabilityError && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {availabilityError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              >
+                Back
+              </button>
+              <button
+                onClick={async () => {
+                  const ok = await saveAvailability();
+                  if (ok) setStep(3);
+                }}
+                disabled={isSavingAvailability}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
+              >
+                {isSavingAvailability ? 'Saving…' : 'Next: Choose Theme'}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Choose Theme */}
+        {step === 3 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -294,7 +482,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
@@ -302,7 +490,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               <button
                 onClick={async () => {
                   const ok = await saveTheme();
-                  if (ok) setStep(3);
+                  if (ok) setStep(4);
                 }}
                 disabled={isSavingTheme}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
@@ -314,8 +502,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 3: Add Products */}
-        {step === 3 && (
+        {/* Step 4: Add Products */}
+        {step === 4 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -351,13 +539,13 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
               </button>
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(5)}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
               >
                 {hasProducts ? 'Next' : 'Skip for now'}
@@ -367,8 +555,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 4: Share Your Link */}
-        {step === 4 && (
+        {/* Step 5: Share Your Link */}
+        {step === 5 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-indigo-100 p-4 mb-4 text-2xl">🚀</div>
@@ -417,7 +605,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
