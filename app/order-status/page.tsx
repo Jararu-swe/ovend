@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import VendleLogo from '@/app/ui/vendle-logo';
 import {
   MagnifyingGlassIcon,
   ClipboardDocumentIcon,
@@ -84,7 +85,7 @@ export default function OrderStatusPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/">
-            <Image src="/brandname.svg" alt="Vendle" width={100} height={32} priority />
+            <VendleLogo />
           </Link>
           <Link href="/explore" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition">
             Browse Stores

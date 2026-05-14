@@ -13,7 +13,7 @@ export default function ProfileSideNav() {
       >
         <VendleLogo />
         <div className="hidden md:block ml-1">
-          <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Customer Profile</p>
+          <p className="text-[10px] text-slate-400 font-medium -mt-0.5">User Profile</p>
         </div>
       </Link>
 

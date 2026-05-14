@@ -32,12 +32,6 @@ export default async function Page() {
           </Link>
           <div className="flex items-center gap-6 text-xs md:text-sm font-medium">
             <Link
-              href="/explore"
-              className="hidden sm:inline-flex text-slate-600 hover:text-emerald-700 transition-colors"
-            >
-              Browse Stores
-            </Link>
-            <Link
               href="/login"
               className="text-slate-600 hover:text-emerald-700 transition-colors"
             >
@@ -299,6 +293,7 @@ export default async function Page() {
             <div className="flex flex-wrap gap-x-10 gap-y-4 text-sm font-bold text-slate-700">
               <Link href="/explore" className="hover:text-emerald-600 transition-colors">Explore</Link>
               <Link href="/order-status" className="hover:text-emerald-600 transition-colors">Track Order</Link>
+              <Link href="/profile" className="hover:text-emerald-600 transition-colors">User Profile</Link>
               <Link href="/login" className="hover:text-emerald-600 transition-colors">Sign in</Link>
               <Link href="/signup" className="hover:text-emerald-600 transition-colors">Create Store</Link>
             </div>
