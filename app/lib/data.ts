@@ -507,11 +507,31 @@ export type PublicStore = {
   availability: StoreAvailability;
 };
 
-export async function fetchAllPublicStores(search?: string, category?: string): Promise<PublicStore[]> {
+export async function fetchAvailableLocations(): Promise<string[]> {
+  try {
+    await ensureStoreColumns();
+    const locations = await sql<{ location_state: string }[]>`
+      SELECT DISTINCT location_state 
+      FROM users 
+      WHERE location_state IS NOT NULL 
+        AND location_state != ''
+        AND store_name IS NOT NULL
+        AND store_name != ''
+      ORDER BY location_state ASC
+    `;
+    return locations.map(l => l.location_state);
+  } catch (error) {
+    console.error('Database Error (fetchAvailableLocations):', error);
+    return [];
+  }
+}
+
+export async function fetchAllPublicStores(search?: string, category?: string, sort?: string, location?: string): Promise<PublicStore[]> {
   try {
     await ensureStoreColumns();
     const searchFilter = search ? `%${search}%` : '%';
     const categoryFilter = category && category !== 'All' ? category : null;
+    const locationFilter = location && location !== 'All' ? location : null;
 
     const stores = await sql<{
       id: string;
@@ -565,9 +585,15 @@ export async function fetchAllPublicStores(search?: string, category?: string): 
             AND p_cat.category = ${categoryFilter}
           )
         )` : sql``}
+        -- Location Filter
+        ${locationFilter ? sql`AND u.location_state = ${locationFilter}` : sql``}
       GROUP BY u.id, u.store_name, u.store_slug, u.category, u.location_state, u.store_timezone, u.store_hours, u.accepting_orders, u.store_closed_note
       HAVING COUNT(p.id) > 0
-      ORDER BY COUNT(p.id) DESC, u.store_name ASC
+      ${sort === 'location' 
+        ? sql`ORDER BY u.location_state ASC NULLS LAST, u.store_name ASC` 
+        : sort === 'name' 
+          ? sql`ORDER BY u.store_name ASC` 
+          : sql`ORDER BY COUNT(p.id) DESC, u.store_name ASC`}
       LIMIT 50
     `;
 

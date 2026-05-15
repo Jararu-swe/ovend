@@ -1,4 +1,4 @@
-import { fetchAllPublicStores } from '@/app/lib/data';
+import { fetchAllPublicStores, fetchAvailableLocations } from '@/app/lib/data';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MagnifyingGlassIcon, ArrowRightIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
@@ -8,6 +8,7 @@ import { FadeInUp, StaggerContainer, StaggerItem } from '@/app/ui/scroll-animati
 import { MudclothPattern, ArewaSymbol } from '@/app/ui/landing-patterns';
 import VendleLogo from '@/app/ui/vendle-logo';
 import { StoreAvailabilityPill } from '@/app/ui/store/store-availability-badge';
+import ExploreLocation from '@/app/ui/explore-location';
 
 
 function generateStoreDescription(storeName: string, topProducts: { name: string }[], productCount: number) {
@@ -29,12 +30,17 @@ export const metadata = {
 export default async function ExplorePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; location?: string }>;
 }) {
   const params = await searchParams;
   const search = params.q || '';
   const category = params.category || 'All';
-  const stores = await fetchAllPublicStores(search || undefined, category);
+  const location = params.location || 'All';
+  
+  const [stores, availableLocations] = await Promise.all([
+    fetchAllPublicStores(search || undefined, category, undefined, location),
+    fetchAvailableLocations()
+  ]);
 
   const CATEGORIES = [
     'All',
@@ -110,7 +116,7 @@ export default async function ExplorePage({
 
         {/* Search */}
         <FadeInUp delay={0.3}>
-          <ExploreSearch defaultValue={search} currentCategory={category} />
+          <ExploreSearch defaultValue={search} currentCategory={category} currentLocation={location} />
         </FadeInUp>
 
         {/* Categories */}
@@ -122,6 +128,7 @@ export default async function ExplorePage({
               const chipParams = new URLSearchParams();
               if (search) chipParams.set('q', search);
               if (cat !== 'All') chipParams.set('category', cat);
+              if (location !== 'All') chipParams.set('location', location);
               const href = `/explore${chipParams.toString() ? '?' + chipParams.toString() : ''}`;
 
               return (
@@ -144,12 +151,16 @@ export default async function ExplorePage({
 
         {/* Results count */}
         <FadeInUp delay={0.4}>
-          <div className="mt-16 mb-8 flex items-center justify-between border-b border-slate-200 pb-4">
+          <div className="mt-16 mb-8 flex flex-col md:flex-row items-center justify-between border-b border-slate-200 pb-6 gap-6">
             <p className="text-sm text-slate-500 font-bold uppercase tracking-widest">
               <span className="text-slate-900">{stores.length}</span> {stores.length === 1 ? 'store' : 'stores'} found
               {search && <span> for <span className="text-emerald-600 italic">"{search}"</span></span>}
               {category !== 'All' && <span> in <span className="text-emerald-600 italic">{category}</span></span>}
+              {location !== 'All' && <span> in <span className="text-emerald-600 italic">{location}</span></span>}
             </p>
+            <div className="flex items-center gap-3">
+              <ExploreLocation currentLocation={location} availableLocations={availableLocations} />
+            </div>
           </div>
         </FadeInUp>
 
