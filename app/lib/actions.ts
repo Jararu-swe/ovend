@@ -355,13 +355,31 @@ export async function createProduct(prevState: State | undefined, formData: Form
   }
 
   const { name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options } = validatedFields.data;
-  console.log('Creating product with image_url:', image_url);
+  
+  // Convert prices to Kobo (multiply by 100)
+  const priceKobo = Math.round(price * 100);
+  const compareAtPriceKobo = compare_at_price ? Math.round(compare_at_price * 100) : null;
+  
+  // Convert option prices to Kobo
+  let finalOptions = options;
+  try {
+    const parsedOptions = JSON.parse(options);
+    const koboOptions = parsedOptions.map((opt: any) => ({
+      ...opt,
+      price: opt.price ? Math.round(Number(opt.price) * 100).toString() : ""
+    }));
+    finalOptions = JSON.stringify(koboOptions);
+  } catch (e) {
+    console.error('Error processing options prices:', e);
+  }
+
+  console.log('Creating product with price (Kobo):', priceKobo);
 
   try {
     await ensureProductColumns();
     await sql`
       INSERT INTO products (vendor_id, name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options)
-      VALUES (${session.user.id}, ${name}, ${description}, ${price}, ${compare_at_price ?? null}, ${status}, ${category ?? null}, ${stock_quantity ?? null}, ${image_url || null}, ${gallery_images}, ${options})
+      VALUES (${session.user.id}, ${name}, ${description}, ${priceKobo}, ${compareAtPriceKobo}, ${status}, ${category ?? null}, ${stock_quantity ?? null}, ${image_url || null}, ${gallery_images}, ${finalOptions})
     `;
   } catch (error) {
     console.error('Database Error:', error);
@@ -408,7 +426,23 @@ export async function updateProduct(
   }
 
   const { name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options } = validatedFields.data;
-  console.log('Updating product with image_url:', image_url);
+  
+  // Convert prices to Kobo (multiply by 100)
+  const priceKobo = Math.round(price * 100);
+  const compareAtPriceKobo = compare_at_price ? Math.round(compare_at_price * 100) : null;
+  
+  // Convert option prices to Kobo
+  let finalOptions = options;
+  try {
+    const parsedOptions = JSON.parse(options);
+    const koboOptions = parsedOptions.map((opt: any) => ({
+      ...opt,
+      price: opt.price ? Math.round(Number(opt.price) * 100).toString() : ""
+    }));
+    finalOptions = JSON.stringify(koboOptions);
+  } catch (e) {
+    console.error('Error processing options prices:', e);
+  }
 
   try {
     await ensureProductColumns();
@@ -436,8 +470,8 @@ export async function updateProduct(
 
     await sql`
       UPDATE products
-      SET name = ${name}, description = ${description}, price = ${price}, compare_at_price = ${compare_at_price ?? null}, status = ${status}, 
-          category = ${category ?? null}, stock_quantity = ${stock_quantity ?? null}, image_url = ${image_url || null}, gallery_images = ${gallery_images}, options = ${options}
+      SET name = ${name}, description = ${description}, price = ${priceKobo}, compare_at_price = ${compareAtPriceKobo}, status = ${status}, 
+          category = ${category ?? null}, stock_quantity = ${stock_quantity ?? null}, image_url = ${image_url || null}, gallery_images = ${gallery_images}, options = ${finalOptions}
       WHERE id = ${id} AND vendor_id = ${session.user.id}
     `;
   } catch (error) {

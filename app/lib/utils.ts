@@ -1,7 +1,9 @@
 import { Revenue } from './definitions';
 
 export const formatCurrency = (amount: number) => {
-  return (amount / 100).toLocaleString('en-NG', {
+  // Ensure we're working with a clean integer before dividing
+  const naira = Math.round(amount) / 100;
+  return naira.toLocaleString('en-NG', {
     style: 'currency',
     currency: 'NGN',
     minimumFractionDigits: 0,

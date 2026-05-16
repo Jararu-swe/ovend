@@ -19,7 +19,12 @@ import MultiImageUpload from './multi-image-upload';
 function safeParseOptions(optsStr: string | null | undefined) {
   if (!optsStr) return [];
   try {
-    return JSON.parse(optsStr);
+    const opts = JSON.parse(optsStr);
+    // Divide prices by 100 for display, with rounding to prevent float issues
+    return opts.map((opt: any) => ({
+      ...opt,
+      price: opt.price ? (Math.round(Number(opt.price)) / 100).toString() : ""
+    }));
   } catch (e) {
     return [];
   }
@@ -30,7 +35,7 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
   const updateProductWithId = updateProduct.bind(null, product.id);
   const checkAny = updateProductWithId as any;
   const initAny = initialState as any;
-  const [state, formAction] = useActionState(checkAny, initAny);
+  const [state, formAction, isPending] = useActionState(checkAny, initAny);
   
   const [mainImage, setMainImage] = useState(product.image_url || '');
   const [galleryImages, setGalleryImages] = useState<string[]>(
@@ -124,7 +129,8 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
               <label htmlFor="price" className="mb-2 block text-sm font-medium text-slate-700">Selling Price (NGN)</label>
               <div className="relative">
                 <input
-                  id="price" name="price" type="number" step="1" defaultValue={product.price}
+                  id="price" name="price" type="number" step="1" min="0" defaultValue={Math.round(product.price) / 100}
+                  required
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
                 />
                 <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -136,7 +142,7 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
               <label htmlFor="compare_at_price" className="mb-2 block text-sm font-medium text-slate-700">Original Price (Show Discount)</label>
               <div className="relative">
                 <input
-                  id="compare_at_price" name="compare_at_price" type="number" step="1" defaultValue={product.compare_at_price || ''}
+                  id="compare_at_price" name="compare_at_price" type="number" step="1" defaultValue={product.compare_at_price ? Math.round(product.compare_at_price) / 100 : ''}
                   placeholder="e.g. 50000"
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
                 />
@@ -211,7 +217,7 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
                      <input type="text" placeholder="Option Name" value={opt.name} onChange={(e) => updateOption(opt.id, 'name', e.target.value)} className="w-full text-sm rounded-lg border-slate-200 py-2 required" required />
                    </div>
                    <div className="w-1/3">
-                     <input type="number" placeholder="Price" value={opt.price} onChange={(e) => updateOption(opt.id, 'price', e.target.value)} className="w-full text-sm rounded-lg border-slate-200 py-2" required />
+                     <input type="number" placeholder="Price" value={opt.price} onChange={(e) => updateOption(opt.id, 'price', e.target.value)} className="w-full text-sm rounded-lg border-slate-200 py-2" />
                    </div>
                    <button type="button" onClick={() => removeOption(opt.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                      <TrashIcon className="h-5 w-5" />
@@ -227,8 +233,20 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
         <Link href="/dashboard/products" className="rounded-xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-200">
           Cancel
         </Link>
-        <button type="submit" className="rounded-xl bg-emerald-500 px-8 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400">
-          Save Changes
+        <button
+          type="submit"
+          disabled={isPending}
+          className="rounded-xl bg-emerald-500 px-8 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center gap-2"
+        >
+          {isPending ? (
+            <>
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </>
+          ) : 'Save Changes'}
         </button>
       </div>
 

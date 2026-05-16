@@ -1,15 +1,3 @@
-import { Inter, Pacifico } from 'next/font/google';
-import {Lusitana} from 'next/font/google';
- 
-export const inter = Inter({ subsets: ['latin'] });
-export const lusitana = Lusitana({
-    weight: ['400', '700'],
-    subsets: ['latin'],
-});
-
-export const pacifico = Pacifico({
-    weight: '400',
-    subsets: ['latin'],
-    variable: '--font-pacifico',
-    display: 'swap',
-});
+// Standard font configuration to avoid Next.js Google Font connection issues
+export const inter = { className: 'antialiased' };
+export const lusitana = { className: 'lusitana-font' };

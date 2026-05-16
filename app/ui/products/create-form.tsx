@@ -16,7 +16,7 @@ import MultiImageUpload from './multi-image-upload';
 
 export default function CreateProductForm() {
   const initialState: State = { message: '', errors: {} };
-  const [state, formAction] = useActionState(createProduct as any, initialState as any);
+  const [state, formAction, isPending] = useActionState(createProduct as any, initialState as any);
   const [mainImage, setMainImage] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   
@@ -112,7 +112,8 @@ export default function CreateProductForm() {
               <label htmlFor="price" className="mb-2 block text-sm font-medium text-slate-700">Selling Price (NGN)</label>
               <div className="relative">
                 <input
-                  id="price" name="price" type="number" step="1" placeholder="0"
+                  id="price" name="price" type="number" step="1" min="0" placeholder="0"
+                  required
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
                 />
                 <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -205,10 +206,10 @@ export default function CreateProductForm() {
                {options.map((opt) => (
                  <div key={opt.id} className="flex gap-2 items-start">
                    <div className="flex-1">
-                     <input type="text" placeholder="Option Name (e.g. Size 45)" value={opt.name} onChange={(e) => updateOption(opt.id, 'name', e.target.value)} className="w-full text-sm rounded-lg border-slate-200 py-2 required" required />
+                     <input type="text" placeholder="Option Name (e.g. Size 45)" value={opt.name} onChange={(e) => updateOption(opt.id, 'name', e.target.value)} className="w-full text-sm rounded-lg border-slate-200 py-2" required />
                    </div>
                    <div className="w-1/3">
-                     <input type="number" placeholder="Price (NGN)" value={opt.price} onChange={(e) => updateOption(opt.id, 'price', e.target.value)} className="w-full text-sm rounded-lg border-slate-200 py-2" required />
+                     <input type="number" placeholder="Price (NGN)" value={opt.price} onChange={(e) => updateOption(opt.id, 'price', e.target.value)} className="w-full text-sm rounded-lg border-slate-200 py-2" />
                    </div>
                    <button type="button" onClick={() => removeOption(opt.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                      <TrashIcon className="h-5 w-5" />
@@ -224,8 +225,20 @@ export default function CreateProductForm() {
         <Link href="/dashboard/products" className="rounded-xl bg-slate-100 px-6 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-200">
           Cancel
         </Link>
-        <button type="submit" className="rounded-xl bg-emerald-500 px-8 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400">
-          Publish Product
+        <button
+          type="submit"
+          disabled={isPending}
+          className="rounded-xl bg-emerald-500 px-8 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center gap-2"
+        >
+          {isPending ? (
+            <>
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Publishing...
+            </>
+          ) : 'Publish Product'}
         </button>
       </div>
 

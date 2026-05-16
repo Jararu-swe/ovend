@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import VendleLogo from '@/app/ui/vendle-logo';
+import GoogleSignInButton from '@/app/ui/google-signin-button';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -56,7 +57,7 @@ export default function LoginForm() {
       </div>
 
       {/* Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-slate-900">Welcome back</h1>
         <p className="mt-1 text-sm text-slate-500">
           Sign in to manage your store
@@ -68,6 +69,19 @@ export default function LoginForm() {
             <span>Account created! Please sign in.</span>
           </div>
         )}
+
+        <div className="mt-6">
+          <GoogleSignInButton role="vendor" callbackUrl={callbackUrl} />
+        </div>
+
+        <div className="mt-6 relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-slate-200" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-white px-4 text-xs font-medium uppercase tracking-wider text-slate-400">Or continue with email</span>
+          </div>
+        </div>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           {/* Email */}

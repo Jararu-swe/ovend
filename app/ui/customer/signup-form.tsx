@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import VendleLogo from '@/app/ui/vendle-logo';
 import { createCustomerAccount } from '@/app/lib/customer-actions';
+import GoogleSignInButton from '@/app/ui/google-signin-button';
 
 export default function SignupForm() {
   const router = useRouter();
@@ -48,11 +49,24 @@ export default function SignupForm() {
       </div>
 
       {/* Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <h1 className="text-xl font-semibold text-slate-900">Create your account</h1>
         <p className="mt-1 text-sm text-slate-500">
           Join Vendle to track your orders and checkout faster.
         </p>
+
+        <div className="mt-6">
+          <GoogleSignInButton role="customer" callbackUrl={callbackUrl} />
+        </div>
+
+        <div className="mt-6 relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-slate-200" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-white px-4 text-xs font-medium uppercase tracking-wider text-slate-400">Or continue with email</span>
+          </div>
+        </div>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           {/* Name */}

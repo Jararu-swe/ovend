@@ -1,6 +1,6 @@
 import '@/app/ui/global.css';
 import 'leaflet/dist/leaflet.css';
-import {inter, pacifico} from '@/app/ui/fonts'
+import {inter} from '@/app/ui/fonts'
 import Script from 'next/script';
 import { Metadata } from 'next';
 
@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} ${pacifico.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
         {children}
         <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
       </body>
