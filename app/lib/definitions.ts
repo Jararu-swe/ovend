@@ -165,6 +165,8 @@ export type Order = {
   delivery_latitude: number | null;
   delivery_longitude: number | null;
   delivery_address_details: string | null;
+  discount_code?: string | null;
+  discount_amount?: number;
   created_at: string;
 };
 

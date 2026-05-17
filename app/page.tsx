@@ -6,7 +6,6 @@ import { fetchAllPublicStores } from '@/app/lib/data';
 import { formatCurrency } from '@/app/lib/utils';
 import { MudclothPattern, ArewaSymbol, TribalBand, CowrieSymbol, MudclothStar, Tambari } from '@/app/ui/landing-patterns';
 import { AnimatedBackground } from '@/app/ui/animated-background';
-import { pacifico } from '@/app/ui/fonts';
 import { FadeInUp, StaggerContainer, StaggerItem, ParallaxScroll } from '@/app/ui/scroll-animations';
 import { HorizontalScrollStory } from '@/app/ui/horizontal-scroll-story';
 import { MouseTrailer } from '@/app/ui/mouse-trailer';

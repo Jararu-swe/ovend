@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ensureLogoLayoutColumns } from '@/app/lib/theme';
-import { ensureProductColumns, ensureStoreColumns, ensureVendorSubscriptionSchema } from '@/app/lib/data';
+import { ensureProductColumns, ensureStoreColumns, ensureVendorSubscriptionSchema, ensureDiscountSchema } from '@/app/lib/data';
 import { validateDiscountCode, incrementDiscountUse } from '@/app/lib/discounts';
 import { deleteCloudinaryImage, deleteCloudinaryImages } from './cloudinary';
 import { signOut } from '@/auth';
@@ -137,6 +137,7 @@ export type State = {
     customer_name?: string[];
     customer_phone?: string[];
     delivery_type?: string[];
+    [key: string]: string[] | undefined;
   };
   message?: string | null;
 };
@@ -526,6 +527,7 @@ export async function createOrder(
   discountCode?: string,
   discountAmount?: number
 ) {
+  await ensureDiscountSchema();
   const customer_name = formData.get('customer_name') as string;
   const customer_phone = formData.get('customer_phone') as string;
   const customer_address = formData.get('customer_address') as string;
@@ -611,7 +613,7 @@ export async function createOrder(
     if (discountCode) {
       try {
         const [discount] = await sql`
-          SELECT id FROM discount_codes WHERE vendor_id = ${vendorId} AND code = ${discountCode} LIMIT 1
+          SELECT id FROM discount_codes WHERE vendor_id = ${vendorId} AND UPPER(code) = UPPER(${discountCode}) LIMIT 1
         `;
         if (discount) {
           await incrementDiscountUse(discount.id);
@@ -664,19 +666,27 @@ export async function createDiscountAction(
   vendorId: string,
   prevState: State | undefined,
   formData: FormData
-) {
+): Promise<State> {
+  await ensureDiscountSchema();
   try {
     await requireActiveVendorSubscription();
   } catch (e: any) {
     return { message: e?.message || 'Subscription required.' };
   }
+  const rawCode = formData.get('code') as string;
+  const rawDiscountType = formData.get('discount_type') as string;
+  const rawDiscountValue = formData.get('discount_value') as string;
+  const rawMinPurchase = formData.get('min_purchase') as string;
+  const rawMaxUses = formData.get('max_uses') as string;
+  const rawExpiresAt = formData.get('expires_at') as string;
+
   const validatedFields = DiscountSchema.safeParse({
-    code: formData.get('code'),
-    discount_type: formData.get('discount_type'),
-    discount_value: formData.get('discount_value'),
-    min_purchase: formData.get('min_purchase') || 0,
-    max_uses: formData.get('max_uses') || null,
-    expires_at: formData.get('expires_at') || null,
+    code: rawCode ? rawCode.trim() : undefined,
+    discount_type: rawDiscountType || undefined,
+    discount_value: rawDiscountValue || undefined,
+    min_purchase: rawMinPurchase ? parseFloat(rawMinPurchase) : undefined,
+    max_uses: rawMaxUses ? parseInt(rawMaxUses, 10) : undefined,
+    expires_at: rawExpiresAt || undefined,
   });
 
   if (!validatedFields.success) {
@@ -712,7 +722,7 @@ export async function toggleDiscountAction(
   active: boolean,
   prevState: State | undefined,
   formData: FormData
-) {
+): Promise<State> {
   const session = await auth();
   if (!session?.user?.id) {
     return { message: 'Unauthorized' };
@@ -724,6 +734,7 @@ export async function toggleDiscountAction(
   }
 
   try {
+    await ensureDiscountSchema();
     await sql`
       UPDATE discount_codes
       SET active = ${active}
@@ -741,6 +752,7 @@ export async function toggleDiscountAction(
 }
 
 export async function validateDiscountAction(vendorId: string, code: string, orderTotal: number) {
+  await ensureDiscountSchema();
   try {
     return await validateDiscountCode(vendorId, code, orderTotal);
   } catch (err) {

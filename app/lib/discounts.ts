@@ -1,4 +1,5 @@
 import { sql } from './db';
+import { ensureDiscountSchema } from './data';
 
 export interface DiscountCode {
   id: string;
@@ -19,11 +20,12 @@ export async function validateDiscountCode(
   code: string,
   orderTotal: number
 ): Promise<{ valid: boolean; discount?: DiscountCode; error?: string }> {
+  await ensureDiscountSchema();
   try {
     const [discount] = await sql<DiscountCode[]>`
       SELECT * FROM discount_codes
       WHERE vendor_id = ${vendorId}
-        AND code = ${code}
+        AND UPPER(code) = UPPER(${code})
         AND active = true
         AND (expires_at IS NULL OR expires_at > NOW())
         AND (max_uses IS NULL OR uses_count < max_uses)
@@ -59,6 +61,7 @@ export function calculateDiscount(
 }
 
 export async function incrementDiscountUse(discountId: string): Promise<void> {
+  await ensureDiscountSchema();
   try {
     await sql`
       UPDATE discount_codes
@@ -81,6 +84,7 @@ export async function createDiscountCode(
     expires_at?: string;
   }
 ): Promise<DiscountCode> {
+  await ensureDiscountSchema();
   const [discount] = await sql<DiscountCode[]>`
     INSERT INTO discount_codes (
       vendor_id,
@@ -106,6 +110,7 @@ export async function createDiscountCode(
 }
 
 export async function fetchVendorDiscounts(vendorId: string): Promise<DiscountCode[]> {
+  await ensureDiscountSchema();
   return await sql<DiscountCode[]>`
     SELECT * FROM discount_codes
     WHERE vendor_id = ${vendorId}
@@ -114,6 +119,7 @@ export async function fetchVendorDiscounts(vendorId: string): Promise<DiscountCo
 }
 
 export async function toggleDiscountStatus(discountId: string, active: boolean): Promise<void> {
+  await ensureDiscountSchema();
   await sql`
     UPDATE discount_codes
     SET active = ${active}

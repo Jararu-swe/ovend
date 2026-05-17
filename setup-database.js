@@ -65,6 +65,32 @@ async function setupDatabase() {
     `;
     console.log('✅ Orders table created\n');
 
+    // Ensure order table discount columns exist
+    console.log('📋 Ensuring order table discount columns exist...');
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code VARCHAR(50) DEFAULT NULL`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INT DEFAULT 0`;
+    console.log('✅ Order table discount columns ensured\n');
+
+    // Create discount_codes table
+    console.log('🏷️ Creating discount_codes table...');
+    await sql`
+      CREATE TABLE IF NOT EXISTS discount_codes (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        vendor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        code VARCHAR(50) NOT NULL,
+        discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
+        discount_value INT NOT NULL,
+        min_purchase INT DEFAULT 0,
+        max_uses INT,
+        uses_count INT DEFAULT 0,
+        active BOOLEAN DEFAULT true,
+        expires_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(vendor_id, code)
+      )
+    `;
+    console.log('✅ Discount codes table created\n');
+
     // Create analytics table
     console.log('📊 Creating analytics table...');
     await sql`

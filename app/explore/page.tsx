@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MagnifyingGlassIcon, ArrowRightIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import ExploreSearch from '@/app/ui/explore-search';
-import { pacifico, lusitana } from '@/app/ui/fonts';
+import { lusitana } from '@/app/ui/fonts';
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/app/ui/scroll-animations';
 import { MudclothPattern, ArewaSymbol } from '@/app/ui/landing-patterns';
 import VendleLogo from '@/app/ui/vendle-logo';

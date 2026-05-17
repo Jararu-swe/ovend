@@ -94,6 +94,39 @@ export async function ensureVendorSubscriptionSchema() {
   await ensureVendorSubscriptionSchemaPromise;
 }
 
+let ensureDiscountSchemaPromise: Promise<void> | null = null;
+export async function ensureDiscountSchema() {
+  if (!ensureDiscountSchemaPromise) {
+    ensureDiscountSchemaPromise = (async () => {
+      try {
+        await sql.unsafe(`
+          CREATE TABLE IF NOT EXISTS discount_codes (
+            id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+            vendor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            code VARCHAR(50) NOT NULL,
+            discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
+            discount_value INT NOT NULL,
+            min_purchase INT DEFAULT 0,
+            max_uses INT,
+            uses_count INT DEFAULT 0,
+            active BOOLEAN DEFAULT true,
+            expires_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(vendor_id, code)
+          )
+        `);
+
+        await sql.unsafe(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code VARCHAR(50) DEFAULT NULL`);
+        await sql.unsafe(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INT DEFAULT 0`);
+      } catch (e) {
+        console.error('ensureDiscountSchema error:', e);
+      }
+    })();
+  }
+  await ensureDiscountSchemaPromise;
+}
+
+
 export async function fetchProductsList(vendorId: string) {
   console.log('fetchProductsList called with vendorId:', vendorId);
   if (!vendorId) {
@@ -403,6 +436,7 @@ export async function fetchUserById(id: string) {
 
 export async function fetchOrdersList(vendorId: string) {
   if (!vendorId) return [];
+  await ensureDiscountSchema();
   try {
     const orders = await sql<Order[]>`
       SELECT * FROM orders
@@ -417,6 +451,7 @@ export async function fetchOrdersList(vendorId: string) {
 }
 
 export async function fetchOrderById(id: string) {
+  await ensureDiscountSchema();
   try {
     const data = await sql<Order[]>`
       SELECT * FROM orders
@@ -639,6 +674,7 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
 
 // ─── Order Tracking ──────────────────────────────────────────
 export async function fetchOrderByTracking(orderId: string, phone: string) {
+  await ensureDiscountSchema();
   try {
     const [order] = await sql<Order[]>`
       SELECT o.*, u.store_name

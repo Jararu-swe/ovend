@@ -159,10 +159,27 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                             </li>
                           ))}
                         </ul>
-                        <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between font-bold text-slate-900">
-                          <span>Total</span>
-                          <span>{formatCurrency(order.total_amount)}</span>
-                        </div>
+                        {order.discount_code && order.discount_amount && order.discount_amount > 0 ? (
+                          <div className="mt-4 pt-4 border-t border-slate-200 space-y-2 text-sm text-slate-600">
+                            <div className="flex justify-between">
+                              <span>Subtotal</span>
+                              <span className="font-medium">{formatCurrency(parsedItems.reduce((acc, item) => acc + item.price * item.quantity, 0))}</span>
+                            </div>
+                            <div className="flex justify-between text-emerald-600 font-medium">
+                              <span>Discount ({order.discount_code})</span>
+                              <span>-{formatCurrency(order.discount_amount)}</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-slate-900 text-base pt-2 border-t border-dashed border-slate-200">
+                              <span>Total Paid</span>
+                              <span>{formatCurrency(order.total_amount)}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between font-bold text-slate-900">
+                            <span>Total</span>
+                            <span>{formatCurrency(order.total_amount)}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-6">

@@ -29,6 +29,7 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
               />
               <TicketIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
+            {state.errors?.code && <p className="mt-1 text-xs text-red-500">{state.errors.code[0]}</p>}
           </div>
 
           <fieldset>
@@ -84,6 +85,7 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
                 <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               )}
             </div>
+            {state.errors?.discount_value && <p className="mt-1 text-xs text-red-500">{state.errors.discount_value[0]}</p>}
           </div>
 
           <div>
@@ -101,6 +103,7 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
               />
               <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
+            {state.errors?.min_purchase && <p className="mt-1 text-xs text-red-500">{state.errors.min_purchase[0]}</p>}
           </div>
 
           <div>
@@ -117,6 +120,7 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
               />
               <HashtagIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
+            {state.errors?.max_uses && <p className="mt-1 text-xs text-red-500">{state.errors.max_uses[0]}</p>}
           </div>
 
           <div>
@@ -132,6 +136,7 @@ export default function CreateDiscountForm({ vendorId }: { vendorId: string }) {
               />
               <CalendarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
+            {state.errors?.expires_at && <p className="mt-1 text-xs text-red-500">{state.errors.expires_at[0]}</p>}
           </div>
         </div>
       </div>
