@@ -1,10 +1,23 @@
-import { fetchVendorDiscounts } from '@/app/lib/discounts';
-import { TicketIcon, PlusIcon } from '@heroicons/react/24/outline';
+'use client';
+
+import { TicketIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import ToggleDiscountButton from './toggle-discount-button';
 import Link from 'next/link';
+import { deleteDiscountAction } from '@/app/lib/actions';
 
-export default async function DiscountList({ vendorId }: { vendorId: string }) {
-  const discounts = await fetchVendorDiscounts(vendorId);
+interface Discount {
+  id: string;
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  min_purchase: number;
+  max_uses: number | null;
+  uses_count: number;
+  active: boolean;
+  expires_at: string | null;
+}
+
+export default function DiscountList({ discounts }: { discounts: Discount[] }) {
 
   if (discounts.length === 0) {
     return (
@@ -105,6 +118,24 @@ export default async function DiscountList({ vendorId }: { vendorId: string }) {
                   currentStatus={discount.active}
                   disabled={Boolean(isExpired || isMaxedOut)}
                 />
+                <div className="mt-2 flex items-center gap-2">
+                  <Link
+                    href={`/dashboard/discounts/${discount.id}/edit`}
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium transition-colors hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-100"
+                  >
+                    <PencilSquareIcon className="h-4 w-4" />
+                    Edit
+                  </Link>
+                  <form action={deleteDiscountAction.bind(null, discount.id)} className="flex-1">
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium transition-colors hover:bg-red-50 hover:text-red-500 hover:border-red-100"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      Delete
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>

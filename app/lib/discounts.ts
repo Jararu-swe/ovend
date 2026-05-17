@@ -118,6 +118,16 @@ export async function fetchVendorDiscounts(vendorId: string): Promise<DiscountCo
   `;
 }
 
+export async function fetchDiscountById(discountId: string, vendorId: string): Promise<DiscountCode | null> {
+  await ensureDiscountSchema();
+  const [discount] = await sql<DiscountCode[]>`
+    SELECT * FROM discount_codes
+    WHERE id = ${discountId} AND vendor_id = ${vendorId}
+    LIMIT 1
+  `;
+  return discount || null;
+}
+
 export async function toggleDiscountStatus(discountId: string, active: boolean): Promise<void> {
   await ensureDiscountSchema();
   await sql`

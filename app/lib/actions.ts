@@ -737,7 +737,7 @@ export async function toggleDiscountAction(
     await ensureDiscountSchema();
     await sql`
       UPDATE discount_codes
-      SET active = ${active}
+      SET active = ${!active}
       WHERE id = ${discountId} AND vendor_id = ${session.user.id}
     `;
   } catch (error) {
@@ -748,7 +748,97 @@ export async function toggleDiscountAction(
   }
 
   revalidatePath('/dashboard/discounts');
-  return { message: null, errors: {} };
+  redirect('/dashboard/discounts');
+}
+
+export async function deleteDiscountAction(discountId: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized.');
+  }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    throw new Error(e?.message || 'Subscription required.');
+  }
+
+  try {
+    await ensureDiscountSchema();
+    await sql`
+      DELETE FROM discount_codes
+      WHERE id = ${discountId} AND vendor_id = ${session.user.id}
+    `;
+    revalidatePath('/dashboard/discounts');
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to delete discount code.');
+  }
+}
+
+export async function updateDiscountAction(
+  discountId: string,
+  prevState: State | undefined,
+  formData: FormData
+): Promise<State> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { message: 'Unauthorized' };
+  }
+  try {
+    await requireActiveVendorSubscription();
+  } catch (e: any) {
+    return { message: e?.message || 'Subscription required.' };
+  }
+
+  const rawCode = formData.get('code') as string;
+  const rawDiscountType = formData.get('discount_type') as string;
+  const rawDiscountValue = formData.get('discount_value') as string;
+  const rawMinPurchase = formData.get('min_purchase') as string;
+  const rawMaxUses = formData.get('max_uses') as string;
+  const rawExpiresAt = formData.get('expires_at') as string;
+
+  const validatedFields = DiscountSchema.safeParse({
+    code: rawCode ? rawCode.trim() : undefined,
+    discount_type: rawDiscountType || undefined,
+    discount_value: rawDiscountValue || undefined,
+    min_purchase: rawMinPurchase ? parseFloat(rawMinPurchase) : undefined,
+    max_uses: rawMaxUses ? parseInt(rawMaxUses, 10) : undefined,
+    expires_at: rawExpiresAt || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Failed to update discount code.',
+    };
+  }
+
+  const { code, discount_type, discount_value, min_purchase, max_uses, expires_at } = validatedFields.data;
+
+  try {
+    await ensureDiscountSchema();
+    const valueInKobo = discount_type === 'fixed' ? Math.round(discount_value * 100) : discount_value;
+    const minPurchaseInKobo = min_purchase ? Math.round(min_purchase * 100) : 0;
+
+    await sql`
+      UPDATE discount_codes
+      SET code = ${code.toUpperCase()},
+          discount_type = ${discount_type},
+          discount_value = ${valueInKobo},
+          min_purchase = ${minPurchaseInKobo},
+          max_uses = ${max_uses || null},
+          expires_at = ${expires_at || null}
+      WHERE id = ${discountId} AND vendor_id = ${session.user.id}
+    `;
+  } catch (error) {
+    console.error('Database Error:', error);
+    return {
+      message: 'Database Error: Failed to update discount code.',
+    };
+  }
+
+  revalidatePath('/dashboard/discounts');
+  redirect('/dashboard/discounts');
 }
 
 export async function validateDiscountAction(vendorId: string, code: string, orderTotal: number) {

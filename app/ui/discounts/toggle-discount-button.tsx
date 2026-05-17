@@ -12,7 +12,7 @@ export default function ToggleDiscountButton({
   currentStatus: boolean;
   disabled?: boolean;
 }) {
-  const toggleWithId = toggleDiscountAction.bind(null, discountId, !currentStatus);
+  const toggleWithId = toggleDiscountAction.bind(null, discountId, currentStatus);
   const [state, formAction] = useActionState(toggleWithId, { message: null, errors: {} });
 
   return (
@@ -28,6 +28,9 @@ export default function ToggleDiscountButton({
       >
         {currentStatus ? 'Deactivate' : 'Activate'}
       </button>
+      {state?.message && (
+        <p className="mt-2 text-sm text-red-600">{state.message}</p>
+      )}
     </form>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
 import { User, Product, OrderItem, StoreTheme } from '@/app/lib/definitions';
@@ -120,6 +120,11 @@ export default function Storefront({
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const grandTotal = Math.max(0, cartTotal - (appliedDiscount?.amount || 0));
+
+  // Memoized callback to prevent infinite loop in LocationPicker
+  const handleLocationSelect = useCallback((lat: number, lng: number, details?: string) => {
+    setDeliveryLocation({ lat, lng, details });
+  }, []);
 
   const fontSizeClass =
     activeTheme.font_size === 'small' ? 'text-sm'
@@ -500,7 +505,13 @@ export default function Storefront({
           },
         });
 
-        handler.openIframe();
+        if (handler && typeof handler.openIframe === 'function') {
+          handler.openIframe();
+        } else {
+          console.error('Paystack handler not initialized');
+          alert('Unable to initialize payment. Please try again.');
+          setIsSubmitting(false);
+        }
       } else {
         await handleCashCheckout(formData);
         setIsSubmitting(false);
@@ -1086,7 +1097,7 @@ export default function Storefront({
                                 {isApplyingDiscount ? '...' : 'Apply'}
                               </button>
                             </div>
-                            {discountError && <p className="text-xs font-medium px-2" style={{ color: activeTheme.accent_color }}>{discountError}</p>}
+                            {discountError && <p className="text-xs font-medium text-red-600 px-2">{discountError}</p>}
                           </div>
                         )}
 
@@ -1179,7 +1190,7 @@ export default function Storefront({
                               {deliveryType === 'delivery' ? (
                                 <div className="space-y-4">
                                   <LocationPicker 
-                                    onLocationSelect={(lat, lng, details) => setDeliveryLocation({ lat, lng, details })} 
+                                    onLocationSelect={handleLocationSelect} 
                                   />
                                   <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1 italic">General Address (optional)</label>

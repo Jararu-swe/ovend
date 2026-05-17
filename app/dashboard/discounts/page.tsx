@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import DiscountList from '@/app/ui/discounts/discount-list';
 import { DiscountListSkeleton } from '@/app/ui/skeletons';
+import { fetchVendorDiscounts } from '@/app/lib/discounts';
 
 export default async function DiscountsPage() {
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login');
   }
+
+  const discounts = await fetchVendorDiscounts(session.user.id);
 
   return (
     <div className="space-y-6">
@@ -29,9 +32,7 @@ export default async function DiscountsPage() {
           <span className="hidden sm:inline">Create Discount</span>
         </Link>
       </div>
-      <Suspense fallback={<DiscountListSkeleton />}>
-        <DiscountList vendorId={session.user.id} />
-      </Suspense>
+      <DiscountList discounts={discounts} />
     </div>
   );
 }

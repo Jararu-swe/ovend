@@ -3,6 +3,7 @@ import { getOrCreateVendorTheme } from '@/app/lib/theme';
 import { getStoreAvailability } from '@/app/lib/store-availability';
 import { notFound } from 'next/navigation';
 import Storefront from '@/app/ui/store/storefront';
+import Script from 'next/script';
 
 import { auth } from '@/auth';
 import { sql } from '@/app/lib/db';
@@ -42,5 +43,10 @@ export default async function StorePage(props: { params: Promise<{ slug: string 
     store_closed_note: vendor.store_closed_note,
   });
 
-  return <Storefront vendor={vendor} products={products} theme={theme} customer={customer} availability={availability} />;
+  return (
+    <>
+      <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+      <Storefront vendor={vendor} products={products} theme={theme} customer={customer} availability={availability} />
+    </>
+  );
 }

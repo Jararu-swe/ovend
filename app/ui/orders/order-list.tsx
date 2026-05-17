@@ -128,7 +128,7 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                     <div>
                       <h4 className="font-bold text-slate-900">{order.customer_name}</h4>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {parsedItems.length} {parsedItems.length === 1 ? 'item' : 'items'} • {new Date(order.created_at).toLocaleDateString()}
+                        {parsedItems.length} {parsedItems.length === 1 ? 'item' : 'items'} • {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                       </p>
                     </div>
                   </div>

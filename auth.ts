@@ -37,7 +37,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const userName = user.name || 'User';
 
           const [existingUser] = await sql`
-            SELECT id FROM users WHERE email = ${userEmail} LIMIT 1
+            SELECT id, whatsapp_number FROM users WHERE email = ${userEmail} LIMIT 1
           `;
 
           if (!existingUser) {
@@ -48,7 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const subscriptionStatus = intendedRole === 'vendor' ? 'trial' : 'inactive';
             const trialDays = 7;
 
-            await sql`
+            const [newUser] = await sql`
               INSERT INTO users (name, email, password, role, subscription_status, subscription_expires_at)
               VALUES (
                 ${userName}, 
@@ -58,6 +58,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 ${subscriptionStatus},
                 ${intendedRole === 'vendor' ? sql`(CURRENT_TIMESTAMP + (${trialDays} * INTERVAL '1 day'))` : null}
               )
+              RETURNING id, whatsapp_number
+            `;
+            
+            // Link past orders for customers
+            if (intendedRole === 'customer' && newUser?.whatsapp_number) {
+              await sql`
+                UPDATE orders
+                SET customer_account_id = ${newUser.id}
+                WHERE customer_phone = ${newUser.whatsapp_number}
+                  AND customer_account_id IS NULL
+              `;
+            }
+          } else if (intendedRole === 'customer' && existingUser.whatsapp_number) {
+            // Link past orders for existing customers on login
+            await sql`
+              UPDATE orders
+              SET customer_account_id = ${existingUser.id}
+              WHERE customer_phone = ${existingUser.whatsapp_number}
+                AND customer_account_id IS NULL
             `;
           }
         } catch (error) {
@@ -93,36 +112,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.subscription_expires_at = (user as any).subscription_expires_at ?? null;
           token.subscription_status = (user as any).subscription_status ?? null;
         }
-        return token;
       }
 
-      // Keep subscription info fresh so middleware gating updates immediately after payment.
-      // We only do this for vendors to avoid extra DB load for customers.
-      const role = (token as any).role as string | undefined;
-      const id = token.id as string | undefined;
-      if (role === 'vendor' && id) {
-        try {
-          // Ensure subscription columns exist (older DBs)
-          await sql.unsafe(
-            `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'inactive'`,
-          );
-          await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL`);
-
-          const [row] = await sql<{ subscription_status: string; subscription_expires_at: string | null }[]>`
-            SELECT subscription_status, subscription_expires_at
-            FROM users
-            WHERE id = ${id}
-            LIMIT 1
-          `;
-          if (row) {
-            (token as any).subscription_status = row.subscription_status ?? null;
-            (token as any).subscription_expires_at = row.subscription_expires_at ?? null;
-          }
-        } catch (e) {
-          console.error('JWT subscription refresh error:', e);
-        }
-      }
-
+      // Note: We removed the subscription refresh logic here because it causes Edge Runtime errors.
+      // Subscription status updates on login or can be refreshed via server actions after payment.
       return token;
     },
     session({ session, token }) {
@@ -185,6 +178,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const passwordsMatch = await bcrypt.compare(password, user.password);
 
           if (passwordsMatch) {
+            // Link past orders for customers on login
+            if (user.role === 'customer') {
+              const [userWithPhone] = await sql<{ whatsapp_number: string | null }[]>`
+                SELECT whatsapp_number FROM users WHERE id = ${user.id} LIMIT 1
+              `;
+              
+              if (userWithPhone?.whatsapp_number) {
+                await sql`
+                  UPDATE orders
+                  SET customer_account_id = ${user.id}
+                  WHERE customer_phone = ${userWithPhone.whatsapp_number}
+                    AND customer_account_id IS NULL
+                `.catch(err => console.error('Error linking orders on login:', err));
+              }
+            }
+
             return {
               id: user.id,
               name: user.name,

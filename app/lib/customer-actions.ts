@@ -21,10 +21,16 @@ export async function createCustomerAccount(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await sql`
+    const [newUser] = await sql`
       INSERT INTO users (name, email, password, whatsapp_number, role)
       VALUES (${name}, ${email}, ${hashedPassword}, ${whatsapp_number || null}, 'customer')
+      RETURNING id
     `;
+
+    // Link any past orders with matching phone number
+    if (whatsapp_number && newUser?.id) {
+      await linkPastOrdersByPhone(newUser.id, whatsapp_number);
+    }
 
     return { success: true };
   } catch (err) {
@@ -57,5 +63,21 @@ export async function updateCustomerSettings(formData: FormData, userId: string)
   } catch (err) {
     console.error('Error updating customer settings:', err);
     return { error: 'Failed to update settings.' };
+  }
+}
+
+export async function linkPastOrdersByPhone(userId: string, phoneNumber: string) {
+  if (!phoneNumber) return;
+  
+  try {
+    // Link all past orders with matching phone number to this customer account
+    await sql`
+      UPDATE orders
+      SET customer_account_id = ${userId}
+      WHERE customer_phone = ${phoneNumber}
+        AND customer_account_id IS NULL
+    `;
+  } catch (err) {
+    console.error('Error linking past orders:', err);
   }
 }
