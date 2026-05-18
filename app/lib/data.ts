@@ -534,6 +534,7 @@ export type PublicStore = {
   id: string;
   store_name: string;
   store_slug: string;
+  store_description: string | null;
   logo_url: string | null;
   product_count: number;
   category: string | null;
@@ -572,6 +573,7 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
       id: string;
       store_name: string;
       store_slug: string;
+      store_description: string | null;
       category: string | null;
       location_state: string | null;
       product_count: string;
@@ -584,6 +586,7 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
         u.id,
         u.store_name,
         u.store_slug,
+        u.store_description,
         u.category,
         u.location_state,
         u.store_timezone,
@@ -622,7 +625,7 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
         )` : sql``}
         -- Location Filter
         ${locationFilter ? sql`AND u.location_state = ${locationFilter}` : sql``}
-      GROUP BY u.id, u.store_name, u.store_slug, u.category, u.location_state, u.store_timezone, u.store_hours, u.accepting_orders, u.store_closed_note
+      GROUP BY u.id, u.store_name, u.store_slug, u.store_description, u.category, u.location_state, u.store_timezone, u.store_hours, u.accepting_orders, u.store_closed_note
       HAVING COUNT(p.id) > 0
       ${sort === 'location' 
         ? sql`ORDER BY u.location_state ASC NULLS LAST, u.store_name ASC` 
@@ -650,6 +653,7 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
           id: store.id,
           store_name: store.store_name,
           store_slug: store.store_slug,
+          store_description: store.store_description,
           logo_url: logoRow?.logo_url || null,
           product_count: Number(store.product_count),
           category: store.category,

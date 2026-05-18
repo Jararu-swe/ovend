@@ -41,6 +41,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
   const [storeName, setStoreName] = useState(user.store_name || '');
   const [storeSlug, setStoreSlug] = useState(user.store_slug || '');
+  const [storeDescription, setStoreDescription] = useState(user.store_description || '');
   const [whatsApp, setWhatsApp] = useState(user.whatsapp_number || '');
   const [locationState, setLocationState] = useState(user.location_state || '');
   const [category, setCategory] = useState(user.category || '');
@@ -49,7 +50,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
   const [themeError, setThemeError] = useState<string | null>(null);
 
   const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${storeSlug || user.store_slug}`;
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   // Availability State
   const [timezone, setTimezone] = useState(user.store_timezone || 'Africa/Lagos');
@@ -89,6 +90,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
         body: JSON.stringify({
           store_name: storeName.trim(),
           store_slug: storeSlug.trim(),
+          store_description: storeDescription.trim() || null,
           whatsapp_number: whatsApp.trim() || null,
           location_state: locationState || null,
           category: category || null,
@@ -314,14 +316,79 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               disabled={isSaving}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60"
             >
-              {isSaving ? 'Saving…' : 'Next: Store Hours'}
+              {isSaving ? 'Saving…' : 'Next: Store Description'}
               <ArrowRightIcon className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        {/* Step 2: Store Availability */}
+        {/* Step 2: Store Description */}
         {step === 2 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center rounded-full bg-purple-100 p-4 mb-4">
+                <SparklesIcon className="h-8 w-8 text-purple-600" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Tell Your Story</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Add a short description to help customers discover your store. This is optional but recommended!
+              </p>
+            </div>
+
+            <div className="space-y-4 rounded-xl bg-slate-50 p-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">
+                  Store Description <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <textarea
+                  value={storeDescription}
+                  onChange={(e) => setStoreDescription(e.target.value.slice(0, 200))}
+                  rows={4}
+                  maxLength={200}
+                  placeholder="e.g. Premium handcrafted jewelry and accessories. Each piece is uniquely designed with love in Lagos."
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 resize-none"
+                />
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-xs text-slate-400">
+                    Appears on Explore page and when sharing your store
+                  </p>
+                  <p className={`text-xs ${storeDescription.length > 200 ? 'text-red-500' : 'text-slate-400'}`}>
+                    {storeDescription.length}/200
+                  </p>
+                </div>
+              </div>
+
+              {saveError && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {saveError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              >
+                Back
+              </button>
+              <button
+                onClick={async () => {
+                  const ok = await saveProfile();
+                  if (ok) setStep(3);
+                }}
+                disabled={isSaving}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
+              >
+                {isSaving ? 'Saving…' : storeDescription.trim() ? 'Next: Store Hours' : 'Skip for now'}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Store Availability */}
+        {step === 3 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-amber-100 p-4 mb-4">
@@ -414,7 +481,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
@@ -422,7 +489,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               <button
                 onClick={async () => {
                   const ok = await saveAvailability();
-                  if (ok) setStep(3);
+                  if (ok) setStep(4);
                 }}
                 disabled={isSavingAvailability}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
@@ -434,8 +501,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 3: Choose Theme */}
-        {step === 3 && (
+        {/* Step 4: Choose Theme */}
+        {step === 4 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -482,7 +549,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
@@ -490,7 +557,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               <button
                 onClick={async () => {
                   const ok = await saveTheme();
-                  if (ok) setStep(4);
+                  if (ok) setStep(5);
                 }}
                 disabled={isSavingTheme}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
@@ -502,8 +569,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 4: Add Products */}
-        {step === 4 && (
+        {/* Step 5: Add Products */}
+        {step === 5 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -539,13 +606,13 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
               </button>
               <button
-                onClick={() => setStep(5)}
+                onClick={() => setStep(6)}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
               >
                 {hasProducts ? 'Next' : 'Skip for now'}
@@ -555,8 +622,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 5: Share Your Link */}
-        {step === 5 && (
+        {/* Step 6: Share Your Link */}
+        {step === 6 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-indigo-100 p-4 mb-4 text-2xl">🚀</div>
@@ -605,7 +672,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(5)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back

@@ -60,6 +60,7 @@ const ProfileSchema = z.object({
   store_slug: z.string().min(2, { message: 'Slug must be at least 2 characters.' }).regex(/^[a-z0-9-]+$/, {
     message: 'Slug can only contain lowercase letters, numbers, and hyphens.',
   }),
+  store_description: z.string().max(200, { message: 'Description must be 200 characters or less.' }).optional().nullable(),
   whatsapp_number: z.string().optional().nullable(),
   bank_name: z.string().optional().nullable(),
   account_number: z.string().optional().nullable(),
@@ -181,6 +182,7 @@ export async function updateProfile(prevState: State | undefined, formData: Form
   const validatedFields = ProfileSchema.safeParse({
     store_name: formData.get('store_name'),
     store_slug: formData.get('store_slug'),
+    store_description: formData.get('store_description'),
     whatsapp_number: formData.get('whatsapp_number'),
     bank_name: formData.get('bank_name'),
     account_number: formData.get('account_number'),
@@ -196,7 +198,7 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     };
   }
 
-  const { store_name, store_slug, whatsapp_number, bank_name, account_number, account_name, category, location_state } = validatedFields.data;
+  const { store_name, store_slug, store_description, whatsapp_number, bank_name, account_number, account_name, category, location_state } = validatedFields.data;
 
   try {
     await ensureStoreColumns();
@@ -217,7 +219,8 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     await sql`
       UPDATE users
       SET store_name = ${store_name}, 
-          store_slug = ${store_slug}, 
+          store_slug = ${store_slug},
+          store_description = ${store_description ?? null},
           whatsapp_number = ${whatsapp_number ?? null},
           bank_name = ${bank_name ?? null},
           account_number = ${account_number ?? null},

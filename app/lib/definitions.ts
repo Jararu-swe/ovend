@@ -9,6 +9,7 @@ export type User = {
   password: string;
   store_slug: string;
   store_name: string;
+  store_description?: string | null;
   whatsapp_number?: string;
   bank_name?: string;
   account_number?: string;

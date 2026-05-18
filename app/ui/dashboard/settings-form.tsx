@@ -2,13 +2,14 @@
 
 import { User } from '@/app/lib/definitions';
 import { updateProfile, State } from '@/app/lib/actions';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 
 export default function SettingsForm({ user }: { user: User }) {
   const initialState: State = { message: null, errors: {} };
   const [state, formAction] = useActionState(updateProfile as any, initialState);
+  const [descriptionLength, setDescriptionLength] = useState(user.store_description?.length || 0);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -31,6 +32,34 @@ export default function SettingsForm({ user }: { user: User }) {
               <p className="mt-2 text-sm text-red-500">{state.errors.store_name[0]}</p>
             )}
           </div>
+          
+          <div>
+            <label htmlFor="store_description" className="block text-sm font-medium text-slate-700 mb-1">
+              Store Description <span className="text-slate-400 font-normal">(Optional)</span>
+            </label>
+            <textarea
+              id="store_description"
+              name="store_description"
+              rows={3}
+              maxLength={200}
+              defaultValue={user.store_description || ''}
+              onChange={(e) => setDescriptionLength(e.target.value.length)}
+              placeholder="Tell customers what makes your store special..."
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 resize-none"
+            />
+            <div className="mt-1 flex items-center justify-between">
+              <p className="text-xs text-slate-400">
+                This appears on the Explore page and when sharing your store link
+              </p>
+              <p className={`text-xs ${descriptionLength > 200 ? 'text-red-500' : 'text-slate-400'}`}>
+                {descriptionLength}/200
+              </p>
+            </div>
+            {state.errors?.store_description && (
+              <p className="mt-2 text-sm text-red-500">{state.errors.store_description[0]}</p>
+            )}
+          </div>
+
           <div>
             <label htmlFor="whatsapp_number" className="block text-sm font-medium text-slate-700 mb-1">
               WhatsApp Number

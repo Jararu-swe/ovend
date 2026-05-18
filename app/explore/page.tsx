@@ -288,7 +288,7 @@ export default async function ExplorePage({
                     </div>
 
                     <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed font-light mt-auto">
-                      {generateStoreDescription(store.store_name, store.top_products, store.product_count)}
+                      {store.store_description || generateStoreDescription(store.store_name, store.top_products, store.product_count)}
                     </p>
                   </div>
                 </Link>
