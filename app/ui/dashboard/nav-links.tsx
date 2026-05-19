@@ -24,19 +24,22 @@ const links = [
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
 ];
 
-export default function NavLinks() {
+export default function NavLinks({ newOrdersCount = 0 }: { newOrdersCount?: number }) {
   const pathname = usePathname();
   return (
     <>
       {links.map((link) => {
         const LinkIcon = link.icon;
         const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href));
+        const isOrders = link.name === 'Orders';
+        const showBadge = isOrders && newOrdersCount > 0;
+        
         return (
           <Link
             key={link.name}
             href={link.href}
             className={clsx(
-              'group flex h-10 grow items-center justify-center gap-3 rounded-xl px-3 text-sm font-medium transition-all md:flex-none md:justify-start',
+              'group flex h-10 grow items-center justify-center gap-3 rounded-xl px-3 text-sm font-medium transition-all md:flex-none md:justify-start relative',
               {
                 'bg-emerald-50 text-emerald-700 shadow-sm': isActive,
                 'text-slate-500 hover:bg-slate-50 hover:text-slate-700': !isActive,
@@ -48,7 +51,17 @@ export default function NavLinks() {
               'text-slate-400 group-hover:text-slate-600': !isActive,
             })} />
             <p className="hidden md:block">{link.name}</p>
-            {isActive && (
+            {showBadge && (
+              <span className="ml-auto hidden md:flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                {newOrdersCount > 99 ? '99+' : newOrdersCount}
+              </span>
+            )}
+            {showBadge && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white md:hidden">
+                {newOrdersCount > 9 ? '9+' : newOrdersCount}
+              </span>
+            )}
+            {isActive && !showBadge && (
               <div className="ml-auto hidden h-1.5 w-1.5 rounded-full bg-emerald-500 md:block" />
             )}
           </Link>

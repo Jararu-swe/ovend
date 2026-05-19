@@ -14,9 +14,11 @@ import {
   TagIcon,
   ClockIcon,
   GlobeAltIcon,
+  BanknotesIcon,
 } from '@heroicons/react/24/outline';
 import { User } from '@/app/lib/definitions';
 import VendleLogo from '@/app/ui/vendle-logo';
+import { useSound } from '@/app/lib/sound-manager';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 import { TEMPLATES } from '@/app/lib/template-presets';
 import {
@@ -34,6 +36,7 @@ interface OnboardingWizardProps {
 
 export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: OnboardingWizardProps) {
   const router = useRouter();
+  const { playSound } = useSound();
   const [step, setStep] = useState(1);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,12 +48,15 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
   const [whatsApp, setWhatsApp] = useState(user.whatsapp_number || '');
   const [locationState, setLocationState] = useState(user.location_state || '');
   const [category, setCategory] = useState(user.category || '');
+  const [bankName, setBankName] = useState(user.bank_name || '');
+  const [accountNumber, setAccountNumber] = useState(user.account_number || '');
+  const [accountName, setAccountName] = useState(user.account_name || '');
   const [templateId, setTemplateId] = useState('fresh-market');
   const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [themeError, setThemeError] = useState<string | null>(null);
 
   const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${storeSlug || user.store_slug}`;
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   // Availability State
   const [timezone, setTimezone] = useState(user.store_timezone || 'Africa/Lagos');
@@ -94,21 +100,27 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           whatsapp_number: whatsApp.trim() || null,
           location_state: locationState || null,
           category: category || null,
+          bank_name: bankName.trim() || null,
+          account_number: accountNumber.trim() || null,
+          account_name: accountName.trim() || null,
         }),
       });
 
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         setSaveError(body?.error || 'Failed to save store details.');
+        playSound('error');
         setIsSaving(false);
         return false;
       }
 
+      playSound('success');
       setIsSaving(false);
       router.refresh();
       return true;
     } catch (e: any) {
       setSaveError(e?.message || 'Failed to save store details.');
+      playSound('error');
       setIsSaving(false);
       return false;
     }
@@ -132,14 +144,18 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         setThemeError(body?.error || 'Failed to save theme.');
+        playSound('error');
         setIsSavingTheme(false);
         return false;
       }
+
+      playSound('success');
       setIsSavingTheme(false);
       router.refresh();
       return true;
     } catch (e: any) {
       setThemeError(e?.message || 'Failed to save theme.');
+      playSound('error');
       setIsSavingTheme(false);
       return false;
     }
@@ -173,15 +189,18 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         setAvailabilityError(body?.error || 'Failed to save availability.');
+        playSound('error');
         setIsSavingAvailability(false);
         return false;
       }
 
+      playSound('success');
       setIsSavingAvailability(false);
       router.refresh();
       return true;
     } catch (e: any) {
       setAvailabilityError(e?.message || 'Failed to save availability.');
+      playSound('error');
       setIsSavingAvailability(false);
       return false;
     }
@@ -194,6 +213,16 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
         <Link href="/">
           <VendleLogo />
         </Link>
+      </div>
+
+      {/* Free Trial Banner */}
+      <div className="mb-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-sky-500 p-4 text-center shadow-lg">
+        <p className="text-sm font-bold text-white">
+          🎉 Your 7-day free trial has started!
+        </p>
+        <p className="mt-1 text-xs text-white/90">
+          Enjoy full access to all features. No credit card required.
+        </p>
       </div>
 
       {/* Progress bar */}
@@ -387,8 +416,96 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 3: Store Availability */}
+        {/* Step 3: Bank Account Details */}
         {step === 3 && (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center rounded-full bg-blue-100 p-4 mb-4">
+                <BanknotesIcon className="h-8 w-8 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Payment Details</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Add your bank details so we can settle payments to you when customers buy from your store.
+              </p>
+            </div>
+
+            <div className="space-y-4 rounded-xl bg-slate-50 p-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">
+                  Bank Name <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  placeholder="e.g. GTBank, Access Bank, First Bank"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">
+                  Account Number <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="0123456789"
+                  type="tel"
+                  maxLength={10}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
+                />
+                <p className="mt-1 text-[11px] text-slate-400">10-digit account number</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">
+                  Account Name <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  placeholder="Name as it appears on your account"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
+                />
+              </div>
+
+              <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
+                <p className="text-xs text-blue-700">
+                  💡 <strong>Why we need this:</strong> When customers pay via card or transfer, we&apos;ll settle the funds directly to this account.
+                </p>
+              </div>
+
+              {saveError && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  {saveError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(2)}
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              >
+                Back
+              </button>
+              <button
+                onClick={async () => {
+                  const ok = await saveProfile();
+                  if (ok) setStep(4);
+                }}
+                disabled={isSaving}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
+              >
+                {isSaving ? 'Saving…' : (bankName && accountNumber && accountName) ? 'Next: Store Hours' : 'Skip for now'}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Store Availability */}
+        {step === 4 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-amber-100 p-4 mb-4">
@@ -481,7 +598,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
@@ -489,7 +606,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               <button
                 onClick={async () => {
                   const ok = await saveAvailability();
-                  if (ok) setStep(4);
+                  if (ok) setStep(5);
                 }}
                 disabled={isSavingAvailability}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
@@ -501,8 +618,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 4: Choose Theme */}
-        {step === 4 && (
+        {/* Step 5: Choose Theme */}
+        {step === 5 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -549,7 +666,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
@@ -557,7 +674,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
               <button
                 onClick={async () => {
                   const ok = await saveTheme();
-                  if (ok) setStep(5);
+                  if (ok) setStep(6);
                 }}
                 disabled={isSavingTheme}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
@@ -569,8 +686,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 5: Add Products */}
-        {step === 5 && (
+        {/* Step 6: Add Products */}
+        {step === 6 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -606,13 +723,13 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(5)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
               </button>
               <button
-                onClick={() => setStep(6)}
+                onClick={() => setStep(7)}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
               >
                 {hasProducts ? 'Next' : 'Skip for now'}
@@ -622,8 +739,8 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
           </div>
         )}
 
-        {/* Step 6: Share Your Link */}
-        {step === 6 && (
+        {/* Step 7: Share Your Link */}
+        {step === 7 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-indigo-100 p-4 mb-4 text-2xl">🚀</div>
@@ -672,7 +789,7 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(5)}
+                onClick={() => setStep(6)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back

@@ -391,7 +391,7 @@ export async function createProduct(prevState: State | undefined, formData: Form
   }
 
   revalidatePath('/dashboard/products');
-  redirect('/dashboard/products');
+  redirect('/dashboard/products?success=product_created');
 }
 
 export async function updateProduct(
@@ -484,7 +484,7 @@ export async function updateProduct(
   }
 
   revalidatePath('/dashboard/products');
-  redirect('/dashboard/products');
+  redirect('/dashboard/products?success=product_updated');
 }
 
 export async function deleteProduct(id: string) {

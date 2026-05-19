@@ -14,6 +14,9 @@ const OnboardingProfileSchema = z.object({
   whatsapp_number: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
   location_state: z.string().optional().nullable(),
+  bank_name: z.string().optional().nullable(),
+  account_number: z.string().optional().nullable(),
+  account_name: z.string().optional().nullable(),
 });
 
 export async function POST(req: NextRequest) {
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 });
     }
 
-    const { store_name, store_slug, store_description, whatsapp_number, category, location_state } = parsed.data;
+    const { store_name, store_slug, store_description, whatsapp_number, category, location_state, bank_name, account_number, account_name } = parsed.data;
 
     await ensureStoreColumns();
     await ensureVendorSubscriptionSchema();
@@ -52,7 +55,10 @@ export async function POST(req: NextRequest) {
         store_description = ${store_description ?? null},
         whatsapp_number = ${whatsapp_number ?? null},
         category = ${category ?? null},
-        location_state = ${location_state ?? null}
+        location_state = ${location_state ?? null},
+        bank_name = ${bank_name ?? null},
+        account_number = ${account_number ?? null},
+        account_name = ${account_name ?? null}
       WHERE id = ${session.user.id}
     `;
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { toggleDiscountAction } from '@/app/lib/actions';
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
+import { useSound } from '@/app/lib/sound-manager';
 
 export default function ToggleDiscountButton({
   discountId,
@@ -14,6 +15,17 @@ export default function ToggleDiscountButton({
 }) {
   const toggleWithId = toggleDiscountAction.bind(null, discountId, currentStatus);
   const [state, formAction] = useActionState(toggleWithId, { message: null, errors: {} });
+  const { playSound } = useSound();
+
+  useEffect(() => {
+    if (state?.message && !state?.errors) {
+      if (state.message.toLowerCase().includes('success')) {
+        playSound('info');
+      } else if (state.message.toLowerCase().includes('fail') || state.message.toLowerCase().includes('error')) {
+        playSound('error');
+      }
+    }
+  }, [state, playSound]);
 
   return (
     <form action={formAction}>

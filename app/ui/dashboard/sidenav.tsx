@@ -2,8 +2,28 @@ import Link from 'next/link';
 import NavLinks from '@/app/ui/dashboard/nav-links';
 import VendleLogo from '@/app/ui/vendle-logo';
 import { SignOutButton } from '@/app/ui/dashboard/sign-out-button';
+import { auth } from '@/auth';
+import { sql } from '@/app/lib/db';
 
-export default function SideNav() {
+async function getNewOrdersCount(vendorId: string): Promise<number> {
+  try {
+    const result = await sql<{ count: string }[]>`
+      SELECT COUNT(*) as count
+      FROM orders
+      WHERE vendor_id = ${vendorId}
+        AND status = 'new'
+    `;
+    return Number(result[0]?.count || 0);
+  } catch (error) {
+    console.error('Error fetching new orders count:', error);
+    return 0;
+  }
+}
+
+export default async function SideNav() {
+  const session = await auth();
+  const newOrdersCount = session?.user?.id ? await getNewOrdersCount(session.user.id) : 0;
+
   return (
     <div className="flex h-full flex-col bg-white border-r border-slate-200/80">
       {/* Logo area */}
@@ -19,7 +39,7 @@ export default function SideNav() {
 
       {/* Navigation */}
       <div className="flex grow flex-row justify-between space-x-2 overflow-y-auto px-3 py-3 md:flex-col md:space-x-0 md:space-y-1">
-        <NavLinks />
+        <NavLinks newOrdersCount={newOrdersCount} />
         <div className="hidden h-auto w-full grow md:block" />
         <SignOutButton />
       </div>

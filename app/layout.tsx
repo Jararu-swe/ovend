@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import {inter} from '@/app/ui/fonts'
 import Script from 'next/script';
 import { Metadata } from 'next';
+import { ClientProviders } from '@/app/client-providers';
 
 export const metadata: Metadata = {
   title: {
@@ -80,7 +81,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} antialiased`}>
-        {children}
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );

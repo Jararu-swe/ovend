@@ -2,14 +2,31 @@
 
 import { User } from '@/app/lib/definitions';
 import { updateProfile, State } from '@/app/lib/actions';
-import { useActionState, useState } from 'react';
-import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { useActionState, useState, useEffect } from 'react';
+import { CheckCircleIcon, ExclamationCircleIcon, BellIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
+import { useSound } from '@/app/lib/sound-manager';
 
 export default function SettingsForm({ user }: { user: User }) {
   const initialState: State = { message: null, errors: {} };
   const [state, formAction] = useActionState(updateProfile as any, initialState);
   const [descriptionLength, setDescriptionLength] = useState(user.store_description?.length || 0);
+  const { preferences, updatePreferences, playSound } = useSound();
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  useEffect(() => {
+    setIsReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
+
+  useEffect(() => {
+    if (state?.message) {
+      if (state.message.toLowerCase().includes('success')) {
+        playSound('success');
+      } else if (state.message.toLowerCase().includes('fail') || state.message.toLowerCase().includes('error')) {
+        playSound('error');
+      }
+    }
+  }, [state, playSound]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -128,6 +145,78 @@ export default function SettingsForm({ user }: { user: User }) {
               Your public store link: <span className="font-medium text-emerald-600">vendle.app/s/{user.store_slug}</span>
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Notifications & Audio Section */}
+      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BellIcon className="h-5 w-5 text-slate-400" />
+            <h2 className="text-base font-semibold text-slate-800">Notifications & Audio</h2>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              updatePreferences({ enabled: !preferences.enabled });
+              if (!preferences.enabled) {
+                // Play a test sound if enabling
+                setTimeout(() => playSound('info'), 100);
+              }
+            }}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+              preferences.enabled ? 'bg-emerald-500' : 'bg-slate-200'
+            }`}
+            aria-label="Toggle sound notifications"
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                preferences.enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-600">Enable audio feedback for important actions</p>
+            {isReducedMotion && (
+              <span className="text-[10px] font-medium bg-amber-50 text-amber-600 px-2 py-0.5 rounded border border-amber-100">
+                Reduced Motion Active
+              </span>
+            )}
+          </div>
+
+          {preferences.enabled && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label htmlFor="sound-volume" className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  {preferences.volume === 0 ? (
+                    <SpeakerXMarkIcon className="h-4 w-4 text-slate-400" />
+                  ) : (
+                    <SpeakerWaveIcon className="h-4 w-4 text-slate-400" />
+                  )}
+                  Notification Volume
+                </label>
+                <span className="text-xs font-mono text-slate-400">{preferences.volume}%</span>
+              </div>
+              <input
+                id="sound-volume"
+                type="range"
+                min="0"
+                max="100"
+                value={preferences.volume}
+                onChange={(e) => updatePreferences({ volume: parseInt(e.target.value) })}
+                onMouseUp={() => playSound('info')}
+                onTouchEnd={() => playSound('info')}
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-slate-100 accent-emerald-500"
+              />
+              <div className="flex justify-between px-1">
+                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Mute</span>
+                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Max</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
