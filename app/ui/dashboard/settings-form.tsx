@@ -2,36 +2,120 @@
 
 import { User } from '@/app/lib/definitions';
 import { updateProfile, State } from '@/app/lib/actions';
-import { useActionState, useState, useEffect } from 'react';
-import { CheckCircleIcon, ExclamationCircleIcon, BellIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/outline';
+import { useActionState, useState, useEffect, useMemo } from 'react';
+import { 
+  CheckCircleIcon, 
+  ExclamationCircleIcon, 
+  BellIcon, 
+  SpeakerWaveIcon, 
+  SpeakerXMarkIcon,
+  ClockIcon,
+  GlobeAltIcon,
+  BanknotesIcon,
+  BuildingStorefrontIcon
+} from '@heroicons/react/24/outline';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 import { useSound } from '@/app/lib/sound-manager';
+import {
+  STORE_DAY_KEYS,
+  type StoreHoursDayKey,
+  type StoreHoursJson,
+  parseHHMM,
+} from '@/app/lib/store-availability';
 
-export default function SettingsForm({ user }: { user: User }) {
+const DAY_LABELS: Record<StoreHoursDayKey, string> = {
+  mon: 'Monday',
+  tue: 'Tuesday',
+  wed: 'Wednesday',
+  thu: 'Thursday',
+  fri: 'Friday',
+  sat: 'Saturday',
+  sun: 'Sunday',
+};
+
+const COMMON_TIMEZONES = [
+  'Africa/Lagos',
+  'Africa/Abidjan',
+  'Africa/Cairo',
+  'Africa/Johannesburg',
+  'Africa/Nairobi',
+  'UTC',
+  'Europe/London',
+  'Europe/Paris',
+  'America/New_York',
+  'America/Los_Angeles',
+  'Asia/Dubai',
+  'Asia/Singapore',
+];
+
+type DayRow = { enabled: boolean; open: string; close: string };
+
+function deserializeHours(user: User): Record<StoreHoursDayKey, DayRow> {
+  const base = {} as Record<StoreHoursDayKey, DayRow>;
+  for (const k of STORE_DAY_KEYS) {
+    base[k] = { enabled: false, open: '09:00', close: '17:00' };
+  }
+  const raw = user.store_hours;
+  let obj: StoreHoursJson | null = null;
+  if (raw != null && typeof raw === 'string') {
+    try {
+      obj = JSON.parse(raw) as StoreHoursJson;
+    } catch {
+      obj = null;
+    }
+  } else if (raw && typeof raw === 'object') {
+    obj = raw as StoreHoursJson;
+  }
+  if (!obj) return base;
+  for (const k of STORE_DAY_KEYS) {
+    const arr = obj[k];
+    if (Array.isArray(arr) && arr[0]?.open != null && arr[0]?.close != null) {
+      const open = String(arr[0].open).slice(0, 5);
+      const close = String(arr[0].close).slice(0, 5);
+      base[k] = { enabled: true, open, close };
+    }
+  }
+  return base;
+}
+
+function serializeHours(state: Record<StoreHoursDayKey, DayRow>): StoreHoursJson | null {
+  const out: StoreHoursJson = {};
+  for (const k of STORE_DAY_KEYS) {
+    const row = state[k];
+    if (!row.enabled) continue;
+    const o = parseHHMM(row.open);
+    const c = parseHHMM(row.close);
+    if (o == null || c == null || c <= o) continue;
+    out[k] = [{ open: row.open.trim().slice(0, 5), close: row.close.trim().slice(0, 5) }];
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+export default function SettingsForm({ user, children }: { user: User; children?: React.ReactNode }) {
   const initialState: State = { message: null, errors: {} };
-  const [state, formAction] = useActionState(updateProfile as any, initialState);
+  const [state, formAction, isPending] = useActionState(updateProfile as any, initialState);
   const [descriptionLength, setDescriptionLength] = useState(user.store_description?.length || 0);
-  const { preferences, updatePreferences, playSound } = useSound();
+  const { preferences, updatePreferences } = useSound();
   const [isReducedMotion, setIsReducedMotion] = useState(false);
+  
+  // Availability State
+  const [days, setDays] = useState(() => deserializeHours(user));
+  const hoursJson = useMemo(() => JSON.stringify(serializeHours(days)), [days]);
+  const tzValue = user.store_timezone?.trim() || 'Africa/Lagos';
+  const acceptingDefault = user.accepting_orders !== false;
+  const tzOptions = Array.from(new Set([tzValue, ...COMMON_TIMEZONES]));
 
   useEffect(() => {
     setIsReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }, []);
 
-  useEffect(() => {
-    if (state?.message) {
-      if (state.message.toLowerCase().includes('success')) {
-        playSound('success');
-      } else if (state.message.toLowerCase().includes('fail') || state.message.toLowerCase().includes('error')) {
-        playSound('error');
-      }
-    }
-  }, [state, playSound]);
-
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-6">
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-base font-semibold text-slate-800">Store Profile</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <BuildingStorefrontIcon className="h-5 w-5 text-slate-400" />
+          <h2 className="text-base font-semibold text-slate-800">Store Profile</h2>
+        </div>
         <div className="space-y-4">
           <div>
             <label htmlFor="store_name" className="block text-sm font-medium text-slate-700 mb-1">
@@ -148,6 +232,118 @@ export default function SettingsForm({ user }: { user: User }) {
         </div>
       </div>
 
+      {/* Availability Section */}
+      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm space-y-5">
+        <div className="flex items-center gap-2 mb-4">
+          <ClockIcon className="h-5 w-5 text-slate-400" />
+          <h2 className="text-base font-semibold text-slate-800">Store hours & availability</h2>
+        </div>
+        <p className="-mt-3 text-xs text-slate-500">
+          Customers see Open or Closed on Explore and your storefront. Leave all days off to show no schedule.
+        </p>
+
+        <input type="hidden" name="store_hours_json" value={hoursJson} readOnly />
+
+        <div>
+          <label htmlFor="store_timezone" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
+            <GlobeAltIcon className="h-4 w-4 text-slate-400" />
+            Timezone
+          </label>
+          <select
+            id="store_timezone"
+            name="store_timezone"
+            defaultValue={tzValue}
+            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
+          >
+            {tzOptions.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-100">
+          <input
+            type="checkbox"
+            name="accepting_orders"
+            defaultChecked={acceptingDefault}
+            className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          <span>
+            <span className="block text-sm font-medium text-slate-800">Accepting orders</span>
+            <span className="block text-xs text-slate-500 mt-0.5">
+              Turn off for holidays or breaks — your store shows as closed even during listed hours.
+            </span>
+          </span>
+        </label>
+
+        <div>
+          <label htmlFor="store_closed_note" className="block text-sm font-medium text-slate-700 mb-1">
+            Message when closed (optional)
+          </label>
+          <textarea
+            id="store_closed_note"
+            name="store_closed_note"
+            rows={2}
+            defaultValue={user.store_closed_note ?? ''}
+            placeholder="e.g. Back on Monday — orders ship Tuesday."
+            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+          />
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-slate-700">Weekly hours</p>
+          <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
+            {STORE_DAY_KEYS.map((key) => (
+              <div key={key} className="flex flex-wrap items-center gap-3 bg-white px-3 py-2.5">
+                <label className="flex items-center gap-2 min-w-[140px]">
+                  <input
+                    type="checkbox"
+                    checked={days[key].enabled}
+                    onChange={(e) =>
+                      setDays((d) => ({
+                        ...d,
+                        [key]: { ...d[key], enabled: e.target.checked },
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span className="text-sm text-slate-800">{DAY_LABELS[key]}</span>
+                </label>
+                <div className="flex items-center gap-2 text-sm">
+                  <input
+                    type="time"
+                    disabled={!days[key].enabled}
+                    value={days[key].open}
+                    onChange={(e) =>
+                      setDays((d) => ({
+                        ...d,
+                        [key]: { ...d[key], open: e.target.value },
+                      }))
+                    }
+                    className="rounded-lg border border-slate-200 px-2 py-1 text-sm disabled:opacity-50 bg-slate-50"
+                  />
+                  <span className="text-slate-400 text-xs">to</span>
+                  <input
+                    type="time"
+                    disabled={!days[key].enabled}
+                    value={days[key].close}
+                    onChange={(e) =>
+                      setDays((d) => ({
+                        ...d,
+                        [key]: { ...d[key], close: e.target.value },
+                      }))
+                    }
+                    className="rounded-lg border border-slate-200 px-2 py-1 text-sm disabled:opacity-50 bg-slate-50"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Notifications & Audio Section */}
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
@@ -159,10 +355,6 @@ export default function SettingsForm({ user }: { user: User }) {
             type="button"
             onClick={() => {
               updatePreferences({ enabled: !preferences.enabled });
-              if (!preferences.enabled) {
-                // Play a test sound if enabling
-                setTimeout(() => playSound('info'), 100);
-              }
             }}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
               preferences.enabled ? 'bg-emerald-500' : 'bg-slate-200'
@@ -207,8 +399,6 @@ export default function SettingsForm({ user }: { user: User }) {
                 max="100"
                 value={preferences.volume}
                 onChange={(e) => updatePreferences({ volume: parseInt(e.target.value) })}
-                onMouseUp={() => playSound('info')}
-                onTouchEnd={() => playSound('info')}
                 className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-slate-100 accent-emerald-500"
               />
               <div className="flex justify-between px-1">
@@ -222,7 +412,10 @@ export default function SettingsForm({ user }: { user: User }) {
 
       {/* Bank Account Section */}
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <h2 className="mb-2 text-base font-semibold text-slate-800">Bank Account Details</h2>
+        <div className="flex items-center gap-2 mb-2">
+          <BanknotesIcon className="h-5 w-5 text-slate-400" />
+          <h2 className="text-base font-semibold text-slate-800">Bank Account Details</h2>
+        </div>
         <p className="mb-4 text-xs text-slate-500">
           For cash/transfer payments, customers will see these details to make payment
         </p>
@@ -267,24 +460,45 @@ export default function SettingsForm({ user }: { user: User }) {
             />
           </div>
         </div>
+      </div>
 
-        {state.message && (
-          <div className={`mt-4 flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm ${state.message.includes('Success') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-            {state.message.includes('Success') ? (
-              <CheckCircleIcon className="h-5 w-5" />
+      {children}
+
+      {/* Global Save Button at the Bottom */}
+      <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1">
+            {state.message ? (
+              <div className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm ${state.message.includes('Success') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                {state.message.includes('Success') ? (
+                  <CheckCircleIcon className="h-5 w-5 shrink-0" />
+                ) : (
+                  <ExclamationCircleIcon className="h-5 w-5 shrink-0" />
+                )}
+                <span className="font-semibold">{state.message}</span>
+              </div>
             ) : (
-              <ExclamationCircleIcon className="h-5 w-5" />
+              <p className="text-sm text-slate-500 font-medium px-2">
+                Make sure to save all your changes before leaving.
+              </p>
             )}
-            <span>{state.message}</span>
           </div>
-        )}
-
-        <div className="mt-5 flex justify-end">
           <button
             type="submit"
-            className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400"
+            disabled={isPending}
+            className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-10 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-emerald-400 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Save profile
+            {isPending ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving Changes...
+              </>
+            ) : (
+              'Save All Settings'
+            )}
           </button>
         </div>
       </div>

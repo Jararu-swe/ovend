@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 
-export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+export type NotificationType = 'order';
 
 interface SoundPreferences {
   enabled: boolean;
@@ -22,18 +22,45 @@ const DEFAULT_PREFERENCES: SoundPreferences = {
   volume: 50,
 };
 
-const SOUND_ASSETS: Record<NotificationType, string> = {
-  success: '/sounds/success.mp3',
-  error: '/sounds/error.mp3',
-  warning: '/sounds/warning.mp3',
-  info: '/sounds/info.mp3',
+/**
+ * Programmatically synthesizes minimalist "monochrome" sounds using Web Audio API.
+ * This provides a clean, electronic aesthetic similar to modern IDE notifications.
+ */
+const synthesizeMonochromeSound = (ctx: AudioContext, type: NotificationType, volume: number) => {
+  const gainNode = ctx.createGain();
+  gainNode.gain.value = volume / 100;
+  gainNode.connect(ctx.destination);
+
+  const now = ctx.currentTime;
+
+  switch (type) {
+    case 'order': {
+      // Clean ascending double-ping (Trae-like)
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, now); // A5
+      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.1); // E6
+      
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.2, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+
+      osc.connect(g);
+      g.connect(gainNode);
+
+      osc.start(now);
+      osc.stop(now + 0.3);
+      break;
+    }
+  }
 };
 
 export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [preferences, setPreferences] = useState<SoundPreferences>(DEFAULT_PREFERENCES);
   const [isInitialized, setIsInitialized] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioBuffersRef = useRef<Map<NotificationType, AudioBuffer>>(new Map());
 
   // Load preferences from localStorage
   useEffect(() => {
@@ -71,22 +98,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const ctx = new AudioContextClass();
       audioContextRef.current = ctx;
-
-      // Pre-load sounds
-      await Promise.all(
-        Object.entries(SOUND_ASSETS).map(async ([type, url]) => {
-          try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Failed to fetch sound: ${url}`);
-            const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-            audioBuffersRef.current.set(type as NotificationType, audioBuffer);
-          } catch (e) {
-            console.error(`Error loading sound ${type}:`, e);
-          }
-        })
-      );
-
       return ctx;
     } catch (e) {
       console.error('Failed to initialize AudioContext', e);
@@ -105,36 +116,8 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (ctx.state === 'suspended') await ctx.resume();
       }
 
-      const buffer = audioBuffersRef.current.get(type);
-      if (!buffer) {
-        // Fallback to HTML5 Audio if buffer not loaded
-        const audio = new Audio(SOUND_ASSETS[type]);
-        audio.volume = preferences.volume / 100;
-        audio.play().catch(e => console.error('HTML5 Audio playback failed', e));
-
-        // Requirement 7.1: Update ARIA live region for fallback
-        const announcer = document.getElementById('notification-announcer');
-        if (announcer) {
-          announcer.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} notification`;
-          setTimeout(() => {
-            if (announcer.textContent === `${type.charAt(0).toUpperCase() + type.slice(1)} notification`) {
-              announcer.textContent = '';
-            }
-          }, 3000);
-        }
-        return;
-      }
-
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-
-      const gainNode = ctx.createGain();
-      gainNode.gain.value = preferences.volume / 100;
-
-      source.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      source.start(0);
+      // Use synthesized monochrome sounds
+      synthesizeMonochromeSound(ctx, type, preferences.volume);
 
       // Requirement 7.1: Update ARIA live region
       const announcer = document.getElementById('notification-announcer');

@@ -44,6 +44,10 @@ export async function ensureStoreColumns() {
       try {
         await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL`);
         await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS location_state VARCHAR(100) DEFAULT NULL`);
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS store_description VARCHAR(200) DEFAULT NULL`);
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100) DEFAULT NULL`);
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_number VARCHAR(100) DEFAULT NULL`);
+        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_name VARCHAR(100) DEFAULT NULL`);
         await sql.unsafe(
           `ALTER TABLE users ADD COLUMN IF NOT EXISTS store_timezone VARCHAR(100) NOT NULL DEFAULT 'Africa/Lagos'`,
         );
@@ -415,7 +419,13 @@ export async function fetchUserById(id: string) {
         email,
         store_slug,
         store_name,
+        store_description,
         whatsapp_number,
+        bank_name,
+        account_number,
+        account_name,
+        category,
+        location_state,
         subscription_status,
         subscription_expires_at,
         subscription_last_payment_reference,

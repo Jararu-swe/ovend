@@ -10,10 +10,10 @@ export type User = {
   store_slug: string;
   store_name: string;
   store_description?: string | null;
-  whatsapp_number?: string;
-  bank_name?: string;
-  account_number?: string;
-  account_name?: string;
+  whatsapp_number?: string | null;
+  bank_name?: string | null;
+  account_number?: string | null;
+  account_name?: string | null;
   category?: string | null;
   location_state?: string | null;
   role?: string;

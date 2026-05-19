@@ -15,17 +15,6 @@ export default function ToggleDiscountButton({
 }) {
   const toggleWithId = toggleDiscountAction.bind(null, discountId, currentStatus);
   const [state, formAction] = useActionState(toggleWithId, { message: null, errors: {} });
-  const { playSound } = useSound();
-
-  useEffect(() => {
-    if (state?.message && !state?.errors) {
-      if (state.message.toLowerCase().includes('success')) {
-        playSound('info');
-      } else if (state.message.toLowerCase().includes('fail') || state.message.toLowerCase().includes('error')) {
-        playSound('error');
-      }
-    }
-  }, [state, playSound]);
 
   return (
     <form action={formAction}>

@@ -15,7 +15,6 @@ import {
   getBorderRadiusClass,
 } from '@/app/lib/utils';
 import { createOrder, validateDiscountAction } from '@/app/lib/actions';
-import { useSound } from '@/app/lib/sound-manager';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 
@@ -83,7 +82,6 @@ export default function Storefront({
   availability: StoreAvailability;
 }) {
   const searchParams = useSearchParams();
-  const { playSound } = useSound();
   const isPreview = searchParams.get('preview') === 'true';
   const [previewTheme, setPreviewTheme] = useState<StoreTheme | null>(null);
   const [cart, setCart] = useState<OrderItem[]>([]);
@@ -492,7 +490,6 @@ export default function Storefront({
             })
             .then(result => {
               if (result?.success) {
-                playSound('success');
                 setPlacedOrder({ id: result.id, total: grandTotal, paymentMethod: 'card' });
                 setCart([]);
                 setAppliedDiscount(null);
@@ -502,7 +499,6 @@ export default function Storefront({
             })
             .catch(err => {
               console.error('Payment error:', err);
-              playSound('error');
               alert('Payment verification failed. Please contact support.');
               setIsSubmitting(false);
             });
@@ -523,7 +519,6 @@ export default function Storefront({
       }
     } catch (err) {
       console.error(err);
-      playSound('error');
       alert('Order failed. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -538,7 +533,6 @@ export default function Storefront({
     }
     const result = await createOrder(vendor.id, cart, grandTotal, formData, 'cash', undefined, appliedDiscount?.code, appliedDiscount?.amount);
     if (result.success) {
-      playSound('success');
       setPlacedOrder({ id: result.id, total: grandTotal, paymentMethod: 'cash' });
       setCart([]);
       setIsCartOpen(true);

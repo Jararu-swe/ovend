@@ -18,7 +18,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { User } from '@/app/lib/definitions';
 import VendleLogo from '@/app/ui/vendle-logo';
-import { useSound } from '@/app/lib/sound-manager';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 import { TEMPLATES } from '@/app/lib/template-presets';
 import {
@@ -36,7 +35,6 @@ interface OnboardingWizardProps {
 
 export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: OnboardingWizardProps) {
   const router = useRouter();
-  const { playSound } = useSound();
   const [step, setStep] = useState(1);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -109,18 +107,15 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         setSaveError(body?.error || 'Failed to save store details.');
-        playSound('error');
         setIsSaving(false);
         return false;
       }
 
-      playSound('success');
       setIsSaving(false);
       router.refresh();
       return true;
     } catch (e: any) {
       setSaveError(e?.message || 'Failed to save store details.');
-      playSound('error');
       setIsSaving(false);
       return false;
     }
@@ -144,18 +139,15 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         setThemeError(body?.error || 'Failed to save theme.');
-        playSound('error');
         setIsSavingTheme(false);
         return false;
       }
 
-      playSound('success');
       setIsSavingTheme(false);
       router.refresh();
       return true;
     } catch (e: any) {
       setThemeError(e?.message || 'Failed to save theme.');
-      playSound('error');
       setIsSavingTheme(false);
       return false;
     }
@@ -189,18 +181,15 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         setAvailabilityError(body?.error || 'Failed to save availability.');
-        playSound('error');
         setIsSavingAvailability(false);
         return false;
       }
 
-      playSound('success');
       setIsSavingAvailability(false);
       router.refresh();
       return true;
     } catch (e: any) {
       setAvailabilityError(e?.message || 'Failed to save availability.');
-      playSound('error');
       setIsSavingAvailability(false);
       return false;
     }
