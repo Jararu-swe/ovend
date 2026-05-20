@@ -171,9 +171,9 @@ export default function Storefront({
     : 'shadow-sm';
 
   const layoutWidthClass = 
-    activeTheme.layout_width === 'wide' ? 'max-w-6xl' :
     activeTheme.layout_width === 'full' ? 'max-w-none' :
-    'max-w-2xl';
+    activeTheme.layout_width === 'standard' ? 'max-w-2xl' :
+    'max-w-6xl';
 
   const logoPos = activeTheme.logo_position ?? 'left';
   const logoFrame = (activeTheme.logo_frame ?? 'profile') as string;
@@ -661,6 +661,15 @@ export default function Storefront({
 
   const entranceAnim = getEntranceClass(activeTheme.animation_style);
 
+  const handleOpenCheckout = () => {
+    if (availability.state === 'closed') {
+      alert(availability.label || 'This store is currently closed and not accepting orders.');
+      return;
+    }
+    setIsCheckingOut(true);
+    setIsCartOpen(false);
+  };
+
   // ─── Product grid renderer (passed to SectionRenderer) ──────
   const renderProductGrid = () => {
     // Get button props using the helper
@@ -816,7 +825,7 @@ export default function Storefront({
                 </div>
 
                 <button 
-                  disabled={isOutOfStock}
+                  disabled={isOutOfStock || availability.state === 'closed'}
                   onClick={(e) => { 
                     e.stopPropagation(); 
                     if (hasOptions || isOutOfStock) {
@@ -826,12 +835,14 @@ export default function Storefront({
                     }
                   }}
                   className={`flex shrink-0 items-center justify-center font-bold shadow-lg ${btn.className} ${
-                    isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''
+                    isOutOfStock || availability.state === 'closed' ? 'opacity-50 cursor-not-allowed' : ''
                   } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
                   style={{...btn.style, padding: hasOptions ? '0.5rem 1rem' : '', height: '2.5rem', width: hasOptions ? 'auto' : '2.5rem', fontSize: '0.875rem', ['--tw-ring-color' as any]: activeTheme.primary_color }}
                 >
                   {isOutOfStock ? (
                     'Sold'
+                  ) : availability.state === 'closed' ? (
+                    'Closed'
                   ) : hasOptions ? (
                     'Options'
                   ) : (
@@ -970,6 +981,7 @@ export default function Storefront({
           vendor={vendor}
           products={products}
           theme={activeTheme}
+          availability={availability}
           onAddToCart={addToCart}
           renderProductGrid={renderProductGrid}
         />
@@ -1271,7 +1283,7 @@ export default function Storefront({
                         if (!customer) {
                           setShowAuthModal(true);
                         } else {
-                          setIsCheckingOut(true);
+                          handleOpenCheckout();
                         }
                       }}
                       className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
@@ -1328,7 +1340,7 @@ export default function Storefront({
                 Create Account
               </a>
               <button
-                onClick={() => { setShowAuthModal(false); setIsCheckingOut(true); }}
+                onClick={() => { setShowAuthModal(false); handleOpenCheckout(); }}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-200 active:scale-95"
               >
                 Continue as Guest
@@ -1342,6 +1354,7 @@ export default function Storefront({
       <ProductQuickView
         product={quickViewProduct}
         theme={activeTheme}
+        isClosed={availability.state === 'closed'}
         onClose={() => setQuickViewProduct(null)}
         onAddToCart={addToCart}
       />

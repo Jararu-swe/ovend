@@ -69,8 +69,8 @@ export default function EditorPreview({ vendorSlug, viewport, iframeRef }: Edito
         </div>
       </div>
 
-      {/* View live store link */}
-      <div className="flex-shrink-0 py-2">
+      {/* View live store link - hidden on small screens */}
+      <div className="hidden sm:flex flex-shrink-0 py-2">
         <a
           href={`/s/${vendorSlug}`}
           target="_blank"

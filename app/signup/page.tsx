@@ -9,6 +9,7 @@ import {
   UserIcon,
   ExclamationCircleIcon,
   ArrowRightIcon,
+  BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -76,8 +77,13 @@ export default function SignupPage() {
 
         {/* Card */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-          <h1 className="text-xl font-semibold text-slate-900">Create your free store</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+              <BuildingStorefrontIcon className="h-5 w-5" />
+            </div>
+            <h1 className="text-xl font-semibold text-slate-900">Create your free store</h1>
+          </div>
+          <p className="text-sm text-slate-500">
             Get started in seconds — no card required.
           </p>
 

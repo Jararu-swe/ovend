@@ -25,23 +25,25 @@ export default async function SideNav() {
   const newOrdersCount = session?.user?.id ? await getNewOrdersCount(session.user.id) : 0;
 
   return (
-    <div className="flex h-full flex-col bg-white border-r border-slate-200/80">
-      {/* Logo area */}
+    <div className="flex h-full flex-col bg-white border-t border-slate-200/80 md:border-t-0 md:border-r">
+      {/* Logo area - hidden on mobile bottom bar */}
       <Link
-        className="flex h-16 items-center gap-3 px-5 border-b border-slate-100 md:h-[72px] shrink-0"
+        className="hidden md:flex h-16 items-center gap-3 px-5 border-b border-slate-100 md:h-[72px] shrink-0"
         href="/"
       >
         <VendleLogo />
-        <div className="hidden md:block ml-1">
+        <div className="ml-1">
           <p className="text-[10px] text-slate-400 font-medium -mt-0.5">Vendor Dashboard</p>
         </div>
       </Link>
 
       {/* Navigation */}
-      <div className="flex grow flex-row justify-between space-x-2 overflow-y-auto px-3 py-3 md:flex-col md:space-x-0 md:space-y-1">
+      <div className="flex grow flex-row items-center justify-start space-x-1 overflow-x-auto px-2 py-2 md:flex-col md:space-x-0 md:space-y-1 md:px-3 md:py-3 md:overflow-y-auto no-scrollbar">
         <NavLinks newOrdersCount={newOrdersCount} />
         <div className="hidden h-auto w-full grow md:block" />
-        <SignOutButton />
+        <div className="hidden md:block">
+          <SignOutButton />
+        </div>
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ type Viewport = 'desktop' | 'tablet' | 'phone';
 interface EditorToolbarProps {
   viewport: Viewport;
   onViewportChange: (v: Viewport) => void;
+  mobileMode?: 'edit' | 'preview';
+  onMobileModeChange?: (m: 'edit' | 'preview') => void;
   canUndo: boolean;
   canRedo: boolean;
   onUndo: () => void;
@@ -21,6 +23,8 @@ interface EditorToolbarProps {
 export default function EditorToolbar({
   viewport,
   onViewportChange,
+  mobileMode = 'edit',
+  onMobileModeChange,
   canUndo,
   canRedo,
   onUndo,
@@ -83,23 +87,59 @@ export default function EditorToolbar({
           </div>
         </div>
 
-        {/* Center: Viewport Toggle (Framer/Shopify style) */}
-        <div className="hidden lg:flex items-center gap-1 rounded-2xl bg-slate-100/50 p-1 border border-slate-200/50">
-          {viewports.map((v) => (
+        {/* Center: Viewport Toggle (Desktop) / Mode Toggle (Mobile) */}
+        <div className="flex items-center gap-1 rounded-2xl bg-slate-100/50 p-1 border border-slate-200/50">
+          {/* Desktop Viewports */}
+          <div className="hidden lg:flex items-center gap-1">
+            {viewports.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => onViewportChange(v.id)}
+                className={`flex h-9 items-center gap-2 rounded-xl px-4 text-xs font-bold transition-all duration-300 ${
+                  viewport === v.id
+                    ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200'
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                }`}
+              >
+                {v.icon}
+                <span className="hidden xl:inline">{v.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Mobile Modes (Edit vs Preview) */}
+          <div className="flex lg:hidden items-center gap-1">
             <button
-              key={v.id}
               type="button"
-              onClick={() => onViewportChange(v.id)}
+              onClick={() => onMobileModeChange?.('edit')}
               className={`flex h-9 items-center gap-2 rounded-xl px-4 text-xs font-bold transition-all duration-300 ${
-                viewport === v.id
+                mobileMode === 'edit'
                   ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200'
                   : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
               }`}
             >
-              {v.icon}
-              <span className="hidden xl:inline">{v.label}</span>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+              <span>Edit</span>
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => onMobileModeChange?.('preview')}
+              className={`flex h-9 items-center gap-2 rounded-xl px-4 text-xs font-bold transition-all duration-300 ${
+                mobileMode === 'preview'
+                  ? 'bg-white text-slate-900 shadow-md ring-1 ring-slate-200'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+              }`}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <span>View</span>
+            </button>
+          </div>
         </div>
 
         {/* Right: Actions */}

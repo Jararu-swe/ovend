@@ -3,7 +3,8 @@
 import { z } from 'zod';
 import { sql } from './db';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+import { getStoreAvailability } from './store-availability';
+import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ensureLogoLayoutColumns } from '@/app/lib/theme';
 import { ensureProductColumns, ensureStoreColumns, ensureVendorSubscriptionSchema, ensureDiscountSchema } from '@/app/lib/data';
@@ -101,7 +102,7 @@ const ThemeSchema = z.object({
   custom_css: z.string().optional().nullable(),
   primary_gradient: z.string().optional().nullable(),
   glass_effect: z.coerce.boolean().optional().default(false),
-  layout_width: z.enum(['standard', 'wide', 'full']).optional().default('standard'),
+  layout_width: z.enum(['standard', 'wide', 'full']).optional().default('wide'),
   show_mobile_checkout_bar: z.coerce.boolean().optional().default(false),
   show_logo: z.preprocess((v) => v === 'true' || v === true, z.boolean()),
   logo_position: z.enum(['left', 'center', 'right']),
@@ -481,6 +482,26 @@ export async function createOrder(
   discountAmount?: number
 ) {
   await ensureDiscountSchema();
+
+  // Check store availability before allowing order
+  const [vendor] = await sql`
+    SELECT accepting_orders, store_hours, store_timezone, store_closed_note 
+    FROM users WHERE id = ${vendorId} LIMIT 1
+  `;
+  
+  if (vendor) {
+    const availability = getStoreAvailability({
+      accepting_orders: vendor.accepting_orders,
+      store_hours: vendor.store_hours,
+      timeZone: vendor.store_timezone,
+      store_closed_note: vendor.store_closed_note
+    });
+
+    if (availability.state === 'closed') {
+      throw new Error(availability.label || 'This store is currently closed and not accepting orders.');
+    }
+  }
+
   const customer_name = formData.get('customer_name') as string;
   const customer_phone = formData.get('customer_phone') as string;
   const customer_address = formData.get('customer_address') as string;

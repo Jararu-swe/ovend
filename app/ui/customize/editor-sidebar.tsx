@@ -42,7 +42,7 @@ export default function EditorSidebar({
   onSectionContentChange,
   onResetDefaults,
 }: EditorSidebarProps) {
-  const [panelStack, setPanelStack] = useState<PanelHistoryEntry[]>([{ id: 'home', label: 'Customize' }]);
+  const [panelStack, setPanelStack] = useState<PanelHistoryEntry[]>([{ id: 'home', label: 'Storefront' }]);
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('left');
 
   const currentPanel = panelStack[panelStack.length - 1];
@@ -119,10 +119,10 @@ export default function EditorSidebar({
     <>
       <div
         className={`flex h-full flex-col transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isOpen ? 'w-[360px] opacity-100' : 'w-0 opacity-0 overflow-hidden'
+          isOpen ? 'w-full md:w-[360px] opacity-100' : 'w-0 opacity-0 overflow-hidden'
         }`}
       >
-        <div className="flex h-full w-[360px] flex-col p-4 bg-slate-50/30">
+        <div className="flex h-full w-full md:w-[360px] flex-col p-4 bg-slate-50/30">
           <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200/60 shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden">
             {/* Panel header with back navigation */}
             <div className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-100 px-4 bg-white/50 backdrop-blur-sm">

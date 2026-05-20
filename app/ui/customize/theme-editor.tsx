@@ -57,6 +57,7 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
   const [isSaving, setIsSaving] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewport, setViewport] = useState<Viewport>('desktop');
+  const [mobileMode, setMobileMode] = useState<'edit' | 'preview'>('edit');
   const previewFrameRef = useRef<HTMLIFrameElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -255,6 +256,8 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
       <EditorToolbar
         viewport={viewport}
         onViewportChange={setViewport}
+        mobileMode={mobileMode}
+        onMobileModeChange={setMobileMode}
         canUndo={history.length > 0}
         canRedo={future.length > 0}
         onUndo={undo}
@@ -267,22 +270,29 @@ export default function ThemeEditor({ theme, vendorSlug }: { theme: StoreTheme; 
       />
 
       {/* Main area: Sidebar + Preview */}
-      <div className="flex flex-1 overflow-hidden">
-        <EditorSidebar
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen((v) => !v)}
-          localTheme={localTheme}
-          onThemeChange={updateLocalTheme}
-          onApplyTemplate={applyTemplate}
-          sections={sections}
-          sectionContent={sectionContent}
-          onSectionsChange={setSections}
-          onSectionContentChange={setSectionContent}
-          onResetDefaults={resetDefaults}
-        />
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Sidebar - Full screen on mobile if mode is 'edit' */}
+        <div className={`${
+          mobileMode === 'edit' ? 'flex' : 'hidden md:flex'
+        } absolute inset-0 z-20 bg-slate-50 md:relative md:inset-auto md:z-auto md:bg-transparent transition-all duration-300`}>
+          <EditorSidebar
+            isOpen={sidebarOpen}
+            onToggle={() => setSidebarOpen((v) => !v)}
+            localTheme={localTheme}
+            onThemeChange={updateLocalTheme}
+            onApplyTemplate={applyTemplate}
+            sections={sections}
+            sectionContent={sectionContent}
+            onSectionsChange={setSections}
+            onSectionContentChange={setSectionContent}
+            onResetDefaults={resetDefaults}
+          />
+        </div>
 
-        {/* Preview */}
-        <div className="flex-1 overflow-hidden">
+        {/* Preview - Full screen on mobile if mode is 'preview' */}
+        <div className={`${
+          mobileMode === 'preview' ? 'flex' : 'hidden md:flex'
+        } flex-1 overflow-hidden`}>
           <EditorPreview
             vendorSlug={vendorSlug}
             viewport={viewport}

@@ -3,6 +3,7 @@
 import { User, Product, StoreTheme } from '@/app/lib/definitions';
 import { TemplateSection, TemplateSectionContent, FONT_MAP } from '@/app/lib/template-presets';
 import { formatCurrency, getSectionSpacing, getButtonStyles, getBorderRadiusClass } from '@/app/lib/utils';
+import type { StoreAvailability } from '@/app/lib/store-availability';
 import { ShoppingBagIcon, PlusIcon, ChevronUpIcon, CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import StoreIcon from './storefront-icons';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
@@ -63,12 +64,13 @@ interface SectionRendererProps {
   vendor: User;
   products: Product[];
   theme: StoreTheme;
+  availability: StoreAvailability;
   onAddToCart: (product: Product) => void;
   renderProductGrid?: () => React.ReactNode;
 }
 
 export default function SectionRenderer({
-  sections, content, vendor, products, theme, onAddToCart, renderProductGrid,
+  sections, content, vendor, products, theme, availability, onAddToCart, renderProductGrid,
 }: SectionRendererProps) {
   const sorted = [...sections].filter((s) => s.enabled).sort((a, b) => a.order - b.order);
 
@@ -93,7 +95,7 @@ export default function SectionRenderer({
           case 'announcement-bar':
             return <AnnouncementBar key={section.id} content={c} theme={theme} entrance={e} />;
           case 'featured-products':
-            return <FeaturedProducts key={section.id} content={c} products={products} theme={theme} onAddToCart={onAddToCart} entrance={e} />;
+            return <FeaturedProducts key={section.id} content={c} products={products} theme={theme} onAddToCart={onAddToCart} entrance={e} isClosed={availability.state === 'closed'} />;
           case 'product-grid':
             return renderProductGrid ? <div key={section.id} className={e.className} style={e.style ? { animationDelay: `${idx * 120}ms` } : undefined}>{renderProductGrid()}</div> : null;
           case 'testimonials':
@@ -166,9 +168,9 @@ function AnnouncementBar({ content, theme, entrance }: { content: Record<string,
 // ═══════════════════════════════════════════════════════════════
 
 function FeaturedProducts({
-  content, products, theme, onAddToCart, entrance,
+  content, products, theme, onAddToCart, entrance, isClosed,
 }: {
-  content: Record<string, any>; products: Product[]; theme: StoreTheme; onAddToCart: (p: Product) => void; entrance: Entrance;
+  content: Record<string, any>; products: Product[]; theme: StoreTheme; onAddToCart: (p: Product) => void; entrance: Entrance; isClosed?: boolean;
 }) {
   const activeProducts = products.filter((p) => p.status === 'active');
   const featured = content.product_ids?.length > 0
@@ -214,7 +216,8 @@ function FeaturedProducts({
                   <span className="text-sm font-bold" style={{ color: theme.primary_color }}>{formatCurrency(product.price)}</span>
                   <button 
                     onClick={() => onAddToCart(product)} 
-                    className={`h-7 w-7 flex items-center justify-center ${btn.className}`} 
+                    disabled={isClosed}
+                    className={`h-7 w-7 flex items-center justify-center ${btn.className} disabled:opacity-40 disabled:cursor-not-allowed`} 
                     style={{ ...btn.style, '--tw-ring-color': theme.primary_color } as any as React.CSSProperties}
                   >
                     <StoreIcon name="add" theme={theme} className="h-4 w-4" />
