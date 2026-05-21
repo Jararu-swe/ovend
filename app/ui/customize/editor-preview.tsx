@@ -34,7 +34,7 @@ export default function EditorPreview({ vendorSlug, viewport, iframeRef }: Edito
   }
 
   return (
-    <div className="flex h-full flex-col items-center justify-start bg-slate-100/80 overflow-hidden">
+    <div className="flex h-full w-full flex-col items-center justify-start bg-slate-100/80 overflow-hidden">
       {/* Preview frame */}
       <div
         className="relative flex-1 transition-all duration-500 ease-in-out"
