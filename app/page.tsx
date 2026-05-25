@@ -340,6 +340,235 @@ export default async function Page() {
         </div>
       </section>
 
+      {/* Flexible Multi-Vendor Platform Showcase - Mobile Mockup */}
+      <section className="relative bg-gradient-to-br from-[#f0fdf4] via-white to-[#fef3c7] py-32 px-6 md:px-12 overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#16a34a]/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#eab308]/5 rounded-full blur-3xl"></div>
+
+        <div className="mx-auto max-w-7xl relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
+            {/* Left: Mobile Phone Mockup - Multi Vendor */}
+            <FadeInUp delay={0.1}>
+              <div className="flex justify-center md:justify-start">
+                <ParallaxScroll
+                  offset={30}
+                  className="relative w-full max-w-sm"
+                >
+                  {/* Phone Frame */}
+                  <div
+                    className="relative bg-black rounded-[3rem] p-3 shadow-2xl"
+                    style={{ aspectRatio: "9/16" }}
+                  >
+                    {/* Screen notch */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-3xl z-20"></div>
+
+                    {/* Phone Screen - Dynamic Vendor Showcase */}
+                    <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-white">
+                      {/* Status Bar */}
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-900 text-white text-xs font-semibold">
+                        <span>9:41</span>
+                        <div className="flex gap-1">
+                          <span>📶</span>
+                          <span>📡</span>
+                          <span>🔋</span>
+                        </div>
+                      </div>
+
+                      {/* Header - Dynamic */}
+                      <div className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xl">🏪</span>
+                          <span className="font-bold text-sm">
+                            Vendle Store
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300">
+                          Your business, beautifully online
+                        </p>
+                      </div>
+
+                      {/* Vendor Category Tabs */}
+                      <div className="flex overflow-x-auto px-3 py-2 border-b border-slate-200 gap-2 text-xs font-bold">
+                        <button className="px-3 py-1 bg-slate-900 text-white rounded-full whitespace-nowrap">
+                          Fashion 👗
+                        </button>
+                        <button className="px-3 py-1 text-slate-600 whitespace-nowrap">
+                          Food 🍜
+                        </button>
+                        <button className="px-3 py-1 text-slate-600 whitespace-nowrap">
+                          Beauty 💄
+                        </button>
+                        <button className="px-3 py-1 text-slate-600 whitespace-nowrap">
+                          Crafts 🎨
+                        </button>
+                      </div>
+
+                      {/* Featured Products Grid - Fashion Example */}
+                      <div className="px-4 pb-20 space-y-3 pt-3">
+                        {/* Product 1 - Fashion */}
+                        <div className="bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md transition-shadow">
+                          <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-md h-24 flex items-center justify-center text-3xl mb-2">
+                            👗
+                          </div>
+                          <p className="font-bold text-xs text-slate-900">
+                            Designer Dress
+                          </p>
+                          <p className="text-xs text-slate-600 mb-2">₦8,500</p>
+                          <button className="w-full bg-slate-900 text-white text-xs font-bold py-1 rounded-md hover:bg-slate-800 transition-colors">
+                            Add to Cart
+                          </button>
+                        </div>
+
+                        {/* Product 2 - Food */}
+                        <div className="bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md transition-shadow">
+                          <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-md h-24 flex items-center justify-center text-3xl mb-2">
+                            🍜
+                          </div>
+                          <p className="font-bold text-xs text-slate-900">
+                            Jollof Rice Meal
+                          </p>
+                          <p className="text-xs text-slate-600 mb-2">₦2,000</p>
+                          <button className="w-full bg-slate-900 text-white text-xs font-bold py-1 rounded-md hover:bg-slate-800 transition-colors">
+                            Add to Cart
+                          </button>
+                        </div>
+
+                        {/* Product 3 - Beauty */}
+                        <div className="bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md transition-shadow">
+                          <div className="bg-gradient-to-br from-rose-100 to-yellow-100 rounded-md h-24 flex items-center justify-center text-3xl mb-2">
+                            💄
+                          </div>
+                          <p className="font-bold text-xs text-slate-900">
+                            Lip Gloss Set
+                          </p>
+                          <p className="text-xs text-slate-600 mb-2">₦3,200</p>
+                          <button className="w-full bg-slate-900 text-white text-xs font-bold py-1 rounded-md hover:bg-slate-800 transition-colors">
+                            Add to Cart
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Bottom Navigation */}
+                      <div className="absolute bottom-0 left-0 right-0 flex justify-around items-center px-4 py-3 bg-white border-t border-slate-200 text-2xl">
+                        <span>🏠</span>
+                        <span>🔍</span>
+                        <span>❤️</span>
+                        <span>👤</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shadow Effect */}
+                  <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-slate-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </ParallaxScroll>
+              </div>
+            </FadeInUp>
+
+            {/* Right: Marketing Copy - Versatility Focus */}
+            <div className="relative z-10">
+              <FadeInUp delay={0.15}>
+                <div className="inline-flex items-center gap-3 mb-6">
+                  <span className="h-[2px] w-8 bg-slate-900 rounded-full"></span>
+                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-700">
+                    One platform, infinite possibilities
+                  </p>
+                </div>
+              </FadeInUp>
+
+              <FadeInUp delay={0.2}>
+                <h2
+                  className={`${lusitana.className} text-4xl md:text-5xl font-bold leading-tight mb-6 text-slate-900`}
+                >
+                  Built for Every Type of{" "}
+                  <span className="text-slate-700">Online Vendor</span>
+                </h2>
+              </FadeInUp>
+
+              <FadeInUp delay={0.25}>
+                <p className="text-lg text-slate-600 leading-relaxed mb-8">
+                  Fashion boutiques. Food vendors. Beauty brands. Artisans. Tech
+                  sellers. Whether you're selling handcrafted items, digital
+                  products, or services, Vendle adapts to your business. One
+                  flexible platform that grows with you.
+                </p>
+              </FadeInUp>
+
+              <StaggerContainer>
+                <div className="space-y-4 mb-10">
+                  <StaggerItem>
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-white font-bold text-sm">✓</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 mb-1">
+                          Any Product Category
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          From physical goods to digital downloads, services to
+                          subscriptions
+                        </p>
+                      </div>
+                    </div>
+                  </StaggerItem>
+
+                  <StaggerItem>
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-white font-bold text-sm">✓</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 mb-1">
+                          Customizable Themes
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Choose designs that match your brand or create your
+                          own aesthetic
+                        </p>
+                      </div>
+                    </div>
+                  </StaggerItem>
+
+                  <StaggerItem>
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-white font-bold text-sm">✓</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 mb-1">
+                          Scale as You Grow
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Start solo, add team members, manage your
+                          bussines all in one place
+                        </p>
+                      </div>
+                    </div>
+                  </StaggerItem>
+                </div>
+              </StaggerContainer>
+
+              <FadeInUp delay={0.35}>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center gap-3 rounded-full bg-slate-900 hover:bg-slate-800 px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:shadow-lg hover:scale-105 group"
+                >
+                  <span>Start Your Store Free</span>
+                  <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </FadeInUp>
+
+              <FadeInUp delay={0.4}>
+                <p className="text-xs text-slate-500 mt-6 font-medium">
+                  Join 500+ vendors across 10+ categories already on Vendle
+                </p>
+              </FadeInUp>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <HorizontalScrollStory />
 
       <FAQ />

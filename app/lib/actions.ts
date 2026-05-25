@@ -12,6 +12,7 @@ import { validateDiscountCode, incrementDiscountUse } from '@/app/lib/discounts'
 import { deleteCloudinaryImage, deleteCloudinaryImages } from './cloudinary';
 import { signOut } from '@/auth';
 import bcrypt from 'bcryptjs';
+import { triggerGuideForEvent } from '@/app/lib/guide-triggers';
 
 async function requireActiveVendorSubscription() {
   const session = await auth();
@@ -336,6 +337,13 @@ export async function createProduct(prevState: State | undefined, formData: Form
       INSERT INTO products (vendor_id, name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options)
       VALUES (${session.user.id}, ${name}, ${description}, ${priceKobo}, ${compareAtPriceKobo}, ${status}, ${category ?? null}, ${stock_quantity ?? null}, ${image_url || null}, ${gallery_images}, ${finalOptions})
     `;
+
+    const [productCount] = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text as count FROM products WHERE vendor_id = ${session.user.id}
+    `;
+    if (Number(productCount?.count) === 1) {
+      await triggerGuideForEvent(session.user.id, 'first-product');
+    }
   } catch (error) {
     console.error('Database Error:', error);
     return { message: 'Database Error: Failed to Create Product.' };
@@ -595,6 +603,13 @@ export async function createOrder(
       } catch (err) {
         console.error("Error tracking discount:", err);
       }
+    }
+
+    const [orderCount] = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text as count FROM orders WHERE vendor_id = ${vendorId}
+    `;
+    if (Number(orderCount?.count) === 1) {
+      await triggerGuideForEvent(vendorId, 'first-order');
     }
     
     revalidatePath('/dashboard/orders');
@@ -870,6 +885,8 @@ export async function inviteTeamMemberAction(
       INSERT INTO team_members (vendor_id, user_id, role, permissions, invited_by, status)
       VALUES (${vendorId}, ${user.id}, ${role}, ${JSON.stringify(permissions)}, ${session.user.id}, 'active')
     `;
+
+    await triggerGuideForEvent(vendorId, 'team-member-invited');
   } catch (error) {
     console.error('Database Error:', error);
     return { message: 'Database Error: Failed to invite team member.' };

@@ -1,4 +1,4 @@
-import { sql } from './db';
+import { sql } from "./db";
 // Forced refresh
 import {
   CustomerField,
@@ -10,9 +10,12 @@ import {
   Product,
   User,
   Order,
-} from './definitions';
-import { formatCurrency } from './utils';
-import { getStoreAvailability, type StoreAvailability } from './store-availability';
+} from "./definitions";
+import { formatCurrency } from "./utils";
+import {
+  getStoreAvailability,
+  type StoreAvailability,
+} from "./store-availability";
 
 let ensureProductColumnsPromise: Promise<void> | null = null;
 export async function ensureProductColumns() {
@@ -30,7 +33,7 @@ export async function ensureProductColumns() {
           await sql.unsafe(stmt);
         }
       } catch (e) {
-        console.error('ensureProductColumns error:', e);
+        console.error("ensureProductColumns error:", e);
       }
     })();
   }
@@ -42,20 +45,38 @@ export async function ensureStoreColumns() {
   if (!ensureStoreColumnsPromise) {
     ensureStoreColumnsPromise = (async () => {
       try {
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL`);
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS location_state VARCHAR(100) DEFAULT NULL`);
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS store_description VARCHAR(200) DEFAULT NULL`);
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100) DEFAULT NULL`);
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_number VARCHAR(100) DEFAULT NULL`);
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_name VARCHAR(100) DEFAULT NULL`);
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS location_state VARCHAR(100) DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS store_description VARCHAR(200) DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100) DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS account_number VARCHAR(100) DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS account_name VARCHAR(100) DEFAULT NULL`,
+        );
         await sql.unsafe(
           `ALTER TABLE users ADD COLUMN IF NOT EXISTS store_timezone VARCHAR(100) NOT NULL DEFAULT 'Africa/Lagos'`,
         );
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS store_hours JSONB DEFAULT NULL`);
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS accepting_orders BOOLEAN NOT NULL DEFAULT true`);
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS store_closed_note VARCHAR(280) DEFAULT NULL`);
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS store_hours JSONB DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS accepting_orders BOOLEAN NOT NULL DEFAULT true`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS store_closed_note VARCHAR(280) DEFAULT NULL`,
+        );
       } catch (e) {
-        console.error('ensureStoreColumns error:', e);
+        console.error("ensureStoreColumns error:", e);
       }
     })();
   }
@@ -70,7 +91,9 @@ export async function ensureVendorSubscriptionSchema() {
         await sql.unsafe(
           `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) NOT NULL DEFAULT 'inactive'`,
         );
-        await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL`);
+        await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ DEFAULT NULL`,
+        );
         await sql.unsafe(
           `ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_last_payment_reference VARCHAR(255) DEFAULT NULL`,
         );
@@ -91,7 +114,7 @@ export async function ensureVendorSubscriptionSchema() {
           )
         `);
       } catch (e) {
-        console.error('ensureVendorSubscriptionSchema error:', e);
+        console.error("ensureVendorSubscriptionSchema error:", e);
       }
     })();
   }
@@ -120,21 +143,26 @@ export async function ensureDiscountSchema() {
           )
         `);
 
-        await sql.unsafe(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code VARCHAR(50) DEFAULT NULL`);
-        await sql.unsafe(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INT DEFAULT 0`);
+        await sql.unsafe(
+          `ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code VARCHAR(50) DEFAULT NULL`,
+        );
+        await sql.unsafe(
+          `ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INT DEFAULT 0`,
+        );
       } catch (e) {
-        console.error('ensureDiscountSchema error:', e);
+        console.error("ensureDiscountSchema error:", e);
       }
     })();
   }
   await ensureDiscountSchemaPromise;
 }
 
-
 export async function fetchProductsList(vendorId: string) {
-  console.log('fetchProductsList called with vendorId:', vendorId);
+  console.log("fetchProductsList called with vendorId:", vendorId);
   if (!vendorId) {
-    console.warn('fetchProductsList: vendorId is missing. Returning empty list.');
+    console.warn(
+      "fetchProductsList: vendorId is missing. Returning empty list.",
+    );
     return [];
   }
   await ensureProductColumns();
@@ -146,14 +174,14 @@ export async function fetchProductsList(vendorId: string) {
     `;
     return products;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch products.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch products.");
   }
 }
 
 export async function fetchProductById(id: string) {
   if (!id) {
-    console.warn('fetchProductById: id is missing.');
+    console.warn("fetchProductById: id is missing.");
     return undefined;
   }
   await ensureProductColumns();
@@ -164,11 +192,10 @@ export async function fetchProductById(id: string) {
     `;
     return data[0];
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch product.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch product.");
   }
 }
-
 
 export async function fetchRevenue() {
   try {
@@ -184,8 +211,8 @@ export async function fetchRevenue() {
 
     return data;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch revenue data.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch revenue data.");
   }
 }
 
@@ -204,8 +231,8 @@ export async function fetchLatestInvoices() {
     }));
     return latestInvoices;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch the latest invoices.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch the latest invoices.");
   }
 }
 
@@ -227,10 +254,10 @@ export async function fetchCardData() {
       invoiceStatusPromise,
     ]);
 
-    const numberOfInvoices = Number(data[0][0].count ?? '0');
-    const numberOfCustomers = Number(data[1][0].count ?? '0');
-    const totalPaidInvoices = formatCurrency(data[2][0].paid ?? '0');
-    const totalPendingInvoices = formatCurrency(data[2][0].pending ?? '0');
+    const numberOfInvoices = Number(data[0][0].count ?? "0");
+    const numberOfCustomers = Number(data[1][0].count ?? "0");
+    const totalPaidInvoices = formatCurrency(data[2][0].paid ?? "0");
+    const totalPendingInvoices = formatCurrency(data[2][0].pending ?? "0");
 
     return {
       numberOfCustomers,
@@ -239,8 +266,8 @@ export async function fetchCardData() {
       totalPendingInvoices,
     };
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch card data.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch card data.");
   }
 }
 
@@ -275,8 +302,8 @@ export async function fetchFilteredInvoices(
 
     return invoices;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoices.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch invoices.");
   }
 }
 
@@ -296,8 +323,8 @@ export async function fetchInvoicesPages(query: string) {
     const totalPages = Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
     return totalPages;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of invoices.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch total number of invoices.");
   }
 }
 
@@ -321,8 +348,8 @@ export async function fetchInvoiceById(id: string) {
 
     return invoice[0];
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoice.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch invoice.");
   }
 }
 
@@ -338,8 +365,8 @@ export async function fetchCustomers() {
 
     return customers;
   } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Failed to fetch all customers.');
+    console.error("Database Error:", err);
+    throw new Error("Failed to fetch all customers.");
   }
 }
 
@@ -371,13 +398,10 @@ export async function fetchFilteredCustomers(query: string) {
 
     return customers;
   } catch (err) {
-    console.error('Database Error:', err);
-    throw new Error('Failed to fetch customer table.');
+    console.error("Database Error:", err);
+    throw new Error("Failed to fetch customer table.");
   }
 }
-
-
-
 
 export async function fetchVendorBySlug(slug: string) {
   try {
@@ -399,7 +423,7 @@ export async function fetchVendorBySlug(slug: string) {
     `;
     return data[0];
   } catch (error) {
-    console.error('Database Error:', error);
+    console.error("Database Error:", error);
     return null;
   }
 }
@@ -439,8 +463,8 @@ export async function fetchUserById(id: string) {
     `;
     return user[0];
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch user.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch user.");
   }
 }
 
@@ -455,8 +479,8 @@ export async function fetchOrdersList(vendorId: string) {
     `;
     return orders;
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch orders.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch orders.");
   }
 }
 
@@ -469,8 +493,8 @@ export async function fetchOrderById(id: string) {
     `;
     return data[0];
   } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch order.');
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch order.");
   }
 }
 export async function fetchVendorStats(vendorId: string) {
@@ -482,10 +506,10 @@ export async function fetchVendorStats(vendorId: string) {
       sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId} AND status IN ('new', 'in_progress')`,
     ]);
 
-    const numberOfOrders = Number(data[0][0].count ?? '0');
-    const totalRevenue = Number(data[1][0].sum ?? '0');
-    const numberOfProducts = Number(data[2][0].count ?? '0');
-    const numberOfPendingOrders = Number(data[3][0].count ?? '0');
+    const numberOfOrders = Number(data[0][0].count ?? "0");
+    const totalRevenue = Number(data[1][0].sum ?? "0");
+    const numberOfProducts = Number(data[2][0].count ?? "0");
+    const numberOfPendingOrders = Number(data[3][0].count ?? "0");
 
     return {
       numberOfOrders,
@@ -494,7 +518,7 @@ export async function fetchVendorStats(vendorId: string) {
       numberOfPendingOrders,
     };
   } catch (error) {
-    console.error('Database Error:', error);
+    console.error("Database Error:", error);
     // Return zeros instead of throwing to prevent page crash
     return {
       numberOfOrders: 0,
@@ -514,7 +538,7 @@ export async function trackStoreVisit(vendorId: string) {
       DO UPDATE SET visits = store_analytics.visits + 1
     `;
   } catch (error) {
-    console.error('Analytics Error:', error);
+    console.error("Analytics Error:", error);
     // Don't throw - analytics shouldn't break the app
   }
 }
@@ -522,7 +546,7 @@ export async function trackStoreVisit(vendorId: string) {
 export async function fetchWeeklyAnalytics(vendorId: string) {
   try {
     const data = await sql`
-      SELECT 
+      SELECT
         date,
         visits,
         orders_count,
@@ -534,7 +558,7 @@ export async function fetchWeeklyAnalytics(vendorId: string) {
     `;
     return data;
   } catch (error) {
-    console.error('Database Error:', error);
+    console.error("Database Error:", error);
     return [];
   }
 }
@@ -557,42 +581,49 @@ export async function fetchAvailableLocations(): Promise<string[]> {
   try {
     await ensureStoreColumns();
     const locations = await sql<{ location_state: string }[]>`
-      SELECT DISTINCT location_state 
-      FROM users 
-      WHERE location_state IS NOT NULL 
+      SELECT DISTINCT location_state
+      FROM users
+      WHERE location_state IS NOT NULL
         AND location_state != ''
         AND store_name IS NOT NULL
         AND store_name != ''
       ORDER BY location_state ASC
     `;
-    return locations.map(l => l.location_state);
+    return locations.map((l) => l.location_state);
   } catch (error) {
-    console.error('Database Error (fetchAvailableLocations):', error);
+    console.error("Database Error (fetchAvailableLocations):", error);
     return [];
   }
 }
 
-export async function fetchAllPublicStores(search?: string, category?: string, sort?: string, location?: string): Promise<PublicStore[]> {
+export async function fetchAllPublicStores(
+  search?: string,
+  category?: string,
+  sort?: string,
+  location?: string,
+): Promise<PublicStore[]> {
   try {
     await ensureStoreColumns();
-    const searchFilter = search ? `%${search}%` : '%';
-    const categoryFilter = category && category !== 'All' ? category : null;
-    const locationFilter = location && location !== 'All' ? location : null;
+    const searchFilter = search ? `%${search}%` : "%";
+    const categoryFilter = category && category !== "All" ? category : null;
+    const locationFilter = location && location !== "All" ? location : null;
 
-    const stores = await sql<{
-      id: string;
-      store_name: string;
-      store_slug: string;
-      store_description: string | null;
-      category: string | null;
-      location_state: string | null;
-      product_count: string;
-      store_timezone: string | null;
-      store_hours: unknown;
-      accepting_orders: boolean | null;
-      store_closed_note: string | null;
-    }[]>`
-      SELECT 
+    const stores = await sql<
+      {
+        id: string;
+        store_name: string;
+        store_slug: string;
+        store_description: string | null;
+        category: string | null;
+        location_state: string | null;
+        product_count: string;
+        store_timezone: string | null;
+        store_hours: unknown;
+        accepting_orders: boolean | null;
+        store_closed_note: string | null;
+      }[]
+    >`
+      SELECT
         u.id,
         u.store_name,
         u.store_slug,
@@ -610,13 +641,13 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
         AND u.store_name != ''
         -- Inclusive Search: Name, Category, Owner, or Products
         AND (
-          u.store_name ILIKE ${searchFilter} 
+          u.store_name ILIKE ${searchFilter}
           OR u.category ILIKE ${searchFilter}
           OR u.name ILIKE ${searchFilter}
           OR EXISTS (
-            SELECT 1 FROM products p_search 
-            WHERE p_search.vendor_id = u.id 
-            AND p_search.status = 'active' 
+            SELECT 1 FROM products p_search
+            WHERE p_search.vendor_id = u.id
+            AND p_search.status = 'active'
             AND (
               p_search.name ILIKE ${searchFilter}
               OR p_search.category ILIKE ${searchFilter}
@@ -624,24 +655,30 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
           )
         )
         -- Robust Category Filter: Store Category OR Product Category
-        ${categoryFilter ? sql`AND (
-          u.category = ${categoryFilter} 
+        ${
+          categoryFilter
+            ? sql`AND (
+          u.category = ${categoryFilter}
           OR EXISTS (
-            SELECT 1 FROM products p_cat 
-            WHERE p_cat.vendor_id = u.id 
-            AND p_cat.status = 'active' 
+            SELECT 1 FROM products p_cat
+            WHERE p_cat.vendor_id = u.id
+            AND p_cat.status = 'active'
             AND p_cat.category = ${categoryFilter}
           )
-        )` : sql``}
+        )`
+            : sql``
+        }
         -- Location Filter
         ${locationFilter ? sql`AND u.location_state = ${locationFilter}` : sql``}
       GROUP BY u.id, u.store_name, u.store_slug, u.store_description, u.category, u.location_state, u.store_timezone, u.store_hours, u.accepting_orders, u.store_closed_note
       HAVING COUNT(p.id) > 0
-      ${sort === 'location' 
-        ? sql`ORDER BY u.location_state ASC NULLS LAST, u.store_name ASC` 
-        : sort === 'name' 
-          ? sql`ORDER BY u.store_name ASC` 
-          : sql`ORDER BY COUNT(p.id) DESC, u.store_name ASC`}
+      ${
+        sort === "location"
+          ? sql`ORDER BY u.location_state ASC NULLS LAST, u.store_name ASC`
+          : sort === "name"
+            ? sql`ORDER BY u.store_name ASC`
+            : sql`ORDER BY COUNT(p.id) DESC, u.store_name ASC`
+      }
       LIMIT 50
     `;
 
@@ -652,7 +689,9 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
           SELECT logo_url FROM store_theme WHERE vendor_id = ${store.id} LIMIT 1
         `;
 
-        const topProducts = await sql<{ name: string; image_url: string | null; price: number }[]>`
+        const topProducts = await sql<
+          { name: string; image_url: string | null; price: number }[]
+        >`
           SELECT name, image_url, price FROM products
           WHERE vendor_id = ${store.id} AND status = 'active'
           ORDER BY created_at DESC
@@ -676,12 +715,12 @@ export async function fetchAllPublicStores(search?: string, category?: string, s
             store_closed_note: store.store_closed_note,
           }),
         };
-      })
+      }),
     );
 
     return results;
   } catch (error) {
-    console.error('Database Error (fetchAllPublicStores):', error);
+    console.error("Database Error (fetchAllPublicStores):", error);
     return [];
   }
 }
@@ -694,13 +733,174 @@ export async function fetchOrderByTracking(orderId: string, phone: string) {
       SELECT o.*, u.store_name
       FROM orders o
       JOIN users u ON u.id = o.vendor_id
-      WHERE o.id::text ILIKE ${orderId + '%'}
+      WHERE o.id::text ILIKE ${orderId + "%"}
         AND o.customer_phone = ${phone}
       LIMIT 1
     `;
     return order ? { ...order, store_name: (order as any).store_name } : null;
   } catch (error) {
-    console.error('Database Error (fetchOrderByTracking):', error);
+    console.error("Database Error (fetchOrderByTracking):", error);
     return null;
+  }
+}
+
+// ==================== VENDOR GUIDES ====================
+
+/**
+ * Fetch all published guides
+ */
+export async function fetchPublishedGuides(limit?: number) {
+  try {
+    const query = sql`
+      SELECT * FROM vendor_guides
+      WHERE published_at IS NOT NULL
+      ORDER BY published_at DESC
+      ${limit ? sql`LIMIT ${limit}` : sql``}
+    `;
+    return await query;
+  } catch (error) {
+    console.error("Database Error (fetchPublishedGuides):", error);
+    return [];
+  }
+}
+
+/**
+ * Fetch featured guides
+ */
+export async function fetchFeaturedGuides(limit = 3) {
+  try {
+    const guides = await sql`
+      SELECT * FROM vendor_guides
+      WHERE published_at IS NOT NULL
+      AND featured = TRUE
+      ORDER BY published_at DESC
+      LIMIT ${limit}
+    `;
+    return guides || [];
+  } catch (error) {
+    console.error("Database Error (fetchFeaturedGuides):", error);
+    return [];
+  }
+}
+
+/**
+ * Fetch guide by slug
+ */
+export async function fetchGuideBySlug(slug: string) {
+  try {
+    const guides = await sql`
+      SELECT * FROM vendor_guides
+      WHERE slug = ${slug}
+      AND published_at IS NOT NULL
+    `;
+    return guides && guides.length > 0 ? guides[0] : null;
+  } catch (error) {
+    console.error("Database Error (fetchGuideBySlug):", error);
+    return null;
+  }
+}
+
+/**
+ * Fetch guides by category
+ */
+export async function fetchGuidesByCategory(category: string) {
+  try {
+    const guides = await sql`
+      SELECT * FROM vendor_guides
+      WHERE category = ${category}
+      AND published_at IS NOT NULL
+      ORDER BY published_at DESC
+    `;
+    return guides || [];
+  } catch (error) {
+    console.error("Database Error (fetchGuidesByCategory):", error);
+    return [];
+  }
+}
+
+/**
+ * Get vendor's viewed guides
+ */
+export async function getVendorViewedGuideIds(
+  vendorId: string,
+): Promise<number[]> {
+  try {
+    const views = await sql`
+      SELECT DISTINCT guide_id FROM guide_views
+      WHERE vendor_id = ${vendorId}
+    `;
+    return (views || []).map((v: any) => v.guide_id);
+  } catch (error) {
+    console.error("Database Error (getVendorViewedGuideIds):", error);
+    return [];
+  }
+}
+
+/**
+ * Check if vendor completed a specific guide
+ */
+export async function isGuideCompleted(
+  vendorId: string,
+  guideId: number,
+): Promise<boolean> {
+  try {
+    const views = await sql`
+      SELECT completed FROM guide_views
+      WHERE vendor_id = ${vendorId} AND guide_id = ${guideId}
+      LIMIT 1
+    `;
+    return views?.[0]?.completed === true;
+  } catch (error) {
+    console.error("Database Error (isGuideCompleted):", error);
+    return false;
+  }
+}
+
+/**
+ * Fetch related guides (same category, excluding current guide)
+ */
+export async function fetchRelatedGuides(
+  currentGuideId: number,
+  category: string | null,
+  limit = 3,
+) {
+  try {
+    if (!category) {
+      const guides = await sql`
+        SELECT id, title, slug, description, reading_time, difficulty, featured, category
+        FROM vendor_guides
+        WHERE published_at IS NOT NULL
+          AND id != ${currentGuideId}
+        ORDER BY featured DESC, published_at DESC
+        LIMIT ${limit}
+      `;
+      return guides || [];
+    }
+    const guides = await sql`
+      SELECT id, title, slug, description, reading_time, difficulty, featured, category
+      FROM vendor_guides
+      WHERE published_at IS NOT NULL
+        AND id != ${currentGuideId}
+        AND category = ${category}
+      ORDER BY featured DESC, published_at DESC
+      LIMIT ${limit}
+    `;
+    // If fewer than limit, fill with guides from any category
+    if ((guides || []).length < limit) {
+      const extra = await sql`
+        SELECT id, title, slug, description, reading_time, difficulty, featured, category
+        FROM vendor_guides
+        WHERE published_at IS NOT NULL
+          AND id != ${currentGuideId}
+          AND (category != ${category} OR category IS NULL)
+        ORDER BY featured DESC, published_at DESC
+        LIMIT ${limit - (guides || []).length}
+      `;
+      return [...(guides || []), ...(extra || [])];
+    }
+    return guides || [];
+  } catch (error) {
+    console.error("Database Error (fetchRelatedGuides):", error);
+    return [];
   }
 }

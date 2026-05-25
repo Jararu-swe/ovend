@@ -4,8 +4,14 @@ import {
   fetchUserById,
   fetchWeeklyAnalytics,
 } from "@/app/lib/data";
+import {
+  getVendorNewGuideNotifications,
+  getNewGuideNotificationsCount,
+} from "@/app/lib/guide-triggers";
 import { auth } from "@/auth";
 import CopyLinkButton from "@/app/ui/dashboard/copy-link";
+import LearningHubSection from "@/app/ui/dashboard/learning-hub-section";
+import ContextualGuideBanner from "@/app/ui/dashboard/contextual-guide-banner";
 import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
@@ -24,11 +30,14 @@ export default async function Page() {
     return null;
   }
 
-  const [stats, user, weeklyAnalytics] = await Promise.all([
-    fetchVendorStats(userId),
-    fetchUserById(userId),
-    fetchWeeklyAnalytics(userId),
-  ]);
+  const [stats, user, weeklyAnalytics, recommendedGuides, newGuideCount] =
+    await Promise.all([
+      fetchVendorStats(userId),
+      fetchUserById(userId),
+      fetchWeeklyAnalytics(userId),
+      getVendorNewGuideNotifications(userId),
+      getNewGuideNotificationsCount(userId),
+    ]);
 
   const totalWeeklyVisits = weeklyAnalytics.reduce(
     (sum, day) => sum + Number(day.visits || 0),
@@ -68,10 +77,17 @@ export default async function Page() {
         </div>
       </div>
 
+      <ContextualGuideBanner vendorId={userId} currentPage="/dashboard" />
+
       {/* Stats Cards */}
       <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <CardWrapper stats={stats} />
       </section>
+
+      <LearningHubSection
+        guides={recommendedGuides}
+        newCount={newGuideCount}
+      />
 
       {/* Quick Actions & Live Store */}
       <div className="grid gap-6 md:grid-cols-2">

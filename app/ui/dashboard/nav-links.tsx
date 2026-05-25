@@ -9,6 +9,7 @@ import {
   PaintBrushIcon,
   CreditCardIcon,
   BuildingStorefrontIcon,
+  BookOpenIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,6 +17,7 @@ import clsx from 'clsx';
 
 const links = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
+  { name: 'Guides', href: '/dashboard/guides', icon: BookOpenIcon },
   { name: 'Products', href: '/dashboard/products', icon: ShoppingBagIcon },
   { name: 'Orders', href: '/dashboard/orders', icon: ClipboardDocumentListIcon },
   { name: 'Discounts', href: '/dashboard/discounts', icon: TicketIcon },
@@ -25,7 +27,13 @@ const links = [
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
 ];
 
-export default function NavLinks({ newOrdersCount = 0 }: { newOrdersCount?: number }) {
+export default function NavLinks({
+  newOrdersCount = 0,
+  newGuidesCount = 0,
+}: {
+  newOrdersCount?: number;
+  newGuidesCount?: number;
+}) {
   const pathname = usePathname();
   return (
     <>
@@ -33,7 +41,11 @@ export default function NavLinks({ newOrdersCount = 0 }: { newOrdersCount?: numb
         const LinkIcon = link.icon;
         const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href));
         const isOrders = link.name === 'Orders';
-        const showBadge = isOrders && newOrdersCount > 0;
+        const isGuides = link.name === 'Guides';
+        const showOrdersBadge = isOrders && newOrdersCount > 0;
+        const showGuidesBadge = isGuides && newGuidesCount > 0;
+        const showBadge = showOrdersBadge || showGuidesBadge;
+        const badgeCount = showOrdersBadge ? newOrdersCount : newGuidesCount;
         
         return (
           <Link
@@ -53,13 +65,13 @@ export default function NavLinks({ newOrdersCount = 0 }: { newOrdersCount?: numb
             })} />
             <p className="block md:block">{link.name}</p>
             {showBadge && (
-              <span className="ml-auto hidden md:flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
-                {newOrdersCount > 99 ? '99+' : newOrdersCount}
+              <span className={`ml-auto hidden md:flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white ${showGuidesBadge ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                {badgeCount > 99 ? '99+' : badgeCount}
               </span>
             )}
             {showBadge && (
-              <span className="absolute top-1 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white md:hidden">
-                {newOrdersCount > 9 ? '9+' : newOrdersCount}
+              <span className={`absolute top-1 right-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white md:hidden ${showGuidesBadge ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                {badgeCount > 9 ? '9+' : badgeCount}
               </span>
             )}
             {isActive && !showBadge && (

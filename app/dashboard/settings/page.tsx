@@ -2,6 +2,7 @@ import { auth } from '@/auth';
 import { fetchUserById } from '@/app/lib/data';
 import SettingsForm from '@/app/ui/dashboard/settings-form';
 import DeleteStoreCard from '@/app/ui/dashboard/delete-store-card';
+import ContextualGuideBanner from '@/app/ui/dashboard/contextual-guide-banner';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 
@@ -24,6 +25,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
+      <ContextualGuideBanner
+        vendorId={session.user.id}
+        currentPage="/dashboard/settings"
+      />
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
         <p className="mt-1 text-sm text-slate-500">

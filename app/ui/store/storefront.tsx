@@ -35,6 +35,47 @@ import { StoreAvailabilityBanner } from "@/app/ui/store/store-availability-badge
 import StoreIcon from "@/app/ui/store/storefront-icons";
 import { CldImage } from "next-cloudinary";
 
+// Nigerian states for vendor-customer location matching
+const NIGERIAN_STATES = [
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
+];
+
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
   if (!json) return fallback;
@@ -137,6 +178,9 @@ export default function Storefront({
   const [customerEmail, setCustomerEmail] = useState(customer?.email || "");
   const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup">(
     "delivery",
+  );
+  const [customerState, setCustomerState] = useState<string>(
+    customer?.location_state || "",
   );
   const [deliveryLocation, setDeliveryLocation] = useState<{
     lat: number;
@@ -563,6 +607,25 @@ export default function Storefront({
   }, [isPreview]);
 
   const addToCart = (product: Product, qty = 1) => {
+    // Check if customer and vendor are in the same state
+    if (
+      vendor.location_state &&
+      customerState &&
+      vendor.location_state !== customerState
+    ) {
+      alert(
+        `This vendor only delivers to ${vendor.location_state}. You have selected ${customerState}. Please change your state to match the vendor's location.`,
+      );
+      return;
+    }
+
+    if (vendor.location_state && !customerState) {
+      alert(
+        `This vendor only delivers to ${vendor.location_state}. Please select your state before adding items to cart.`,
+      );
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
@@ -600,6 +663,26 @@ export default function Storefront({
 
   const handleCheckoutSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate state match before checkout
+    if (
+      vendor.location_state &&
+      customerState &&
+      vendor.location_state !== customerState
+    ) {
+      alert(
+        `This vendor only delivers to ${vendor.location_state}. You have selected ${customerState}. Please change your state before proceeding.`,
+      );
+      return;
+    }
+
+    if (vendor.location_state && !customerState) {
+      alert(
+        `This vendor only delivers to ${vendor.location_state}. Please select your state before checking out.`,
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
 
@@ -632,6 +715,7 @@ export default function Storefront({
             delivery_latitude: deliveryLocation?.lat,
             delivery_longitude: deliveryLocation?.lng,
             delivery_address_details: deliveryLocation?.details,
+            customer_state: customerState,
           },
           onClose: function () {
             setIsSubmitting(false);
@@ -658,6 +742,9 @@ export default function Storefront({
                       "delivery_address_details",
                       deliveryLocation.details || "",
                     );
+                  }
+                  if (customerState) {
+                    formData.append("customer_state", customerState);
                   }
                   return createOrder(
                     vendor.id,
@@ -722,6 +809,9 @@ export default function Storefront({
         "delivery_address_details",
         deliveryLocation.details || "",
       );
+    }
+    if (customerState) {
+      formData.append("customer_state", customerState);
     }
     const result = await createOrder(
       vendor.id,
@@ -1303,6 +1393,24 @@ export default function Storefront({
             borderColor={activeTheme.border_color || "#e2e8f0"}
             textColor={activeTheme.text_color}
           />
+
+          {/* State Restriction Banner */}
+          {vendor.location_state && (
+            <div className="mt-4 rounded-xl border-l-4 border-blue-500 bg-blue-50 p-4 flex items-start gap-3">
+              <span className="text-xl flex-shrink-0">📍</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-blue-900">
+                  Delivery Location Restricted
+                </p>
+                <p className="text-sm text-blue-800 mt-1">
+                  This vendor currently delivers to{" "}
+                  <span className="font-bold">{vendor.location_state}</span>{" "}
+                  only. You can still browse products, but you must be in{" "}
+                  {vendor.location_state} to place an order.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <main
@@ -1665,6 +1773,43 @@ export default function Storefront({
                                     placeholder="+234 801 234 5678"
                                   />
                                 </div>
+
+                                {/* Customer State Selection */}
+                                {vendor.location_state && (
+                                  <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1 italic">
+                                      Your State
+                                    </label>
+                                    <select
+                                      name="customer_state"
+                                      value={customerState}
+                                      onChange={(e) =>
+                                        setCustomerState(e.target.value)
+                                      }
+                                      required
+                                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition"
+                                    >
+                                      <option value="">
+                                        Select your state...
+                                      </option>
+                                      {NIGERIAN_STATES.map((state) => (
+                                        <option key={state} value={state}>
+                                          {state}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {vendor.location_state &&
+                                      customerState &&
+                                      vendor.location_state !==
+                                        customerState && (
+                                        <p className="mt-2 text-sm text-red-600 font-medium">
+                                          ⚠️ This vendor only delivers to{" "}
+                                          {vendor.location_state}. Please select
+                                          the correct state.
+                                        </p>
+                                      )}
+                                  </div>
+                                )}
 
                                 {/* Payment Method */}
                                 <div>

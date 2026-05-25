@@ -5,13 +5,21 @@ import { auth } from '@/auth';
 import { formatCurrency } from '@/app/lib/utils';
 import Image from 'next/image';
 import { deleteProduct } from '@/app/lib/actions';
+import ContextualGuideBanner from '@/app/ui/dashboard/contextual-guide-banner';
 
 export default async function ProductsPage() {
   const session = await auth();
-  const products = await fetchProductsList(session?.user?.id as string);
+  const vendorId = session?.user?.id as string;
+  const products = await fetchProductsList(vendorId);
 
   return (
     <div className="space-y-6">
+      {vendorId && (
+        <ContextualGuideBanner
+          vendorId={vendorId}
+          currentPage="/dashboard/products"
+        />
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Products</h1>

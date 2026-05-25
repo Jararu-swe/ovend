@@ -4,6 +4,7 @@ import VendleLogo from '@/app/ui/vendle-logo';
 import { SignOutButton } from '@/app/ui/dashboard/sign-out-button';
 import { auth } from '@/auth';
 import { sql } from '@/app/lib/db';
+import { getNewGuideNotificationsCount } from '@/app/lib/guide-triggers';
 
 async function getNewOrdersCount(vendorId: string): Promise<number> {
   try {
@@ -22,7 +23,13 @@ async function getNewOrdersCount(vendorId: string): Promise<number> {
 
 export default async function SideNav() {
   const session = await auth();
-  const newOrdersCount = session?.user?.id ? await getNewOrdersCount(session.user.id) : 0;
+  const vendorId = session?.user?.id;
+  const [newOrdersCount, newGuidesCount] = vendorId
+    ? await Promise.all([
+        getNewOrdersCount(vendorId),
+        getNewGuideNotificationsCount(vendorId),
+      ])
+    : [0, 0];
 
   return (
     <div className="flex h-full flex-col bg-white border-t border-slate-200/80 md:border-t-0 md:border-r">
@@ -39,7 +46,7 @@ export default async function SideNav() {
 
       {/* Navigation */}
       <div className="flex grow flex-row items-center justify-start space-x-1 overflow-x-auto px-2 py-2 md:flex-col md:space-x-0 md:space-y-1 md:px-3 md:py-3 md:overflow-y-auto no-scrollbar">
-        <NavLinks newOrdersCount={newOrdersCount} />
+        <NavLinks newOrdersCount={newOrdersCount} newGuidesCount={newGuidesCount} />
         <div className="hidden h-auto w-full grow md:block" />
         <div className="hidden md:block">
           <SignOutButton />
