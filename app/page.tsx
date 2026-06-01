@@ -10,6 +10,13 @@ import { lusitana } from "./ui/fonts";
 import { fetchAllPublicStores } from "@/app/lib/data";
 import { formatCurrency } from "@/app/lib/utils";
 import {
+  FacebookLogo,
+  InstagramLogo,
+  TikTokLogo,
+  WhatsAppLogo,
+  YouTubeLogo,
+} from "@/app/ui/social-icons";
+import {
   MudclothPattern,
   ArewaSymbol,
   TribalBand,
@@ -46,7 +53,7 @@ export default async function Page() {
               NIGERIA
             </span>
           </Link>
-          <div className="flex items-center gap-6 text-xs md:text-sm font-medium">
+          <div className="flex items-center gap-3 md:gap-6 text-xs md:text-sm font-medium">
             <Link
               href="/login"
               className="text-slate-600 hover:text-emerald-700 transition-colors"
@@ -55,10 +62,11 @@ export default async function Page() {
             </Link>
             <Link
               href="/signup"
-              className="hidden items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-600 md:inline-flex hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 md:gap-2 rounded-full bg-slate-900 px-4 md:px-5 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:-translate-y-0.5"
             >
-              <span>Get started free</span>
-              <ArrowRightIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Get started free</span>
+              <span className="sm:hidden">Start</span>
+              <ArrowRightIcon className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </Link>
           </div>
         </div>
@@ -101,7 +109,7 @@ export default async function Page() {
 
             <FadeInUp delay={0.3}>
               <p className="max-w-xl text-base leading-relaxed text-slate-600 md:text-lg">
-                Vendle helps Nigerian vendors instantly create beautiful online
+                Vendle helps online vendors instantly create beautiful online
                 stores, process secure payments, and manage orders from a single
                 mobile dashboard. Setup takes less than 3 minutes.
               </p>
@@ -540,8 +548,8 @@ export default async function Page() {
                           Scale as You Grow
                         </p>
                         <p className="text-sm text-slate-600">
-                          Start solo, add team members, manage your
-                          bussines all in one place
+                          Start solo, add team members, manage your bussines all
+                          in one place
                         </p>
                       </div>
                     </div>
@@ -570,6 +578,68 @@ export default async function Page() {
       </section>
 
       <HorizontalScrollStory />
+
+      <section className="mx-auto max-w-6xl px-6 py-10 md:px-12 md:py-14">
+        <FadeInUp>
+          <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white/95 p-6 md:p-8 shadow-xl shadow-slate-900/5 backdrop-blur-sm">
+            <div className="absolute -right-10 top-8 h-24 w-24 rounded-full bg-emerald-100/80 blur-3xl"></div>
+            <div className="absolute -left-12 bottom-6 h-28 w-28 rounded-full bg-slate-900/5 blur-3xl"></div>
+            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-3 max-w-2xl">
+                <p className="text-xs uppercase tracking-[0.35em] text-emerald-600 font-semibold">
+                  Social storefront
+                </p>
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+                  Built for the social apps your customers already use.
+                </h2>
+                <p className="text-sm leading-7 text-slate-600">
+                  Vendle links your store to Facebook, Instagram, TikTok,
+                  WhatsApp and YouTube with a clean shareable experience.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-5 gap-3 md:gap-4">
+                {[
+                  {
+                    label: "Facebook",
+                    classes: "bg-blue-600 text-white",
+                    icon: <FacebookLogo />,
+                  },
+                  {
+                    label: "Instagram",
+                    classes:
+                      "bg-gradient-to-br from-pink-500 via-orange-400 to-yellow-300 text-white",
+                    icon: <InstagramLogo />,
+                  },
+                  {
+                    label: "TikTok",
+                    classes: "bg-slate-900 text-white",
+                    icon: <TikTokLogo />,
+                  },
+                  {
+                    label: "WhatsApp",
+                    classes: "bg-emerald-600 text-white",
+                    icon: <WhatsAppLogo />,
+                  },
+                  {
+                    label: "YouTube",
+                    classes: "bg-red-600 text-white",
+                    icon: <YouTubeLogo />,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className={`flex h-14 w-14 items-center justify-center rounded-3xl ${item.classes} shadow-lg shadow-slate-900/10 transition duration-500 ease-out hover:-translate-y-1 hover:scale-105`}
+                    aria-label={item.label}
+                  >
+                    {item.icon}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </FadeInUp>
+      </section>
 
       <FAQ />
 
@@ -632,7 +702,7 @@ export default async function Page() {
             <div>
               <VendleLogo className="mb-4" />
               <p className="mt-4 text-sm leading-relaxed text-slate-500 max-w-sm font-medium">
-                Simple, beautiful storefronts for Nigerian vendors. Turn your
+                Simple, beautiful storefronts for online vendors. Turn your
                 social media into a powerful e-commerce business.
               </p>
             </div>
@@ -642,12 +712,6 @@ export default async function Page() {
                 className="hover:text-emerald-600 transition-colors"
               >
                 Explore
-              </Link>
-              <Link
-                href="/order-status"
-                className="hover:text-emerald-600 transition-colors"
-              >
-                Track Order
               </Link>
               <Link
                 href="/profile"

@@ -639,6 +639,12 @@ export async function fetchAllPublicStores(
       LEFT JOIN products p ON p.vendor_id = u.id AND p.status = 'active'
       WHERE u.store_name IS NOT NULL
         AND u.store_name != ''
+        -- Filter out stores with expired subscriptions
+        AND (
+          u.subscription_status = 'active'
+          OR u.subscription_status = 'trial'
+          OR (u.subscription_expires_at IS NOT NULL AND u.subscription_expires_at > CURRENT_TIMESTAMP)
+        )
         -- Inclusive Search: Name, Category, Owner, or Products
         AND (
           u.store_name ILIKE ${searchFilter}

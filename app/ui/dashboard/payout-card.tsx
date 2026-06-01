@@ -59,19 +59,35 @@ export default function PayoutCard({ user, balance }: PayoutCardProps) {
 
     setIsRequesting(true);
     try {
+      // Generate idempotency key to protect against duplicate submissions
+      const generateUuid = () =>
+        typeof crypto !== "undefined" && (crypto as any).randomUUID
+          ? (crypto as any).randomUUID()
+          : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+              /[xy]/g,
+              function (c) {
+                const r = (Math.random() * 16) | 0,
+                  v = c == "x" ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+              },
+            );
+
+      const idempotencyKey = generateUuid();
+
       const response = await fetch("/api/payouts/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: parseFloat(amount) }),
+        body: JSON.stringify({ amount: parseFloat(amount), idempotencyKey }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({
-          text: "Payout request submitted successfully! You will receive the funds in 24-48 hours.",
-          type: "success",
-        });
+        const infoText = data.idempotent
+          ? "Payout request already submitted. We won't duplicate the transfer."
+          : "Payout request submitted successfully! You will receive the funds in 24-48 hours.";
+
+        setMessage({ text: infoText, type: "success" });
         setAmount("");
       } else {
         setMessage({

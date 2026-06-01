@@ -41,6 +41,8 @@ async function createPayoutsTable() {
         bank_name VARCHAR NOT NULL,
         account_number VARCHAR NOT NULL,
         account_name VARCHAR NOT NULL,
+        paystack_recipient_code VARCHAR,
+        paystack_transfer_code VARCHAR,
         requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         processed_at TIMESTAMP,
         failed_reason TEXT,
@@ -54,6 +56,7 @@ async function createPayoutsTable() {
     await sql`CREATE INDEX IF NOT EXISTS idx_payouts_vendor ON payouts(vendor_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_payouts_status ON payouts(status)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_payouts_requested_at ON payouts(requested_at)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_payouts_transfer_code ON payouts(paystack_transfer_code)`;
     console.log("✅ Indexes created");
 
     console.log("\n✅ Payouts table created successfully!");

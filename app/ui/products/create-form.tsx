@@ -75,6 +75,7 @@ export default function CreateProductForm() {
               <div className="relative">
                 <input
                   id="name" name="name" type="text" placeholder="e.g. Ankara Two-Piece"
+                  defaultValue={state.values?.name || ''}
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                 />
                 <TagIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -89,6 +90,7 @@ export default function CreateProductForm() {
                 <select
                   id="category"
                   name="category"
+                  defaultValue={state.values?.category || ''}
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 px-4 text-sm outline-none focus:border-emerald-500 bg-white"
                 >
                   <option value="">Select Category</option>
@@ -113,6 +115,7 @@ export default function CreateProductForm() {
               <div className="relative">
                 <input
                   id="price" name="price" type="number" step="1" min="0" placeholder="0"
+                  defaultValue={state.values?.price || ''}
                   required
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
                 />
@@ -127,6 +130,7 @@ export default function CreateProductForm() {
               <div className="relative">
                 <input
                   id="compare_at_price" name="compare_at_price" type="number" step="1" placeholder="e.g. 50000"
+                  defaultValue={state.values?.compare_at_price || ''}
                   className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
                 />
                 <BanknotesIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -140,6 +144,7 @@ export default function CreateProductForm() {
             <div className="relative">
               <textarea
                 id="description" name="description" rows={3} placeholder="Tell customers about this product..."
+                defaultValue={state.values?.description || ''}
                 className="peer block w-full rounded-xl border border-slate-200 py-2.5 pl-10 text-sm outline-none focus:border-emerald-500"
               ></textarea>
               <DocumentTextIcon className="pointer-events-none absolute left-3 top-7 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -164,6 +169,7 @@ export default function CreateProductForm() {
                <label htmlFor="stock_quantity" className="mb-2 block text-sm font-medium text-slate-700">How many available?</label>
                <input
                  id="stock_quantity" name="stock_quantity" type="number" step="1" min="0" placeholder="e.g. 5"
+                 defaultValue={state.values?.stock_quantity || ''}
                  className="block w-full rounded-xl border border-slate-200 py-2.5 px-4 text-sm outline-none focus:border-emerald-500"
                />
              </div>
@@ -173,11 +179,11 @@ export default function CreateProductForm() {
              <legend className="mb-3 block text-sm font-medium text-slate-700">Visibility Status</legend>
              <div className="flex gap-4">
                 <label className="flex cursor-pointer items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700">
-                  <input type="radio" name="status" value="active" defaultChecked className="h-4 w-4 border-slate-300 text-emerald-600" />
+                  <input type="radio" name="status" value="active" defaultChecked={state.values?.status ? state.values.status === 'active' : true} className="h-4 w-4 border-slate-300 text-emerald-600" />
                   Active <CheckIcon className="h-4 w-4" />
                 </label>
                 <label className="flex cursor-pointer items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600">
-                  <input type="radio" name="status" value="inactive" className="h-4 w-4 border-slate-300 text-slate-600" />
+                  <input type="radio" name="status" value="inactive" defaultChecked={state.values?.status === 'inactive'} className="h-4 w-4 border-slate-300 text-slate-600" />
                   Hidden
                 </label>
              </div>

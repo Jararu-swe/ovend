@@ -147,6 +147,7 @@ export type State = {
     [key: string]: string[] | undefined;
   };
   message?: string | null;
+  values?: Record<string, any>;
 };
 
 export type OrderState = State;
@@ -307,6 +308,15 @@ export async function createProduct(prevState: State | undefined, formData: Form
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Create Product.',
+      values: {
+        name: formData.get('name')?.toString() || '',
+        description: formData.get('description')?.toString() || '',
+        price: formData.get('price')?.toString() || '',
+        compare_at_price: formData.get('compare_at_price')?.toString() || '',
+        category: formData.get('category')?.toString() || '',
+        stock_quantity: formData.get('stock_quantity')?.toString() || '',
+        status: formData.get('status')?.toString() || 'active',
+      }
     };
   }
 
@@ -385,6 +395,15 @@ export async function updateProduct(
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Update Product.',
+      values: {
+        name: formData.get('name')?.toString() || '',
+        description: formData.get('description')?.toString() || '',
+        price: formData.get('price')?.toString() || '',
+        compare_at_price: formData.get('compare_at_price')?.toString() || '',
+        category: formData.get('category')?.toString() || '',
+        stock_quantity: formData.get('stock_quantity')?.toString() || '',
+        status: formData.get('status')?.toString() || 'active',
+      }
     };
   }
 

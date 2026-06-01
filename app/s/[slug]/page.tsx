@@ -67,6 +67,20 @@ export default async function StorePage(props: Props) {
     notFound();
   }
 
+  // Check if vendor's subscription is active
+  const subscriptionStatus = vendor.subscription_status;
+  const subscriptionExpiresAt = vendor.subscription_expires_at 
+    ? new Date(vendor.subscription_expires_at) 
+    : null;
+  
+  // Redirect to not found if subscription is expired or inactive
+  const isExpired = subscriptionStatus === 'inactive' || subscriptionStatus === 'past_due';
+  const hasExpired = subscriptionExpiresAt && subscriptionExpiresAt.getTime() < Date.now();
+  
+  if (isExpired || hasExpired) {
+    notFound();
+  }
+
   const products = await fetchProducts(vendor.id);
   const theme = await getOrCreateVendorTheme(vendor.id);
   

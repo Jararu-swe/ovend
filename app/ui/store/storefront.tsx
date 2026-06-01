@@ -1535,17 +1535,18 @@ export default function Storefront({
                 </div>
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className={`flex items-center gap-2 px-6 py-2.5 font-bold text-white ${btnProps.className}`}
+                  className={`flex items-center justify-center gap-2 px-6 py-2.5 font-bold min-w-[140px] ${btnProps.className}`}
                   style={{
                     ...btnProps.style,
                     backgroundColor: activeTheme.primary_color,
+                    color: '#ffffff',
                   }}
                 >
-                  Checkout
+                  <span className="text-sm text-white">Checkout</span>
                   <StoreIcon
                     name="chevron-right"
                     theme={activeTheme}
-                    className="h-4 w-4"
+                    className="h-4 w-4 text-white"
                   />
                 </button>
               </div>

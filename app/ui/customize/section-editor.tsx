@@ -383,6 +383,13 @@ export default function SectionEditor({
                     {section.id === 'product-grid' && (
                       <p className="text-[10px] text-slate-400 italic">Configure layout, cards & spacing in the Layout panel.</p>
                     )}
+                    <div className="pt-3 mt-3 border-t border-slate-100">
+                      <SectionSpacingEditor
+                        paddingTop={(sectionContent[section.id] || {}).padding_top}
+                        paddingBottom={(sectionContent[section.id] || {}).padding_bottom}
+                        onChange={(key, val) => updateContent(section.id, key, val)}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -475,6 +482,44 @@ function MiniColor({ label, value, onChange }: { label: string; value: string; o
     <div className="flex items-center gap-2">
       <label className="text-[10px] font-semibold text-slate-400">{label}</label>
       <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-6 w-8 rounded border border-slate-200 cursor-pointer" />
+    </div>
+  );
+}
+
+function SectionSpacingEditor({ paddingTop, paddingBottom, onChange }: { paddingTop?: string; paddingBottom?: string; onChange: (key: string, val: string) => void }) {
+  const options = [
+    { label: 'Default', value: '' },
+    { label: 'None', value: 'none' },
+    { label: 'Small', value: 'small' },
+    { label: 'Medium', value: 'medium' },
+    { label: 'Large', value: 'large' },
+  ];
+  return (
+    <div className="flex gap-2">
+      <div className="flex-1">
+        <label className="block text-[10px] font-semibold text-slate-400 mb-1">Padding Top</label>
+        <select
+          value={paddingTop || ''}
+          onChange={(e) => onChange('padding_top', e.target.value)}
+          className="w-full rounded-lg border border-slate-100 px-2 py-1.5 text-[10px] outline-none focus:border-emerald-500 bg-white"
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+      <div className="flex-1">
+        <label className="block text-[10px] font-semibold text-slate-400 mb-1">Padding Bottom</label>
+        <select
+          value={paddingBottom || ''}
+          onChange={(e) => onChange('padding_bottom', e.target.value)}
+          className="w-full rounded-lg border border-slate-100 px-2 py-1.5 text-[10px] outline-none focus:border-emerald-500 bg-white"
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
