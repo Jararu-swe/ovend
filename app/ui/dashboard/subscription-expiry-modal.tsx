@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface SubscriptionExpiryModalProps {
@@ -15,6 +15,7 @@ export default function SubscriptionExpiryModal({
 }: SubscriptionExpiryModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // Check if subscription is expired or inactive
@@ -35,6 +36,10 @@ export default function SubscriptionExpiryModal({
     setIsDismissed(true);
     // Store dismissal in session storage (will reset on browser close)
     sessionStorage.setItem('subscription-modal-dismissed', 'true');
+  };
+
+  const handleRenewClick = () => {
+    router.push('/dashboard/billing');
   };
 
   if (!isOpen) return null;
@@ -104,15 +109,15 @@ export default function SubscriptionExpiryModal({
 
             {/* Actions */}
             <div className="flex flex-col gap-3">
-              <Link
-                href="/dashboard/billing"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-500 hover:-translate-y-0.5 hover:shadow-xl"
+              <button
+                onClick={handleRenewClick}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-500 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-95"
               >
                 Renew Subscription
-              </Link>
+              </button>
               <button
                 onClick={handleDismiss}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-200"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-200 active:scale-95"
               >
                 Remind Me Later
               </button>

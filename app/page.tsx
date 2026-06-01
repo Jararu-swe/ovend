@@ -35,6 +35,7 @@ import { HorizontalScrollStory } from "@/app/ui/horizontal-scroll-story";
 import { MouseTrailer } from "@/app/ui/mouse-trailer";
 import VendleLogo from "@/app/ui/vendle-logo";
 import FAQ from "@/app/ui/faq";
+import ScrollToTop from "@/app/ui/scroll-to-top";
 
 export default async function Page() {
   // Fetch featured stores for the showcase section
@@ -44,6 +45,7 @@ export default async function Page() {
   return (
     <main className="min-h-screen bg-[#FDFBF7] text-slate-900 selection:bg-emerald-200">
       <MouseTrailer />
+      <ScrollToTop />
       {/* Top navigation */}
       <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-[#FDFBF7]/80 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 md:px-12">
@@ -692,8 +694,13 @@ export default async function Page() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200/60 bg-[#FDFBF7] relative overflow-hidden">
+        {/* Mudcloth Pattern Watermark */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none text-slate-900">
+          <MudclothPattern />
+        </div>
+        
         {/* Subtle background element */}
-        <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/3 opacity-5 pointer-events-none">
+        <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/3 opacity-[0.03] pointer-events-none text-slate-900">
           <ArewaSymbol className="w-96 h-96" />
         </div>
 
@@ -702,11 +709,10 @@ export default async function Page() {
             <div>
               <VendleLogo className="mb-4" />
               <p className="mt-4 text-sm leading-relaxed text-slate-500 max-w-sm font-medium">
-                Simple, beautiful storefronts for online vendors. Turn your
-                social media into a powerful e-commerce business.
+               Sell online with a beautiful storefront.
               </p>
             </div>
-            <div className="flex flex-wrap gap-x-10 gap-y-4 text-sm font-bold text-slate-700">
+            <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-bold text-slate-700">
               <Link
                 href="/explore"
                 className="hover:text-emerald-600 transition-colors"
@@ -714,22 +720,16 @@ export default async function Page() {
                 Explore
               </Link>
               <Link
-                href="/profile"
+                href="/pricing"
                 className="hover:text-emerald-600 transition-colors"
               >
-                User Profile
+                Pricing
               </Link>
               <Link
-                href="/login"
+                href="/help"
                 className="hover:text-emerald-600 transition-colors"
               >
-                Sign in
-              </Link>
-              <Link
-                href="/signup"
-                className="hover:text-emerald-600 transition-colors"
-              >
-                Create Store
+                Help
               </Link>
             </div>
           </div>
@@ -738,12 +738,12 @@ export default async function Page() {
               &copy; {new Date().getFullYear()} Vendle. Built in Nigeria.
             </div>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-slate-900 transition-colors">
-                Terms
-              </a>
-              <a href="#" className="hover:text-slate-900 transition-colors">
+              <Link href="/privacy" className="hover:text-slate-900 transition-colors">
                 Privacy
-              </a>
+              </Link>
+              <Link href="/terms" className="hover:text-slate-900 transition-colors">
+                Terms
+              </Link>
             </div>
           </div>
         </div>
