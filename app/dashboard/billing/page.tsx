@@ -16,33 +16,86 @@ export default async function BillingPage() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  const [user, stats, payouts] = await Promise.all([
-    fetchUserById(session.user.id),
-    fetchVendorStats(session.user.id),
-    fetchVendorPayouts(session.user.id),
-  ]);
-
+  const user = await fetchUserById(session.user.id);
   if (!user) notFound();
 
-  return (
-    <>
-      <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Billing & Payouts
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Manage your subscription and request earnings payouts.
-          </p>
+  // Check if user has subscription issues - if so, show minimal page
+  const subscriptionStatus = (session.user as any)?.subscription_status;
+  const hasSubscriptionIssue = subscriptionStatus === 'inactive' || subscriptionStatus === 'past_due';
+
+  // If subscription is expired, show minimal billing page (just subscription card)
+  if (hasSubscriptionIssue) {
+    return (
+      <>
+        <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Billing & Subscription
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Renew your subscription to access all features.
+            </p>
+          </div>
+
+          <SubscriptionPayCard user={user} />
         </div>
+      </>
+    );
+  }
 
-        <PayoutCard user={user} balance={stats.totalRevenue} />
+  // For active subscriptions, fetch full stats
+  try {
+    const [stats, payouts] = await Promise.all([
+      fetchVendorStats(session.user.id).catch(() => ({
+        numberOfOrders: 0,
+        totalRevenue: 0,
+        numberOfProducts: 0,
+        numberOfPendingOrders: 0,
+      })),
+      fetchVendorPayouts(session.user.id).catch(() => []),
+    ]);
 
-        {payouts.length > 0 && <PayoutHistory payouts={payouts} />}
+    return (
+      <>
+        <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Billing & Payouts
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your subscription and request earnings payouts.
+            </p>
+          </div>
 
-        <SubscriptionPayCard user={user} />
-      </div>
-    </>
-  );
+          <PayoutCard user={user} balance={stats.totalRevenue} />
+
+          {payouts.length > 0 && <PayoutHistory payouts={payouts} />}
+
+          <SubscriptionPayCard user={user} />
+        </div>
+      </>
+    );
+  } catch (error) {
+    console.error('Billing page error:', error);
+    // Fallback to minimal page
+    return (
+      <>
+        <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Billing & Payouts
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your subscription and request earnings payouts.
+            </p>
+          </div>
+
+          <SubscriptionPayCard user={user} />
+        </div>
+      </>
+    );
+  }
 }

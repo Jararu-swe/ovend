@@ -2,18 +2,24 @@ import SideNav from "@/app/ui/dashboard/sidenav";
 import OrderNotificationAlerter from "@/app/ui/dashboard/order-notification-alerter";
 import SubscriptionExpiryModal from "@/app/ui/dashboard/subscription-expiry-modal";
 import { auth } from "@/auth";
+import Script from "next/script";
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const subscriptionStatus = (session?.user as any)?.subscription_status ?? null;
   const subscriptionExpiresAt = (session?.user as any)?.subscription_expires_at ?? null;
+  const userEmail = session?.user?.email ?? undefined;
+  const userId = session?.user?.id ?? undefined;
 
   return (
     <div className="flex h-screen flex-col md:flex-row md:overflow-hidden bg-slate-50/60">
+      <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
       <OrderNotificationAlerter />
       <SubscriptionExpiryModal 
         subscriptionStatus={subscriptionStatus}
         subscriptionExpiresAt={subscriptionExpiresAt}
+        userEmail={userEmail}
+        userId={userId}
       />
 
       {/* Desktop Sidebar */}

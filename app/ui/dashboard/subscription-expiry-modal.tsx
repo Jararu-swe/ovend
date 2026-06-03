@@ -4,17 +4,31 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
+declare global {
+  interface Window {
+    PaystackPop: any;
+  }
+}
+
 interface SubscriptionExpiryModalProps {
   subscriptionStatus: string | null;
   subscriptionExpiresAt: string | null;
+  userEmail?: string;
+  userId?: string;
 }
+
+const MONTHLY_AMOUNT_NAIRA = 3000;
 
 export default function SubscriptionExpiryModal({
   subscriptionStatus,
   subscriptionExpiresAt,
+  userEmail,
+  userId,
 }: SubscriptionExpiryModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,8 +52,85 @@ export default function SubscriptionExpiryModal({
     sessionStorage.setItem('subscription-modal-dismissed', 'true');
   };
 
-  const handleRenewClick = () => {
-    router.push('/dashboard/billing');
+  const handlePayNow = async () => {
+    if (!userEmail || !userId) {
+      setError('User information is missing. Please refresh and try again.');
+      return;
+    }
+
+    setError(null);
+    setIsPaying(true);
+
+    // Check if Paystack script is loaded
+    if (typeof window === 'undefined' || !window.PaystackPop || typeof window.PaystackPop.setup !== 'function') {
+      setError('Payment system is still loading. Please wait a moment and try again.');
+      setIsPaying(false);
+      return;
+    }
+
+    const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+    if (!publicKey) {
+      setError('Payment system is not configured. Please contact support.');
+      setIsPaying(false);
+      return;
+    }
+
+    setIsPaying(true);
+
+    const reference = `OVD-SUB-${userId.slice(0, 8)}-${Date.now()}`;
+
+    try {
+      const handler = window.PaystackPop.setup({
+        key: publicKey,
+        email: userEmail,
+        amount: MONTHLY_AMOUNT_NAIRA * 100,
+        currency: 'NGN',
+        ref: reference,
+        metadata: {
+          vendorId: userId,
+          purpose: 'vendor_subscription',
+        },
+        onClose: () => {
+          setIsPaying(false);
+        },
+        callback: (response: any) => {
+          void (async () => {
+            try {
+              const resp = await fetch('/api/vendor/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reference: response?.reference }),
+              });
+
+              const body = await resp.json().catch(() => ({}));
+              if (!resp.ok) {
+                setError(body?.error || 'Subscription activation failed.');
+                setIsPaying(false);
+                return;
+              }
+
+              setIsPaying(false);
+              setIsOpen(false);
+              router.refresh();
+            } catch (e: any) {
+              setError(e?.message || 'Subscription activation failed.');
+              setIsPaying(false);
+            }
+          })();
+        },
+      });
+
+      if (!handler || typeof handler.openIframe !== 'function') {
+        setError('Unable to open payment popup. Please disable popup blockers and try again.');
+        setIsPaying(false);
+        return;
+      }
+
+      handler.openIframe();
+    } catch (e: any) {
+      setError(e?.message || 'Unable to start payment.');
+      setIsPaying(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -107,17 +198,26 @@ export default function SubscriptionExpiryModal({
               </ul>
             </div>
 
+            {/* Error message */}
+            {error && (
+              <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error}
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex flex-col gap-3">
               <button
-                onClick={handleRenewClick}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-500 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-95"
+                onClick={handlePayNow}
+                disabled={isPaying}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-500 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Renew Subscription
+                {isPaying ? 'Processing...' : `Pay ₦${MONTHLY_AMOUNT_NAIRA.toLocaleString()} Now`}
               </button>
               <button
                 onClick={handleDismiss}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-200 active:scale-95"
+                disabled={isPaying}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-200 active:scale-95 disabled:opacity-60"
               >
                 Remind Me Later
               </button>

@@ -506,10 +506,10 @@ export async function fetchVendorStats(vendorId: string) {
       sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId} AND status IN ('new', 'in_progress')`,
     ]);
 
-    const numberOfOrders = Number(data[0][0].count ?? "0");
-    const totalRevenue = Number(data[1][0].sum ?? "0");
-    const numberOfProducts = Number(data[2][0].count ?? "0");
-    const numberOfPendingOrders = Number(data[3][0].count ?? "0");
+    const numberOfOrders = Number(data[0]?.[0]?.count ?? "0");
+    const totalRevenue = Number(data[1]?.[0]?.sum ?? "0");
+    const numberOfProducts = Number(data[2]?.[0]?.count ?? "0");
+    const numberOfPendingOrders = Number(data[3]?.[0]?.count ?? "0");
 
     return {
       numberOfOrders,
@@ -518,7 +518,7 @@ export async function fetchVendorStats(vendorId: string) {
       numberOfPendingOrders,
     };
   } catch (error) {
-    console.error("Database Error:", error);
+    console.error("Database Error in fetchVendorStats:", error);
     // Return zeros instead of throwing to prevent page crash
     return {
       numberOfOrders: 0,

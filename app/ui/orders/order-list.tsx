@@ -82,7 +82,7 @@ export default function OrderList({ orders }: { orders: Order[] }) {
     <div className="space-y-6">
       {/* Filter pills */}
       <div className="flex gap-2 flex-wrap">
-        {['All', 'New', 'In Progress', 'Fulfilled', 'Cancelled'].map((f) => (
+        {['All', 'New', 'In Progress', 'Fulfilled'].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -263,12 +263,6 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 transition"
                             >
                               <CheckCircleIcon className="h-4 w-4" /> Fulfilled
-                            </button>
-                            <button 
-                              onClick={() => handleStatusUpdate(order.id, 'cancelled')}
-                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 font-bold hover:bg-red-100 transition"
-                            >
-                              <XCircleIcon className="h-4 w-4" /> Cancel
                             </button>
                           </div>
                         </div>

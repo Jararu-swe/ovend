@@ -156,93 +156,20 @@ export default async function Page() {
             delay={0.5}
             className="flex flex-1 justify-center md:justify-end lg:ml-12 relative"
           >
-            {/* Actual Dashboard Preview */}
-            <div className="relative w-full max-w-[420px]">
+            {/* Dashboard Screenshot */}
+            <div className="relative w-full max-w-[220px] md:max-w-[260px] lg:max-w-[280px]">
               <div className="absolute inset-0 bg-emerald-600 rounded-[2.5rem] rotate-3 scale-105 opacity-10 transition-transform duration-700 hover:rotate-6"></div>
               <div className="absolute inset-0 bg-slate-900 rounded-[2.5rem] -rotate-2 scale-105 opacity-10 transition-transform duration-700 hover:-rotate-4"></div>
 
-              <div className="relative rounded-[2.5rem] border-8 border-white bg-gradient-to-b from-slate-50 to-slate-100 p-5 shadow-2xl ring-1 ring-slate-200 hover:-translate-y-2 transition-transform duration-500">
-                {/* Status Bar */}
-                <div className="flex items-center justify-between mb-4 px-2">
-                  <p className="text-[9px] font-bold text-slate-600">9:41</p>
-                  <div className="flex items-center gap-1">
-                    <div className="h-1 w-1 rounded-full bg-slate-600"></div>
-                    <div className="h-1 w-1 rounded-full bg-slate-600"></div>
-                    <div className="h-1 w-2 rounded-full bg-slate-600"></div>
-                  </div>
-                </div>
-
-                {/* Dashboard Content */}
-                <div className="space-y-3">
-                  {/* Hero Section */}
-                  <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-slate-50 border border-emerald-100 p-3">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <p className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider">
-                          Store Dashboard
-                        </p>
-                        <p className="text-xs font-bold text-slate-900 mt-1">
-                          Welcome back!
-                        </p>
-                      </div>
-                      <div className="h-6 w-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                      </div>
-                    </div>
-                    <p className="text-[8px] text-slate-600">
-                      Store is live & performing well
-                    </p>
-                  </div>
-
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-lg border border-slate-200 bg-white p-2.5 text-center">
-                      <p className="text-[7px] font-bold uppercase text-slate-500 mb-1">
-                        Visits
-                      </p>
-                      <p className="text-sm font-bold text-blue-900">284</p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-white p-2.5 text-center">
-                      <p className="text-[7px] font-bold uppercase text-slate-500 mb-1">
-                        Orders
-                      </p>
-                      <p className="text-sm font-bold text-emerald-900">42</p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-white p-2.5 text-center">
-                      <p className="text-[7px] font-bold uppercase text-slate-500 mb-1">
-                        Revenue
-                      </p>
-                      <p className="text-sm font-bold text-amber-900">₦125k</p>
-                    </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <button className="rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 p-2.5 transition text-left">
-                      <p className="text-[8px] font-bold text-emerald-700">
-                        + Add Product
-                      </p>
-                    </button>
-                    <button className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 p-2.5 transition text-left">
-                      <p className="text-[8px] font-bold text-slate-700">
-                        📦 Orders
-                      </p>
-                    </button>
-                  </div>
-
-                  {/* Store Status */}
-                  <div className="rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 p-3 text-white">
-                    <p className="text-[8px] font-bold uppercase mb-1">
-                      Your store is live!
-                    </p>
-                    <p className="text-[7px] text-emerald-50 mb-2">
-                      Share link with customers
-                    </p>
-                    <button className="w-full rounded-lg bg-white text-emerald-600 py-1.5 text-[8px] font-bold hover:bg-emerald-50 transition">
-                      View Store
-                    </button>
-                  </div>
-                </div>
+              <div className="relative rounded-[2.5rem] overflow-hidden border-8 border-white shadow-2xl ring-1 ring-slate-200 hover:-translate-y-2 transition-transform duration-500">
+                <Image
+                  src="/images/story/hero-storefront.png"
+                  alt="Vendle Dashboard"
+                  width={340}
+                  height={510}
+                  className="w-full h-auto"
+                  priority
+                />
               </div>
             </div>
           </FadeInUp>
@@ -351,136 +278,73 @@ export default async function Page() {
       </section>
 
       {/* Flexible Multi-Vendor Platform Showcase - Mobile Mockup */}
-      <section className="relative bg-gradient-to-br from-[#f0fdf4] via-white to-[#fef3c7] py-32 px-6 md:px-12 overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-[#16a34a]/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[#eab308]/5 rounded-full blur-3xl"></div>
+      <section className="relative bg-gradient-to-br from-emerald-50/50 via-white to-amber-50/50 py-24 md:py-32 lg:py-40 px-6 md:px-12 overflow-hidden">
+        {/* Enhanced Decorative background elements */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-slate-900/5 rounded-full blur-3xl"></div>
 
         <div className="mx-auto max-w-7xl relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
-            {/* Left: Mobile Phone Mockup - Multi Vendor */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            {/* Left: Mobile Screenshots Stack - Enhanced Layout */}
             <FadeInUp delay={0.1}>
-              <div className="flex justify-center md:justify-start">
-                <ParallaxScroll
-                  offset={30}
-                  className="relative w-full max-w-sm"
-                >
-                  {/* Phone Frame */}
-                  <div
-                    className="relative bg-black rounded-[3rem] p-3 shadow-2xl"
-                    style={{ aspectRatio: "9/16" }}
-                  >
-                    {/* Screen notch */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-3xl z-20"></div>
-
-                    {/* Phone Screen - Dynamic Vendor Showcase */}
-                    <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-white">
-                      {/* Status Bar */}
-                      <div className="flex items-center justify-between px-4 py-2 bg-slate-900 text-white text-xs font-semibold">
-                        <span>9:41</span>
-                        <div className="flex gap-1">
-                          <span>📶</span>
-                          <span>📡</span>
-                          <span>🔋</span>
-                        </div>
-                      </div>
-
-                      {/* Header - Dynamic */}
-                      <div className="px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xl">🏪</span>
-                          <span className="font-bold text-sm">
-                            Vendle Store
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300">
-                          Your business, beautifully online
-                        </p>
-                      </div>
-
-                      {/* Vendor Category Tabs */}
-                      <div className="flex overflow-x-auto px-3 py-2 border-b border-slate-200 gap-2 text-xs font-bold">
-                        <button className="px-3 py-1 bg-slate-900 text-white rounded-full whitespace-nowrap">
-                          Fashion 👗
-                        </button>
-                        <button className="px-3 py-1 text-slate-600 whitespace-nowrap">
-                          Food 🍜
-                        </button>
-                        <button className="px-3 py-1 text-slate-600 whitespace-nowrap">
-                          Beauty 💄
-                        </button>
-                        <button className="px-3 py-1 text-slate-600 whitespace-nowrap">
-                          Crafts 🎨
-                        </button>
-                      </div>
-
-                      {/* Featured Products Grid - Fashion Example */}
-                      <div className="px-4 pb-20 space-y-3 pt-3">
-                        {/* Product 1 - Fashion */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md transition-shadow">
-                          <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-md h-24 flex items-center justify-center text-3xl mb-2">
-                            👗
-                          </div>
-                          <p className="font-bold text-xs text-slate-900">
-                            Designer Dress
-                          </p>
-                          <p className="text-xs text-slate-600 mb-2">₦8,500</p>
-                          <button className="w-full bg-slate-900 text-white text-xs font-bold py-1 rounded-md hover:bg-slate-800 transition-colors">
-                            Add to Cart
-                          </button>
-                        </div>
-
-                        {/* Product 2 - Food */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md transition-shadow">
-                          <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-md h-24 flex items-center justify-center text-3xl mb-2">
-                            🍜
-                          </div>
-                          <p className="font-bold text-xs text-slate-900">
-                            Jollof Rice Meal
-                          </p>
-                          <p className="text-xs text-slate-600 mb-2">₦2,000</p>
-                          <button className="w-full bg-slate-900 text-white text-xs font-bold py-1 rounded-md hover:bg-slate-800 transition-colors">
-                            Add to Cart
-                          </button>
-                        </div>
-
-                        {/* Product 3 - Beauty */}
-                        <div className="bg-white rounded-lg border border-slate-200 p-3 hover:shadow-md transition-shadow">
-                          <div className="bg-gradient-to-br from-rose-100 to-yellow-100 rounded-md h-24 flex items-center justify-center text-3xl mb-2">
-                            💄
-                          </div>
-                          <p className="font-bold text-xs text-slate-900">
-                            Lip Gloss Set
-                          </p>
-                          <p className="text-xs text-slate-600 mb-2">₦3,200</p>
-                          <button className="w-full bg-slate-900 text-white text-xs font-bold py-1 rounded-md hover:bg-slate-800 transition-colors">
-                            Add to Cart
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Bottom Navigation */}
-                      <div className="absolute bottom-0 left-0 right-0 flex justify-around items-center px-4 py-3 bg-white border-t border-slate-200 text-2xl">
-                        <span>🏠</span>
-                        <span>🔍</span>
-                        <span>❤️</span>
-                        <span>👤</span>
-                      </div>
-                    </div>
+              <div className="relative flex flex-col gap-8 md:gap-10 justify-center lg:justify-start">
+                {/* Mobile Screenshot 1 - Top Left */}
+                <div className="relative w-full max-w-[220px] md:max-w-[240px] lg:max-w-[260px] mx-auto lg:mx-0 lg:ml-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-700 rounded-[2.5rem] rotate-3 scale-105 opacity-15 blur-sm transition-transform duration-700 hover:rotate-6 hover:scale-110"></div>
+                  
+                  <div className="relative rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-2xl ring-1 ring-slate-900/10 hover:-translate-y-3 hover:shadow-3xl transition-all duration-500 group">
+                    <Image
+                      src="/images/story/platform-mockup-1.png"
+                      alt="Vendle Store - Fashion Example"
+                      width={340}
+                      height={510}
+                      className="w-full h-auto"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
+                </div>
 
-                  {/* Shadow Effect */}
-                  <div className="absolute inset-0 rounded-[3rem] bg-gradient-to-b from-slate-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </ParallaxScroll>
+                {/* Mobile Screenshot 2 - Center Right */}
+                <div className="relative w-full max-w-[220px] md:max-w-[240px] lg:max-w-[260px] mx-auto lg:mx-0 lg:ml-16 -mt-4 md:-mt-6">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-emerald-500 rounded-[2.5rem] -rotate-3 scale-105 opacity-15 blur-sm transition-transform duration-700 hover:-rotate-6 hover:scale-110"></div>
+                  
+                  <div className="relative rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-2xl ring-1 ring-emerald-900/10 hover:-translate-y-3 hover:shadow-3xl transition-all duration-500 group">
+                    <Image
+                      src="/images/story/platform-mockup-2.png"
+                      alt="Vendle Store - Beauty Example"
+                      width={340}
+                      height={510}
+                      className="w-full h-auto"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  </div>
+                </div>
+
+                {/* Mobile Screenshot 3 - Bottom Center */}
+                <div className="relative w-full max-w-[220px] md:max-w-[240px] lg:max-w-[260px] mx-auto lg:mx-0 lg:ml-8 -mt-4 md:-mt-6">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-600 to-amber-500 rounded-[2.5rem] rotate-2 scale-105 opacity-15 blur-sm transition-transform duration-700 hover:rotate-5 hover:scale-110"></div>
+                  
+                  <div className="relative rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-2xl ring-1 ring-amber-900/10 hover:-translate-y-3 hover:shadow-3xl transition-all duration-500 group">
+                    <Image
+                      src="/images/story/platform-mockup-3.png"
+                      alt="Vendle Store - Food Example"
+                      width={340}
+                      height={510}
+                      className="w-full h-auto"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-amber-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  </div>
+                </div>
               </div>
             </FadeInUp>
 
-            {/* Right: Marketing Copy - Versatility Focus */}
-            <div className="relative z-10">
+            {/* Right: Marketing Copy - Enhanced Typography and Spacing */}
+            <div className="relative z-10 lg:pl-8">
               <FadeInUp delay={0.15}>
-                <div className="inline-flex items-center gap-3 mb-6">
-                  <span className="h-[2px] w-8 bg-slate-900 rounded-full"></span>
-                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-700">
+                <div className="inline-flex items-center gap-3 mb-8">
+                  <span className="h-[2px] w-10 bg-gradient-to-r from-emerald-600 to-slate-900 rounded-full"></span>
+                  <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-700">
                     One platform, infinite possibilities
                   </p>
                 </div>
@@ -488,15 +352,20 @@ export default async function Page() {
 
               <FadeInUp delay={0.2}>
                 <h2
-                  className={`${lusitana.className} text-4xl md:text-5xl font-bold leading-tight mb-6 text-slate-900`}
+                  className={`${lusitana.className} text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-8 text-slate-900`}
                 >
                   Built for Every Type of{" "}
-                  <span className="text-slate-700">Online Vendor</span>
+                  <span className="relative inline-block">
+                    <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-slate-900">
+                      Online Vendor
+                    </span>
+                    <span className="absolute bottom-2 left-0 -z-10 h-4 w-full bg-emerald-200/40 skew-x-[-12deg]"></span>
+                  </span>
                 </h2>
               </FadeInUp>
 
               <FadeInUp delay={0.25}>
-                <p className="text-lg text-slate-600 leading-relaxed mb-8">
+                <p className="text-lg md:text-xl text-slate-600 leading-relaxed mb-10 max-w-xl">
                   Fashion boutiques. Food vendors. Beauty brands. Artisans. Tech
                   sellers. Whether you're selling handcrafted items, digital
                   products, or services, Vendle adapts to your business. One
@@ -505,17 +374,17 @@ export default async function Page() {
               </FadeInUp>
 
               <StaggerContainer>
-                <div className="space-y-4 mb-10">
+                <div className="space-y-6 mb-12">
                   <StaggerItem>
-                    <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white font-bold text-sm">✓</span>
+                    <div className="flex items-start gap-4 group">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-slate-900/20 group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-white font-bold text-base">✓</span>
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 mb-1">
+                        <p className="font-bold text-slate-900 mb-2 text-lg">
                           Any Product Category
                         </p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-base text-slate-600 leading-relaxed">
                           From physical goods to digital downloads, services to
                           subscriptions
                         </p>
@@ -524,15 +393,15 @@ export default async function Page() {
                   </StaggerItem>
 
                   <StaggerItem>
-                    <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white font-bold text-sm">✓</span>
+                    <div className="flex items-start gap-4 group">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-emerald-900/20 group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-white font-bold text-base">✓</span>
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 mb-1">
+                        <p className="font-bold text-slate-900 mb-2 text-lg">
                           Customizable Themes
                         </p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-base text-slate-600 leading-relaxed">
                           Choose designs that match your brand or create your
                           own aesthetic
                         </p>
@@ -541,16 +410,16 @@ export default async function Page() {
                   </StaggerItem>
 
                   <StaggerItem>
-                    <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white font-bold text-sm">✓</span>
+                    <div className="flex items-start gap-4 group">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-amber-900/20 group-hover:scale-110 transition-transform duration-300">
+                        <span className="text-white font-bold text-base">✓</span>
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 mb-1">
+                        <p className="font-bold text-slate-900 mb-2 text-lg">
                           Scale as You Grow
                         </p>
-                        <p className="text-sm text-slate-600">
-                          Start solo, add team members, manage your bussines all
+                        <p className="text-base text-slate-600 leading-relaxed">
+                          Start solo, add team members, manage your business all
                           in one place
                         </p>
                       </div>
@@ -562,19 +431,190 @@ export default async function Page() {
               <FadeInUp delay={0.35}>
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center gap-3 rounded-full bg-slate-900 hover:bg-slate-800 px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:shadow-lg hover:scale-105 group"
+                  className="inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-r from-slate-900 to-slate-800 hover:from-emerald-600 hover:to-emerald-500 px-10 py-5 text-base font-bold text-white transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 group"
                 >
                   <span>Start Your Store Free</span>
-                  <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-2 transition-transform duration-300" />
                 </Link>
               </FadeInUp>
 
               <FadeInUp delay={0.4}>
-                <p className="text-xs text-slate-500 mt-6 font-medium">
+                <p className="text-sm text-slate-500 mt-8 font-medium flex items-center gap-2">
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]"></span>
                   Join 500+ vendors across 10+ categories already on Vendle
                 </p>
               </FadeInUp>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Desktop Dashboard Showcase Section */}
+      <section className="relative bg-slate-900 text-white py-24 md:py-32 lg:py-40 px-6 md:px-12 overflow-hidden">
+        {/* Decorative background patterns */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <MudclothPattern />
+        </div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+
+        <div className="mx-auto max-w-7xl relative z-10">
+          {/* Header */}
+          <div className="text-center mb-16 md:mb-20">
+            <FadeInUp>
+              <div className="inline-flex items-center gap-3 mb-6">
+                <span className="h-[2px] w-10 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full"></span>
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">
+                  Powerful Dashboard
+                </p>
+                <span className="h-[2px] w-10 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full"></span>
+              </div>
+            </FadeInUp>
+
+            <FadeInUp delay={0.1}>
+              <h2
+                className={`${lusitana.className} text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-6 text-white`}
+              >
+                Manage Everything from{" "}
+                <span className="relative inline-block">
+                  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400">
+                    One Dashboard
+                  </span>
+                  <span className="absolute bottom-2 left-0 -z-10 h-3 w-full bg-emerald-500/20 blur-sm"></span>
+                </span>
+              </h2>
+            </FadeInUp>
+
+            <FadeInUp delay={0.2}>
+              <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+                Track orders, manage inventory, customize your store, and monitor sales—all from a beautiful, intuitive dashboard designed for speed and simplicity.
+              </p>
+            </FadeInUp>
+          </div>
+
+          {/* Desktop Dashboard Mockup */}
+          <FadeInUp delay={0.3}>
+            <div className="relative max-w-6xl mx-auto">
+              {/* Glow effects behind the dashboard */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 via-blue-500/20 to-purple-500/20 rounded-[3rem] blur-3xl opacity-60"></div>
+              
+              {/* Browser chrome mockup */}
+              <div className="relative rounded-[2rem] overflow-hidden border border-slate-700/50 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm bg-slate-800/50">
+                {/* Browser top bar */}
+                <div className="bg-slate-800/90 border-b border-slate-700/50 px-4 py-3 flex items-center gap-2">
+                  <div className="flex gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-500/80"></span>
+                    <span className="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+                    <span className="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+                  </div>
+                  <div className="flex-1 ml-4">
+                    <div className="bg-slate-700/50 rounded-lg px-4 py-1.5 text-xs text-slate-400 max-w-md flex items-center gap-2">
+                      <span className="text-slate-500">🔒</span>
+                      <span>vendle.store/dashboard</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dashboard screenshot container */}
+                <div className="relative bg-slate-900 aspect-video w-full">
+                  <Image
+                    src="/images/story/dashboard-desktop.png"
+                    alt="Vendle Dashboard - Desktop View"
+                    width={1920}
+                    height={1080}
+                    className="w-full h-full object-cover object-top"
+                    priority
+                  />
+                  
+                  {/* Gradient overlay for depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent pointer-events-none"></div>
+                </div>
+              </div>
+
+              {/* Floating feature cards */}
+              <div className="absolute -left-4 top-1/4 hidden lg:block">
+                <FadeInUp delay={0.5}>
+                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-4 w-56 hover:-translate-y-2 transition-transform duration-300">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold text-lg">
+                        📊
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Real-time Analytics</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Track sales, orders, and customer insights instantly
+                    </p>
+                  </div>
+                </FadeInUp>
+              </div>
+
+              <div className="absolute -right-4 bottom-1/4 hidden lg:block">
+                <FadeInUp delay={0.6}>
+                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-4 w-56 hover:-translate-y-2 transition-transform duration-300">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                        🎨
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">Easy Customization</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Change themes, colors, and layouts with one click
+                    </p>
+                  </div>
+                </FadeInUp>
+              </div>
+            </div>
+          </FadeInUp>
+
+          {/* Large Interactive Mudcloth Pattern */}
+          <div className="relative group cursor-pointer mt-20">
+            <FadeInUp delay={0.4}>
+              <div className="relative py-32 md:py-40 lg:py-48 px-6 rounded-3xl overflow-hidden border border-slate-700/30 hover:border-emerald-500/30 transition-all duration-700">
+                {/* Base Mudcloth Pattern - transitions to green on hover */}
+                <div className="absolute inset-0 opacity-20 text-slate-600 transition-all duration-700 group-hover:opacity-50 group-hover:text-emerald-500 scale-150">
+                  <MudclothPattern />
+                </div>
+
+                {/* Glow effect on hover */}
+                <div className="absolute inset-0 bg-emerald-500/0 transition-all duration-700 group-hover:bg-emerald-500/10"></div>
+                
+                {/* Radial glow that appears on hover */}
+                <div className="absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-emerald-500/25 rounded-full blur-3xl"></div>
+                </div>
+
+                {/* Content overlay */}
+                <div className="relative z-10 flex flex-col items-center justify-center text-center">
+                  <div className="mb-8 transition-all duration-700 group-hover:scale-110">
+                    <ArewaSymbol className="w-32 h-32 md:w-40 md:h-40 mx-auto text-slate-600 transition-all duration-700 group-hover:text-emerald-500" />
+                  </div>
+                  <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 transition-all duration-700 group-hover:text-emerald-400 max-w-4xl px-4">
+                    Crafted with African Heritage
+                  </h3>
+                  <p className="text-lg md:text-xl lg:text-2xl text-slate-400 transition-all duration-700 group-hover:text-slate-300 max-w-3xl leading-relaxed px-4">
+                    Every pixel tells a story of tradition, craftsmanship, and innovation. Hover to illuminate the patterns that inspire our design.
+                  </p>
+                </div>
+
+                {/* Animated pattern elements on hover */}
+                <div className="absolute top-12 left-12 opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:translate-y-[-10px] hidden lg:block">
+                  <CowrieSymbol className="w-24 h-24 text-emerald-500/60" />
+                </div>
+                <div className="absolute top-12 right-12 opacity-0 transition-all duration-700 delay-75 group-hover:opacity-100 group-hover:translate-y-[-10px] hidden lg:block">
+                  <MudclothStar className="w-24 h-24 text-emerald-500/60" />
+                </div>
+                <div className="absolute bottom-12 left-1/4 opacity-0 transition-all duration-700 delay-150 group-hover:opacity-100 group-hover:translate-y-[10px] hidden lg:block">
+                  <Tambari className="w-24 h-24 text-emerald-500/60" />
+                </div>
+                <div className="absolute bottom-12 right-1/4 opacity-0 transition-all duration-700 delay-200 group-hover:opacity-100 group-hover:translate-y-[10px] hidden lg:block">
+                  <TribalBand className="w-24 h-24 text-emerald-500/60" />
+                </div>
+              </div>
+            </FadeInUp>
           </div>
         </div>
       </section>

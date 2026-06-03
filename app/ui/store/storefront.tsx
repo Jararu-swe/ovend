@@ -1013,8 +1013,14 @@ export default function Storefront({
       activeTheme.card_style || "modern",
     );
 
+    // Get spacing for consistent section separation
+    const spacing = getSectionSpacing(activeTheme.spacing || "comfortable");
+
     return (
-      <section id="item-list">
+      <section 
+        id="item-list"
+        style={{ marginBottom: spacing.section }}
+      >
         <div className="mb-6 flex items-center justify-between">
           <h3
             className="text-lg font-bold"
@@ -1929,13 +1935,12 @@ export default function Storefront({
                                       ...getButtonStyles(activeTheme).style,
                                       backgroundColor:
                                         activeTheme.primary_color,
+                                      color: '#ffffff',
                                     }}
                                   >
                                     {isSubmitting
                                       ? "Processing..."
-                                      : paymentMethod === "card"
-                                        ? "Pay Now"
-                                        : "Confirm Order"}
+                                      : "Checkout"}
                                   </button>
                                 </div>
                               </form>
