@@ -163,7 +163,7 @@ export default async function Page() {
 
               <div className="relative rounded-[2.5rem] overflow-hidden border-8 border-white shadow-2xl ring-1 ring-slate-200 hover:-translate-y-2 transition-transform duration-500">
                 <Image
-                  src="/images/story/hero-storefront.png"
+                  src="/images/hero-storefront.png"
                   alt="Vendle Dashboard"
                   width={340}
                   height={510}
@@ -286,46 +286,46 @@ export default async function Page() {
 
         <div className="mx-auto max-w-7xl relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-            {/* Left: Mobile Screenshots Stack - Enhanced Layout */}
+            {/* Left: Mobile Screenshots Stack - Poker Hand Layout */}
             <FadeInUp delay={0.1}>
-              <div className="relative flex flex-col gap-8 md:gap-10 justify-center lg:justify-start">
-                {/* Mobile Screenshot 1 - Top Left */}
-                <div className="relative w-full max-w-[220px] md:max-w-[240px] lg:max-w-[260px] mx-auto lg:mx-0 lg:ml-0">
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-700 rounded-[2.5rem] rotate-3 scale-105 opacity-15 blur-sm transition-transform duration-700 hover:rotate-6 hover:scale-110"></div>
+              <div className="relative h-[400px] md:h-[480px] lg:h-[560px] flex items-end justify-center lg:justify-start group/stack">
+                {/* Mobile Screenshot 1 - Left Card */}
+                <div className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-10" style={{ transform: 'translateX(-50%) translateX(-80px) rotate(-15deg)', transformOrigin: 'bottom center' }}>
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-700 rounded-[1.5rem] md:rounded-[2rem] scale-105 opacity-15 blur-sm"></div>
                   
-                  <div className="relative rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-2xl ring-1 ring-slate-900/10 hover:-translate-y-3 hover:shadow-3xl transition-all duration-500 group">
+                  <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 md:border-[6px] border-white shadow-2xl ring-1 ring-slate-900/10 transition-all duration-500 group hover:rotate-0 hover:shadow-3xl cursor-pointer hover:-translate-y-8">
                     <Image
-                      src="/images/story/platform-mockup-1.png"
+                      src="/images/platform-mockup-1.png"
                       alt="Vendle Store - Fashion Example"
                       width={340}
                       height={510}
                       className="w-full h-auto"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
                 </div>
 
-                {/* Mobile Screenshot 2 - Center Right */}
-                <div className="relative w-full max-w-[220px] md:max-w-[240px] lg:max-w-[260px] mx-auto lg:mx-0 lg:ml-16 -mt-4 md:-mt-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-emerald-500 rounded-[2.5rem] -rotate-3 scale-105 opacity-15 blur-sm transition-transform duration-700 hover:-rotate-6 hover:scale-110"></div>
+                {/* Mobile Screenshot 2 - Center Card */}
+                <div className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-20" style={{ transform: 'translateX(-50%) rotate(0deg)', transformOrigin: 'bottom center' }}>
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-emerald-500 rounded-[1.5rem] md:rounded-[2rem] scale-105 opacity-15 blur-sm"></div>
                   
-                  <div className="relative rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-2xl ring-1 ring-emerald-900/10 hover:-translate-y-3 hover:shadow-3xl transition-all duration-500 group">
+                  <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 md:border-[6px] border-white shadow-2xl ring-1 ring-emerald-900/10 transition-all duration-500 group hover:shadow-3xl cursor-pointer hover:-translate-y-8">
                     <Image
-                      src="/images/story/platform-mockup-2.png"
+                      src="/images/platform-mockup-2.png"
                       alt="Vendle Store - Beauty Example"
                       width={340}
                       height={510}
                       className="w-full h-auto"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
                 </div>
 
-                {/* Mobile Screenshot 3 - Bottom Center */}
-                <div className="relative w-full max-w-[220px] md:max-w-[240px] lg:max-w-[260px] mx-auto lg:mx-0 lg:ml-8 -mt-4 md:-mt-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-600 to-amber-500 rounded-[2.5rem] rotate-2 scale-105 opacity-15 blur-sm transition-transform duration-700 hover:rotate-5 hover:scale-110"></div>
+                {/* Mobile Screenshot 3 - Right Card */}
+                <div className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-30" style={{ transform: 'translateX(-50%) translateX(80px) rotate(15deg)', transformOrigin: 'bottom center' }}>
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-600 to-amber-500 rounded-[1.5rem] md:rounded-[2rem] scale-105 opacity-15 blur-sm"></div>
                   
-                  <div className="relative rounded-[2.5rem] overflow-hidden border-[6px] border-white shadow-2xl ring-1 ring-amber-900/10 hover:-translate-y-3 hover:shadow-3xl transition-all duration-500 group">
+                  <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 md:border-[6px] border-white shadow-2xl ring-1 ring-amber-900/10 transition-all duration-500 group hover:rotate-0 hover:shadow-3xl cursor-pointer hover:-translate-y-8">
                     <Image
                       src="/images/story/platform-mockup-3.png"
                       alt="Vendle Store - Food Example"
@@ -333,7 +333,7 @@ export default async function Page() {
                       height={510}
                       className="w-full h-auto"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-amber-900/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-amber-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
                 </div>
               </div>
@@ -518,7 +518,7 @@ export default async function Page() {
                 {/* Dashboard screenshot container */}
                 <div className="relative bg-slate-900 aspect-video w-full">
                   <Image
-                    src="/images/story/dashboard-desktop.png"
+                    src="/images/dashboard.png"
                     alt="Vendle Dashboard - Desktop View"
                     width={1920}
                     height={1080}

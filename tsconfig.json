@@ -29,6 +29,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/lib/placeholder-data.ts"
-  ],
+, "scripts/setup-subscription-schema.js"  ],
   "exclude": ["node_modules"]
 }

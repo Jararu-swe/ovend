@@ -4,6 +4,9 @@
     "build": "next build",
     "dev": "next dev --turbopack",
     "start": "next start",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "setup": "node setup-database.js",
     "db:guides-migrate": "node scripts/migrations/create-vendor-guides.js",
     "db:guides-seed": "node scripts/seeds/vendor-guides.js",
@@ -43,8 +46,11 @@
     "@types/node": "22.10.7",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
+    "@vitest/ui": "1.6.0",
     "nock": "^14.0.11",
-    "raw-loader": "^4.0.2"
+    "raw-loader": "^4.0.2",
+    "tsx": "^4.22.4",
+    "vitest": "1.6.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

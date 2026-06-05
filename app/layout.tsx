@@ -10,10 +10,34 @@ export const metadata: Metadata = {
     template: '%s | Vendle',
     default: 'Vendle',
   },
-  description: 'Empowering African Craft & Commerce.',
+  description: 'Sell online with a beautiful storefront.',
+  openGraph: {
+    title: 'Vendle - Turn Your Social Media Into a Storefront',
+    description: 'Empowering African Craft & Commerce. Create beautiful online stores, process secure payments, and manage orders from a single mobile dashboard.',
+    url: 'https://vendle.com.ng',
+    siteName: 'Vendle',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Vendle - African Commerce Platform',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vendle - Sell online with a beautiful storefront.',
+    description: 'Empowering African Craft & Commerce. Setup takes less than 3 minutes.',
+    images: ['/og-image.png'],
+    creator: '@vendle',
+  },
   icons: {
     icon: '/icon.svg',
   },
+  metadataBase: new URL('https://vendle.store'),
 };
 
 export default function RootLayout({

@@ -179,18 +179,19 @@ export async function fetchProductsList(vendorId: string) {
   }
 }
 
-export async function fetchProductById(id: string) {
+export async function fetchProductById(id: string): Promise<Product | null> {
   if (!id) {
     console.warn("fetchProductById: id is missing.");
-    return undefined;
+    return null;
   }
   await ensureProductColumns();
   try {
     const data = await sql<Product[]>`
       SELECT * FROM products
       WHERE id = ${id}
+      LIMIT 1
     `;
-    return data[0];
+    return data[0] || null;
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch product.");

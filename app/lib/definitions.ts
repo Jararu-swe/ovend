@@ -185,23 +185,102 @@ export type DiscountCode = {
   created_at: string;
 };
 
+// Subscription System Types
+
+export type SubscriptionTier = 'starter' | 'pro' | 'business';
+
+export type SubscriptionStatus = 'active' | 'trial' | 'past_due' | 'inactive' | 'cancelled';
+
+export type SubscriptionPlan = {
+  id: string;
+  tier: SubscriptionTier;
+  name: string;
+  price_kobo: number;
+  transaction_fee_percentage: number;
+  product_limit: number;
+  features: SubscriptionFeatures;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SubscriptionFeatures = {
+  analytics: boolean;
+  advanced_analytics?: boolean;
+  team_members: boolean;
+  custom_domain: boolean;
+  priority_support: boolean;
+  theme_level: 'basic' | 'premium' | 'exclusive';
+};
+
+export type SubscriptionPayment = {
+  id: string;
+  vendor_id: string;
+  amount_kobo: number;
+  reference: string;
+  tier: SubscriptionTier;
+  status: 'paid' | 'failed' | 'pending';
+  billing_period_start: string;
+  billing_period_end: string;
+  paid_at: string;
+  created_at: string;
+};
+
+export type VendorSubscriptionInfo = {
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  expires_at: string | null;
+  last_payment_reference: string | null;
+  updated_at: string;
+  plan: SubscriptionPlan;
+  grace_days_remaining: number | null;
+  is_trial: boolean;
+  trial_days_remaining: number | null;
+};
+
+export type TeamMemberPermissions = {
+  products: boolean;
+  orders: boolean;
+  settings: boolean;
+};
+
 export type TeamMember = {
   id: string;
   vendor_id: string;
-  user_id: string;
-  role: 'owner' | 'admin' | 'assistant';
-  permissions: {
-    products: boolean;
-    orders: boolean;
-    settings: boolean;
-  };
-  invited_by: string | null;
+  user_id: string | null;
+  email: string;
+  role: 'admin' | 'assistant';
+  permissions: TeamMemberPermissions;
+  invited_by: string;
   invited_at: string;
   accepted_at: string | null;
   status: 'pending' | 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
 };
 
+export type SubscriptionInvoice = {
+  id: string;
+  vendor_id: string;
+  payment_id: string;
+  invoice_number: string;
+  amount_kobo: number;
+  tier: SubscriptionTier;
+  billing_period_start: string;
+  billing_period_end: string;
+  issued_at: string;
+  pdf_url: string | null;
+  created_at: string;
+};
 
+export type SubscriptionEvent = {
+  id: string;
+  vendor_id: string;
+  event_type: string;
+  from_tier: SubscriptionTier | null;
+  to_tier: SubscriptionTier | null;
+  metadata: Record<string, any> | null;
+  created_at: string;
+};
 
 export type StoreTheme = {
   id: string;
