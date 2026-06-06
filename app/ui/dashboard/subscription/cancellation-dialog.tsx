@@ -131,6 +131,12 @@ export default function CancellationDialog({
   if (subscription.plan.features.priority_support) {
     featuresAtRisk.push('Priority support');
   }
+  if (subscription.plan.features.theme_level === 'premium') {
+    featuresAtRisk.push('Premium themes');
+  }
+  if (subscription.plan.features.theme_level === 'exclusive') {
+    featuresAtRisk.push('Exclusive themes');
+  }
 
   return (
     <div

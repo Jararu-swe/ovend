@@ -4,6 +4,7 @@ import {
   getCardShadowClass,
   getCardHoverEffect,
   getSectionSpacing,
+  validatePickupLocation,
 } from './utils';
 
 describe('Theme Styling Helper Functions', () => {
@@ -103,6 +104,142 @@ describe('Theme Styling Helper Functions', () => {
     it('should return spacious spacing', () => {
       const result = getSectionSpacing('spacious');
       expect(result).toEqual({ section: '6rem', internal: '3rem' });
+    });
+  });
+
+  describe('validatePickupLocation', () => {
+    describe('Requirement 8.1: Null location validation', () => {
+      it('should reject null location', () => {
+        const result = validatePickupLocation(null);
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe('Location is required');
+      });
+    });
+
+    describe('Requirement 8.2: Latitude validation', () => {
+      it('should reject latitude below -90', () => {
+        const result = validatePickupLocation({ lat: -91, lng: 0 });
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe('Invalid latitude');
+      });
+
+      it('should reject latitude above 90', () => {
+        const result = validatePickupLocation({ lat: 91, lng: 0 });
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe('Invalid latitude');
+      });
+
+      it('should accept latitude at -90 boundary', () => {
+        const result = validatePickupLocation({ lat: -90, lng: 0 });
+        expect(result.valid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
+
+      it('should accept latitude at 90 boundary', () => {
+        const result = validatePickupLocation({ lat: 90, lng: 0 });
+        expect(result.valid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
+
+      it('should accept latitude within valid range', () => {
+        const result = validatePickupLocation({ lat: 6.5244, lng: 3.3792 });
+        expect(result.valid).toBe(true);
+      });
+    });
+
+    describe('Requirement 8.3: Longitude validation', () => {
+      it('should reject longitude below -180', () => {
+        const result = validatePickupLocation({ lat: 0, lng: -181 });
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe('Invalid longitude');
+      });
+
+      it('should reject longitude above 180', () => {
+        const result = validatePickupLocation({ lat: 0, lng: 181 });
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe('Invalid longitude');
+      });
+
+      it('should accept longitude at -180 boundary', () => {
+        const result = validatePickupLocation({ lat: 0, lng: -180 });
+        expect(result.valid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
+
+      it('should accept longitude at 180 boundary', () => {
+        const result = validatePickupLocation({ lat: 0, lng: 180 });
+        expect(result.valid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
+
+      it('should accept longitude within valid range', () => {
+        const result = validatePickupLocation({ lat: 6.5244, lng: 3.3792 });
+        expect(result.valid).toBe(true);
+      });
+    });
+
+    describe('Requirement 8.4: Address details validation', () => {
+      it('should accept location without address details', () => {
+        const result = validatePickupLocation({ lat: 6.5244, lng: 3.3792 });
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept address details with 500 characters', () => {
+        const details = 'a'.repeat(500);
+        const result = validatePickupLocation({ 
+          lat: 6.5244, 
+          lng: 3.3792, 
+          details 
+        });
+        expect(result.valid).toBe(true);
+      });
+
+      it('should reject address details exceeding 500 characters', () => {
+        const details = 'a'.repeat(501);
+        const result = validatePickupLocation({ 
+          lat: 6.5244, 
+          lng: 3.3792, 
+          details 
+        });
+        expect(result.valid).toBe(false);
+        expect(result.error).toBe('Address details too long');
+      });
+
+      it('should accept valid address details', () => {
+        const result = validatePickupLocation({ 
+          lat: 6.5244, 
+          lng: 3.3792, 
+          details: '123 Market Street, Ikeja, Lagos'
+        });
+        expect(result.valid).toBe(true);
+      });
+    });
+
+    describe('Requirement 8.5: Complete validation success', () => {
+      it('should accept valid location with all fields', () => {
+        const result = validatePickupLocation({
+          lat: 6.5244,
+          lng: 3.3792,
+          details: '123 Market Street, Ikeja, Lagos'
+        });
+        expect(result.valid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
+
+      it('should validate multiple correct examples', () => {
+        const validLocations = [
+          { lat: 0, lng: 0, details: 'Null Island' },
+          { lat: 6.4281, lng: 3.4219, details: 'Victoria Island, Lagos' },
+          { lat: -33.8688, lng: 151.2093, details: 'Sydney, Australia' },
+          { lat: 51.5074, lng: -0.1278, details: 'London, UK' },
+        ];
+
+        validLocations.forEach(location => {
+          const result = validatePickupLocation(location);
+          expect(result.valid).toBe(true);
+          expect(result.error).toBeUndefined();
+        });
+      });
     });
   });
 });

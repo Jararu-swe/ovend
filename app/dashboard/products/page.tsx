@@ -1,4 +1,4 @@
-import { ShoppingBagIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ShoppingBagIcon, PlusIcon, PencilSquareIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { fetchProductsList } from '@/app/lib/data';
 import { auth } from '@/auth';
@@ -6,11 +6,15 @@ import { formatCurrency } from '@/app/lib/utils';
 import Image from 'next/image';
 import { deleteProduct } from '@/app/lib/actions';
 import ContextualGuideBanner from '@/app/ui/dashboard/contextual-guide-banner';
+import { getProductLimit } from '@/app/lib/subscriptions';
 
 export default async function ProductsPage() {
   const session = await auth();
   const vendorId = session?.user?.id as string;
   const products = await fetchProductsList(vendorId);
+  const productLimit = await getProductLimit(vendorId);
+  const productCount = products.length;
+  const isAtLimit = productCount >= productLimit;
 
   return (
     <div className="space-y-6">
@@ -27,14 +31,51 @@ export default async function ProductsPage() {
             Manage your product catalogue and availability.
           </p>
         </div>
-        <Link
-          href="/dashboard/products/create"
-          id="add-product-btn"
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400"
-        >
-          <PlusIcon className="h-4 w-4" />
-          Add Product
-        </Link>
+        {isAtLimit ? (
+          <span
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-200 px-4 py-2.5 text-sm font-medium text-slate-400 cursor-not-allowed"
+            title={`You've reached your limit of ${productLimit} products`}
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add Product
+          </span>
+        ) : (
+          <Link
+            href="/dashboard/products/create"
+            id="add-product-btn"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add Product
+          </Link>
+        )}
+      </div>
+
+      {/* Product Usage Indicator */}
+      <div className={`flex items-center justify-between rounded-xl border px-4 py-3 ${isAtLimit ? 'border-amber-200 bg-amber-50' : 'border-slate-100 bg-white'}`}>
+        <div className="flex items-center gap-3">
+          {isAtLimit && (
+            <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0" />
+          )}
+          <div>
+            <p className={`text-sm font-medium ${isAtLimit ? 'text-amber-800' : 'text-slate-700'}`}>
+              {productCount} / {productLimit} products used
+            </p>
+            {isAtLimit && (
+              <p className="text-xs text-amber-600 mt-0.5">
+                You&apos;ve reached your plan&apos;s product limit.
+              </p>
+            )}
+          </div>
+        </div>
+        {isAtLimit && (
+          <Link
+            href="/dashboard/billing"
+            className="text-sm font-medium text-emerald-600 hover:text-emerald-500 transition-colors"
+          >
+            Upgrade plan →
+          </Link>
+        )}
       </div>
 
       {products.length === 0 ? (

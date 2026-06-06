@@ -12,7 +12,8 @@ import {
   ClockIcon,
   GlobeAltIcon,
   BanknotesIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 import { useSound } from '@/app/lib/sound-manager';
@@ -22,6 +23,11 @@ import {
   type StoreHoursJson,
   parseHHMM,
 } from '@/app/lib/store-availability';
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/app/ui/store/location-picker'), {
+  ssr: false,
+});
 
 const DAY_LABELS: Record<StoreHoursDayKey, string> = {
   mon: 'Monday',
@@ -104,6 +110,15 @@ export default function SettingsForm({ user, children }: { user: User; children?
   const tzValue = user.store_timezone?.trim() || 'Africa/Lagos';
   const acceptingDefault = user.accepting_orders !== false;
   const tzOptions = Array.from(new Set([tzValue, ...COMMON_TIMEZONES]));
+
+  // Pickup Location State
+  const [offersPickup, setOffersPickup] = useState(user.offers_pickup ?? false);
+  const [pickupLocation, setPickupLocation] = useState<{lat: number, lng: number} | null>(
+    user.pickup_latitude && user.pickup_longitude 
+      ? { lat: user.pickup_latitude, lng: user.pickup_longitude }
+      : null
+  );
+  const [pickupAddressDetails, setPickupAddressDetails] = useState(user.pickup_address_details || '');
 
   useEffect(() => {
     setIsReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -459,6 +474,90 @@ export default function SettingsForm({ user, children }: { user: User; children?
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Delivery Options Section */}
+      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <TruckIcon className="h-5 w-5 text-slate-400" />
+          <h2 className="text-base font-semibold text-slate-800">Delivery Options</h2>
+        </div>
+        <p className="mb-4 text-xs text-slate-500">
+          Configure how customers can receive their orders
+        </p>
+        
+        <div className="space-y-4">
+          {/* Offers Pickup Toggle */}
+          <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-100">
+            <input
+              type="checkbox"
+              checked={offersPickup}
+              onChange={(e) => setOffersPickup(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            <span>
+              <span className="block text-sm font-medium text-slate-800">I offer pickup for my orders</span>
+              <span className="block text-xs text-slate-500 mt-0.5">
+                Allow customers to collect orders from your location instead of delivery
+              </span>
+            </span>
+          </label>
+
+          {/* Hidden input for offers_pickup */}
+          <input type="hidden" name="offers_pickup" value={offersPickup ? 'true' : 'false'} />
+
+          {/* Conditionally render LocationPicker when pickup is enabled */}
+          {offersPickup && (
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Pickup Location
+                </label>
+                <LocationPicker
+                  onLocationSelect={(lat, lng, address) => {
+                    setPickupLocation({ lat, lng });
+                    if (address !== undefined) {
+                      setPickupAddressDetails(address);
+                    }
+                  }}
+                  initialLat={pickupLocation?.lat}
+                  initialLng={pickupLocation?.lng}
+                />
+                {state.errors?.pickup_location && (
+                  <p className="mt-2 text-sm text-red-500">{state.errors.pickup_location[0]}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="pickup_address_details" className="block text-sm font-medium text-slate-700 mb-1">
+                  Pickup Address Details
+                </label>
+                <textarea
+                  id="pickup_address_details"
+                  name="pickup_address_details"
+                  rows={3}
+                  maxLength={500}
+                  value={pickupAddressDetails}
+                  onChange={(e) => setPickupAddressDetails(e.target.value)}
+                  placeholder="e.g. Shop 4, Blue Building, Near Main Gate..."
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 resize-none"
+                />
+                <div className="mt-1 flex items-center justify-between">
+                  <p className="text-xs text-slate-400">
+                    Provide clear directions for customers to find your pickup location
+                  </p>
+                  <p className={`text-xs ${pickupAddressDetails.length > 500 ? 'text-red-500' : 'text-slate-400'}`}>
+                    {pickupAddressDetails.length}/500
+                  </p>
+                </div>
+              </div>
+
+              {/* Hidden inputs for pickup location coordinates */}
+              <input type="hidden" name="pickup_latitude" value={pickupLocation?.lat ?? ''} />
+              <input type="hidden" name="pickup_longitude" value={pickupLocation?.lng ?? ''} />
+            </div>
+          )}
         </div>
       </div>
 

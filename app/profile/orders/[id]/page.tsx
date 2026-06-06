@@ -49,7 +49,24 @@ export default async function OrderDetail(props: { params: Promise<{ id: string 
       </div>
 
       <div className="space-y-6">
-        {/* Tracker */}
+        {/* Location Display - Conditional based on delivery_type */}
+        {order.delivery_type === 'pickup' && order.vendor_pickup_latitude && order.vendor_pickup_longitude && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <MapPinIcon className="h-5 w-5 text-emerald-500" /> Pickup Location
+            </h2>
+            <div className="h-64 w-full rounded-xl overflow-hidden border border-slate-200 shadow-inner z-0">
+              <ProfileOrderMap lat={order.vendor_pickup_latitude} lng={order.vendor_pickup_longitude} />
+            </div>
+            {order.vendor_pickup_address_details && (
+              <p className="mt-4 text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <span className="font-bold block text-slate-900 mb-1">Address:</span>
+                {order.vendor_pickup_address_details}
+              </p>
+            )}
+          </div>
+        )}
+
         {order.delivery_type === 'delivery' && order.delivery_latitude && order.delivery_longitude && (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">

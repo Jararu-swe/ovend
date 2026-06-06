@@ -10,6 +10,7 @@ import {
   Product,
   User,
   Order,
+  Location,
 } from "./definitions";
 import { formatCurrency } from "./utils";
 import {
@@ -909,5 +910,202 @@ export async function fetchRelatedGuides(
   } catch (error) {
     console.error("Database Error (fetchRelatedGuides):", error);
     return [];
+  }
+}
+
+// ==================== VENDOR PICKUP LOCATION ====================
+
+/**
+ * Save vendor pickup location to database
+ * 
+ * Implements Function 1 from design.md: saveVendorPickupLocation()
+ * 
+ * @param vendorId - UUID of the vendor
+ * @param location - Location object with lat, lng, and optional details
+ * @returns Promise resolving to success/error response
+ * 
+ * Preconditions:
+ * - vendorId is a valid UUID string
+ * - location.lat is between -90 and 90 (valid latitude)
+ * - location.lng is between -180 and 180 (valid longitude)
+ * - location.details is optional string with max 500 characters
+ * 
+ * Postconditions:
+ * - If successful: Returns { success: true } and vendor's pickup location is updated in database
+ * - If validation fails: Returns { success: false, error: descriptive message }
+ * - If database error: Returns { success: false, error: 'Database update failed' }
+ * - No side effects if any precondition fails
+ * 
+ * Requirement: 1.4
+ */
+export async function saveVendorPickupLocation(
+  vendorId: string,
+  location: Location
+): Promise<{ success: boolean; error?: string }> {
+  // Validate input parameters
+  if (!vendorId || typeof vendorId !== 'string') {
+    return { success: false, error: 'Invalid vendor ID' };
+  }
+
+  // Validate location coordinates
+  if (typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+    return { success: false, error: 'Invalid location coordinates' };
+  }
+
+  if (location.lat < -90 || location.lat > 90) {
+    return { success: false, error: 'Invalid latitude' };
+  }
+
+  if (location.lng < -180 || location.lng > 180) {
+    return { success: false, error: 'Invalid longitude' };
+  }
+
+  // Validate address details length
+  if (location.details && location.details.length > 500) {
+    return { success: false, error: 'Address details too long' };
+  }
+
+  try {
+    // Update vendor pickup location in database
+    await sql`
+      UPDATE users
+      SET 
+        pickup_latitude = ${location.lat},
+        pickup_longitude = ${location.lng},
+        pickup_address_details = ${location.details || null}
+      WHERE id = ${vendorId}
+    `;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Database Error (saveVendorPickupLocation):', error);
+    return { success: false, error: 'Database update failed' };
+  }
+}
+
+/**
+ * Clear vendor pickup location from database
+ * 
+ * Implements clearVendorPickupLocation() helper function (Task 2.6)
+ * 
+ * Sets all pickup location fields to null when a vendor disables offers_pickup option.
+ * This ensures clean state when pickup is turned off.
+ * 
+ * @param vendorId - UUID of the vendor
+ * @returns Promise resolving to success/error response
+ * 
+ * Preconditions:
+ * - vendorId is a valid UUID string
+ * 
+ * Postconditions:
+ * - If successful: Returns { success: true } and all pickup location fields are set to null
+ * - If database error: Returns { success: false, error: 'Database update failed' }
+ * - No side effects if vendorId is invalid
+ * 
+ * Requirements: 2.3, 4.3
+ */
+export async function clearVendorPickupLocation(
+  vendorId: string
+): Promise<{ success: boolean; error?: string }> {
+  // Validate input parameter
+  if (!vendorId || typeof vendorId !== 'string') {
+    return { success: false, error: 'Invalid vendor ID' };
+  }
+
+  try {
+    // Clear all pickup location fields in database
+    await sql`
+      UPDATE users
+      SET 
+        pickup_latitude = NULL,
+        pickup_longitude = NULL,
+        pickup_address_details = NULL
+      WHERE id = ${vendorId}
+    `;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Database Error (clearVendorPickupLocation):', error);
+    return { success: false, error: 'Database update failed' };
+  }
+}
+
+/**
+ * Fetch vendor pickup location from database
+ * 
+ * Implements Function 2 from design.md: fetchVendorPickupLocation()
+ * 
+ * @param vendorId - UUID of the vendor
+ * @returns Promise resolving to Location object or null
+ * 
+ * Preconditions:
+ * - vendorId is a valid UUID string
+ * - Database connection is available
+ * 
+ * Postconditions:
+ * - Returns Location object if vendor has pickup location stored
+ * - Returns null if vendor has no pickup location or offers_pickup is false
+ * - No mutations to database state
+ * 
+ * Requirements: 1.5
+ */
+export async function fetchVendorPickupLocation(
+  vendorId: string
+): Promise<Location | null> {
+  // Validate input parameter
+  if (!vendorId || typeof vendorId !== 'string') {
+    console.warn('fetchVendorPickupLocation: Invalid vendor ID');
+    return null;
+  }
+
+  try {
+    // Query vendor pickup location data
+    const result = await sql<
+      {
+        pickup_latitude: number | null;
+        pickup_longitude: number | null;
+        pickup_address_details: string | null;
+        offers_pickup: boolean | null;
+      }[]
+    >`
+      SELECT 
+        pickup_latitude,
+        pickup_longitude,
+        pickup_address_details,
+        offers_pickup
+      FROM users
+      WHERE id = ${vendorId}
+      LIMIT 1
+    `;
+
+    // Check if vendor exists and has data
+    if (!result || result.length === 0) {
+      return null;
+    }
+
+    const vendor = result[0];
+
+    // Return null if vendor doesn't offer pickup
+    if (!vendor.offers_pickup) {
+      return null;
+    }
+
+    // Return null if pickup location is incomplete
+    if (
+      vendor.pickup_latitude === null ||
+      vendor.pickup_longitude === null
+    ) {
+      return null;
+    }
+
+    // Return Location object
+    return {
+      lat: vendor.pickup_latitude,
+      lng: vendor.pickup_longitude,
+      details: vendor.pickup_address_details || undefined,
+    };
+  } catch (error) {
+    console.error('Database Error (fetchVendorPickupLocation):', error);
+    return null;
   }
 }

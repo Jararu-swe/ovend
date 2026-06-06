@@ -43,6 +43,14 @@ const features: FeatureItem[] = [
     label: 'Priority Support',
     getValue: (plan) => plan.features.priority_support,
   },
+  {
+    label: 'Premium Themes',
+    getValue: (plan) => plan.features.theme_level === 'premium' || plan.features.theme_level === 'exclusive',
+  },
+  {
+    label: 'Exclusive Themes',
+    getValue: (plan) => plan.features.theme_level === 'exclusive',
+  },
 ];
 
 export default function FeatureList({ plan }: FeatureListProps) {

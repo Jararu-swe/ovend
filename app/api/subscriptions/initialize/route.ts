@@ -58,7 +58,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       authorization_url: result.authorization_url,
-      reference: result.reference
+      reference: result.reference,
+      email: session.user.email
     });
   } catch (error) {
     console.error('Error initializing subscription payment:', error);

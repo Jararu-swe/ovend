@@ -21,6 +21,10 @@ export type User = {
   delivery_latitude?: number | null;
   delivery_longitude?: number | null;
   delivery_address_details?: string | null;
+  pickup_latitude?: number | null;
+  pickup_longitude?: number | null;
+  pickup_address_details?: string | null;
+  offers_pickup?: boolean | null;
   subscription_status?: 'active' | 'past_due' | 'inactive' | 'trial' | string | null;
   subscription_expires_at?: string | null;
   subscription_last_payment_reference?: string | null;
@@ -150,6 +154,12 @@ export type OrderItem = {
   quantity: number;
 };
 
+export type Location = {
+  lat: number;
+  lng: number;
+  details?: string;
+};
+
 export type Order = {
   id: string;
   vendor_id: string;
@@ -166,6 +176,9 @@ export type Order = {
   delivery_latitude: number | null;
   delivery_longitude: number | null;
   delivery_address_details: string | null;
+  vendor_pickup_latitude: number | null;
+  vendor_pickup_longitude: number | null;
+  vendor_pickup_address_details: string | null;
   discount_code?: string | null;
   discount_amount?: number;
   created_at: string;

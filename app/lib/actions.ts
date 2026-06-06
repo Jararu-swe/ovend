@@ -73,6 +73,10 @@ const ProfileSchema = z.object({
   accepting_orders: z.preprocess((v) => v === 'on' || v === true, z.boolean()).optional().default(true),
   store_closed_note: z.string().max(280).optional().nullable(),
   store_hours_json: z.string().optional().nullable(),
+  pickup_latitude: z.coerce.number().optional().nullable(),
+  pickup_longitude: z.coerce.number().optional().nullable(),
+  pickup_address_details: z.string().max(500, { message: 'Address details must be 500 characters or less.' }).optional().nullable(),
+  offers_pickup: z.preprocess((v) => v === 'on' || v === true, z.boolean()).optional().default(false),
 });
 
 const ThemeSchema = z.object({
@@ -200,6 +204,10 @@ export async function updateProfile(prevState: State | undefined, formData: Form
     accepting_orders: formData.get('accepting_orders'),
     store_closed_note: formData.get('store_closed_note'),
     store_hours_json: formData.get('store_hours_json'),
+    pickup_latitude: formData.get('pickup_latitude'),
+    pickup_longitude: formData.get('pickup_longitude'),
+    pickup_address_details: formData.get('pickup_address_details'),
+    offers_pickup: formData.get('offers_pickup'),
   });
 
   if (!validatedFields.success) {
@@ -212,8 +220,17 @@ export async function updateProfile(prevState: State | undefined, formData: Form
   const { 
     store_name, store_slug, store_description, whatsapp_number, 
     bank_name, account_number, account_name, category, location_state,
-    store_timezone, accepting_orders, store_closed_note, store_hours_json
+    store_timezone, accepting_orders, store_closed_note, store_hours_json,
+    pickup_latitude, pickup_longitude, pickup_address_details, offers_pickup
   } = validatedFields.data;
+
+  // Validate pickup location requirement
+  if (offers_pickup && (pickup_latitude === null || pickup_longitude === null)) {
+    return {
+      errors: { offers_pickup: ['Pickup location is required when offering pickup'] },
+      message: 'Validation failed',
+    };
+  }
 
   // Validate timezone
   if (store_timezone && !isValidIanaTimeZone(store_timezone)) {
@@ -264,7 +281,11 @@ export async function updateProfile(prevState: State | undefined, formData: Form
           store_timezone = ${store_timezone},
           accepting_orders = ${accepting_orders},
           store_closed_note = ${store_closed_note ?? null},
-          store_hours = ${store_hours ? sql.json(store_hours) : null}
+          store_hours = ${store_hours ? sql.json(store_hours) : null},
+          pickup_latitude = ${offers_pickup ? (pickup_latitude ?? null) : null},
+          pickup_longitude = ${offers_pickup ? (pickup_longitude ?? null) : null},
+          pickup_address_details = ${offers_pickup ? (pickup_address_details ?? null) : null},
+          offers_pickup = ${offers_pickup}
       WHERE id = ${session.user.id}
     `;
     
@@ -343,6 +364,20 @@ export async function createProduct(prevState: State | undefined, formData: Form
 
   try {
     await ensureProductColumns();
+
+    // Enforce product limit based on subscription tier
+    const { getProductLimit } = await import('@/app/lib/subscriptions');
+    const productLimit = await getProductLimit(session.user.id);
+    const [countResult] = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text as count FROM products WHERE vendor_id = ${session.user.id}
+    `;
+    const currentCount = Number(countResult?.count || 0);
+    if (currentCount >= productLimit) {
+      return {
+        message: `You've reached your plan's limit of ${productLimit} products. Please upgrade your subscription to add more.`,
+      };
+    }
+
     await sql`
       INSERT INTO products (vendor_id, name, description, price, compare_at_price, status, category, stock_quantity, image_url, gallery_images, options)
       VALUES (${session.user.id}, ${name}, ${description}, ${priceKobo}, ${compareAtPriceKobo}, ${status}, ${category ?? null}, ${stock_quantity ?? null}, ${image_url || null}, ${gallery_images}, ${finalOptions})
@@ -510,9 +545,10 @@ export async function createOrder(
 ) {
   await ensureDiscountSchema();
 
-  // Check store availability before allowing order
+  // Check store availability before allowing order and fetch pickup location
   const [vendor] = await sql`
-    SELECT accepting_orders, store_hours, store_timezone, store_closed_note 
+    SELECT accepting_orders, store_hours, store_timezone, store_closed_note,
+           pickup_latitude, pickup_longitude, pickup_address_details, offers_pickup
     FROM users WHERE id = ${vendorId} LIMIT 1
   `;
   
@@ -536,6 +572,17 @@ export async function createOrder(
   const delivery_latitude = formData.get('delivery_latitude') ? parseFloat(formData.get('delivery_latitude') as string) : null;
   const delivery_longitude = formData.get('delivery_longitude') ? parseFloat(formData.get('delivery_longitude') as string) : null;
   const delivery_address_details = formData.get('delivery_address_details') as string;
+
+  // Extract vendor pickup location for pickup orders
+  let vendor_pickup_latitude = null;
+  let vendor_pickup_longitude = null;
+  let vendor_pickup_address_details = null;
+
+  if (delivery_type === 'pickup' && vendor && vendor.offers_pickup) {
+    vendor_pickup_latitude = vendor.pickup_latitude;
+    vendor_pickup_longitude = vendor.pickup_longitude;
+    vendor_pickup_address_details = vendor.pickup_address_details;
+  }
 
   const session = await auth();
   const customer_account_id = session?.user?.id && (session.user as any).role === 'customer' ? session.user.id : null;
@@ -565,6 +612,9 @@ export async function createOrder(
         delivery_latitude,
         delivery_longitude,
         delivery_address_details,
+        vendor_pickup_latitude,
+        vendor_pickup_longitude,
+        vendor_pickup_address_details,
         customer_account_id
       )
       VALUES (
@@ -584,6 +634,9 @@ export async function createOrder(
         ${delivery_latitude},
         ${delivery_longitude},
         ${delivery_address_details || null},
+        ${vendor_pickup_latitude},
+        ${vendor_pickup_longitude},
+        ${vendor_pickup_address_details || null},
         ${customer_account_id}
       )
       RETURNING id

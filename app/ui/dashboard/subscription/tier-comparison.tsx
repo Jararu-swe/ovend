@@ -10,7 +10,9 @@ import {
 } from '@/app/lib/definitions';
 import TierCard from './tier-card';
 import CancellationDialog from './cancellation-dialog';
-import { upgradeSubscription, startTrial } from '@/app/lib/subscription-actions';
+import PaymentModal from './payment-modal';
+import DowngradeDialog from './downgrade-dialog';
+import { startTrial } from '@/app/lib/subscription-actions';
 
 interface TierComparisonProps {
   plans: SubscriptionPlan[];
@@ -31,6 +33,11 @@ export default function TierComparison({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [downgradeTarget, setDowngradeTarget] = useState<SubscriptionTier>('starter');
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('pro');
+  const [selectedAmount, setSelectedAmount] = useState<number>(0);
 
   // Sort plans by tier rank (starter -> pro -> business)
   const sortedPlans = [...plans].sort((a, b) => {
@@ -60,24 +67,12 @@ export default function TierComparison({
         return;
       }
 
-      // Initialize payment
-      const callbackUrl = `${window.location.origin}/dashboard/billing`;
-      const result = await upgradeSubscription(tier, callbackUrl);
-
-      if (!result.ok) {
-        setError(result.error || 'Failed to initialize upgrade');
-        setIsLoading(false);
-        return;
-      }
-
-      // Redirect to Paystack payment page
-      if (result.data?.authorization_url) {
-        window.location.href = result.data.authorization_url;
-      } else {
-        throw new Error('No authorization URL returned');
-      }
+      setSelectedTier(tier);
+      setSelectedAmount(plan.price_kobo);
+      setShowPaymentModal(true);
+      setIsLoading(false);
     } catch (err) {
-      console.error('Error upgrading subscription:', err);
+      console.error('Error preparing upgrade:', err);
       setError(
         err instanceof Error ? err.message : 'An unexpected error occurred'
       );
@@ -114,10 +109,18 @@ export default function TierComparison({
 
   /**
    * Handle downgrade flow
-   * Opens cancellation dialog
+   * Opens downgrade dialog
    */
   const handleDowngrade = (tier: SubscriptionTier) => {
-    setShowCancellationDialog(true);
+    setDowngradeTarget(tier);
+    setShowDowngradeDialog(true);
+  };
+
+  /**
+   * Close downgrade dialog
+   */
+  const handleCloseDowngradeDialog = () => {
+    setShowDowngradeDialog(false);
   };
 
   /**
@@ -226,6 +229,21 @@ export default function TierComparison({
           onClose={handleCloseCancellationDialog}
         />
       )}
+
+      {/* Downgrade Dialog */}
+      <DowngradeDialog
+        targetTier={downgradeTarget}
+        isOpen={showDowngradeDialog}
+        onClose={handleCloseDowngradeDialog}
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        tier={selectedTier}
+        amount={selectedAmount}
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+      />
     </section>
   );
 }

@@ -15,12 +15,27 @@ import {
   getBorderRadiusClass,
 } from "@/app/lib/utils";
 import { createOrder, validateDiscountAction } from "@/app/lib/actions";
+import { fetchVendorPickupLocation } from "@/app/lib/data";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 
 const LocationPicker = dynamic(() => import("./location-picker"), {
   ssr: false,
 });
+
+// Import Leaflet components for pickup location display
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
 import {
   TemplateSection,
   TemplateSectionContent,
@@ -208,6 +223,13 @@ export default function Storefront({
   const [discountError, setDiscountError] = useState("");
   const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
 
+  // Vendor pickup location state
+  const [vendorPickupLocation, setVendorPickupLocation] = useState<{
+    lat: number;
+    lng: number;
+    details?: string;
+  } | null>(null);
+
   const activeProducts = products.filter((p) => p.status === "active");
   const activeTheme = useMemo(
     () => previewTheme ?? theme,
@@ -237,6 +259,20 @@ export default function Storefront({
     },
     [],
   );
+
+  // Fetch vendor pickup location when delivery type is pickup
+  useEffect(() => {
+    if (deliveryType === "pickup" && vendor.id) {
+      fetchVendorPickupLocation(vendor.id)
+        .then((location) => {
+          setVendorPickupLocation(location);
+        })
+        .catch((error) => {
+          console.error("Error fetching vendor pickup location:", error);
+          setVendorPickupLocation(null);
+        });
+    }
+  }, [deliveryType, vendor.id]);
 
   const fontSizeClass =
     activeTheme.font_size === "small"
@@ -1906,16 +1942,55 @@ export default function Storefront({
                                     </div>
                                   </div>
                                 ) : (
-                                  <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1 italic">
-                                      Pickup Note (optional)
-                                    </label>
-                                    <textarea
-                                      name="customer_address"
-                                      rows={2}
-                                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition"
-                                      placeholder="Any note about your pickup..."
-                                    />
+                                  <div className="space-y-4">
+                                    {/* Pickup Location Display */}
+                                    <div className="space-y-2">
+                                      <h3 className="text-sm font-bold text-slate-700">
+                                        Pickup Location
+                                      </h3>
+                                      {vendorPickupLocation ? (
+                                        <>
+                                          {/* Map Display */}
+                                          <div className="h-48 w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                                            <MapContainer
+                                              center={[vendorPickupLocation.lat, vendorPickupLocation.lng]}
+                                              zoom={15}
+                                              style={{ height: "100%", width: "100%" }}
+                                              scrollWheelZoom={false}
+                                            >
+                                              <TileLayer
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                              />
+                                              <Marker position={[vendorPickupLocation.lat, vendorPickupLocation.lng]} />
+                                            </MapContainer>
+                                          </div>
+                                          {/* Address Details */}
+                                          {vendorPickupLocation.details && (
+                                            <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                              📍 {vendorPickupLocation.details}
+                                            </p>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <p className="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                          Pickup location information is not available.
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {/* Pickup Note */}
+                                    <div>
+                                      <label className="block text-sm font-bold text-slate-700 mb-1 italic">
+                                        Pickup Note (optional)
+                                      </label>
+                                      <textarea
+                                        name="customer_address"
+                                        rows={2}
+                                        className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition"
+                                        placeholder="Any note about your pickup..."
+                                      />
+                                    </div>
                                   </div>
                                 )}
 

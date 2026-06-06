@@ -6,6 +6,7 @@ import PayoutCard from '@/app/ui/dashboard/payout-card';
 import PayoutHistory from '@/app/ui/dashboard/payout-history';
 import { fetchVendorPayouts } from '@/app/lib/payouts';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { SubscriptionPayment } from '@/app/lib/definitions';
@@ -16,6 +17,7 @@ import GracePeriodWarning from '@/app/ui/dashboard/subscription/grace-period-war
 import CurrentPlanCard from '@/app/ui/dashboard/subscription/current-plan-card';
 import TierComparison from '@/app/ui/dashboard/subscription/tier-comparison';
 import PaymentHistorySection from '@/app/ui/dashboard/subscription/payment-history-section';
+import PaymentVerifier from '@/app/ui/dashboard/subscription/payment-verifier';
 
 export const metadata: Metadata = {
   title: 'Billing',
@@ -128,6 +130,11 @@ export default async function BillingPage() {
               Manage your subscription and request earnings payouts.
             </p>
           </div>
+
+          {/* Payment Verifier - Handles redirect from Paystack */}
+          <Suspense fallback={null}>
+            <PaymentVerifier />
+          </Suspense>
 
           {/* Trial Banner - Only show if status is 'trial' */}
           {subscription.status === 'trial' && (

@@ -203,3 +203,43 @@ export const STORE_CATEGORIES = [
   'Services',
   'Other'
 ];
+
+/**
+ * Validates pickup location data according to requirements 8.1-8.5
+ * 
+ * @param location - Location object to validate (can be null)
+ * @returns Validation result with success status and error message if invalid
+ * 
+ * Validates:
+ * - Location is not null (Requirement 8.1)
+ * - Latitude is in range [-90, 90] (Requirement 8.2)
+ * - Longitude is in range [-180, 180] (Requirement 8.3)
+ * - Address details is 500 characters or less (Requirement 8.4)
+ * - Returns success if all criteria pass (Requirement 8.5)
+ */
+export function validatePickupLocation(
+  location: { lat: number; lng: number; details?: string } | null
+): { valid: boolean; error?: string } {
+  // Requirement 8.1: Null location check
+  if (location === null) {
+    return { valid: false, error: 'Location is required' };
+  }
+
+  // Requirement 8.2: Latitude validation
+  if (location.lat < -90 || location.lat > 90) {
+    return { valid: false, error: 'Invalid latitude' };
+  }
+
+  // Requirement 8.3: Longitude validation
+  if (location.lng < -180 || location.lng > 180) {
+    return { valid: false, error: 'Invalid longitude' };
+  }
+
+  // Requirement 8.4: Address details validation
+  if (location.details && location.details.length > 500) {
+    return { valid: false, error: 'Address details too long' };
+  }
+
+  // Requirement 8.5: All validations passed
+  return { valid: true };
+}

@@ -28,20 +28,29 @@ export default function OrderList({ orders }: { orders: Order[] }) {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   const getWhatsAppUrl = (order: Order) => {
-    const itemsArray: any[] = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
-    const itemsText = itemsArray.map(i => `${i.quantity}x ${i.name}`).join('%0A- ');
-    let locationText = '';
-    if (order.delivery_latitude && order.delivery_longitude) {
-      locationText = `%0A%0ADelivery Location: https://www.google.com/maps/search/?api=1&query=${order.delivery_latitude},${order.delivery_longitude}`;
+    try {
+      const itemsArray: any[] = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+      // Ensure itemsArray is an array
+      if (!Array.isArray(itemsArray) || itemsArray.length === 0) {
+        return '#';
+      }
+      const itemsText = itemsArray.map(i => `${i.quantity}x ${i.name}`).join('%0A- ');
+      let locationText = '';
+      if (order.delivery_latitude && order.delivery_longitude) {
+        locationText = `%0A%0ADelivery Location: https://www.google.com/maps/search/?api=1&query=${order.delivery_latitude},${order.delivery_longitude}`;
+      }
+      const message = `Hello ${order.customer_name}!%0A%0AThank you for your order.%0AHere is a quick summary:%0A- ${itemsText}%0A%0ATotal: ${formatCurrency(order.total_amount)}${locationText}%0A%0AWe are processing this right away!`;
+      
+      // Naively format Nigerian phone numbers for MVP
+      let phone = order.customer_phone.replace(/\D/g, '');
+      if (phone.startsWith('0')) {
+        phone = '234' + phone.substring(1);
+      }
+      return `https://wa.me/${phone}?text=${message}`;
+    } catch (error) {
+      console.error('Error generating WhatsApp URL:', error);
+      return '#';
     }
-    const message = `Hello ${order.customer_name}!%0A%0AThank you for your order.%0AHere is a quick summary:%0A- ${itemsText}%0A%0ATotal: ${formatCurrency(order.total_amount)}${locationText}%0A%0AWe are processing this right away!`;
-    
-    // Naively format Nigerian phone numbers for MVP
-    let phone = order.customer_phone.replace(/\D/g, '');
-    if (phone.startsWith('0')) {
-      phone = '234' + phone.substring(1);
-    }
-    return `https://wa.me/${phone}?text=${message}`;
   };
 
   const getGoogleMapsUrl = (lat: number, lng: number) => {
@@ -66,9 +75,24 @@ export default function OrderList({ orders }: { orders: Order[] }) {
     }
   };
 
-  const filteredOrders = filter === 'All' 
-    ? orders 
-    : orders.filter(order => statusLabels[order.status] === filter);
+  // Define filter logic
+  const getFilteredOrders = () => {
+    switch (filter) {
+      case 'New':
+        return orders.filter(order => order.status === 'new');
+      case 'In Progress':
+        return orders.filter(order => order.status === 'in_progress');
+      case 'Fulfilled':
+        return orders.filter(order => order.status === 'fulfilled');
+      case 'History':
+        return orders.filter(order => order.status === 'fulfilled');
+      case 'All':
+      default:
+        return orders.filter(order => order.status !== 'cancelled');
+    }
+  };
+
+  const filteredOrders = getFilteredOrders();
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     try {
@@ -82,7 +106,7 @@ export default function OrderList({ orders }: { orders: Order[] }) {
     <div className="space-y-6">
       {/* Filter pills */}
       <div className="flex gap-2 flex-wrap">
-        {['All', 'New', 'In Progress', 'Fulfilled'].map((f) => (
+        {['All', 'New', 'In Progress', 'Fulfilled', 'History'].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -116,7 +140,18 @@ export default function OrderList({ orders }: { orders: Order[] }) {
         ) : (
           <div className="divide-y divide-slate-100">
             {filteredOrders.map((order) => {
-              const parsedItems: any[] = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+              let parsedItems: any[] = [];
+              try {
+                parsedItems = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+                // Ensure parsedItems is an array
+                if (!Array.isArray(parsedItems)) {
+                  parsedItems = [];
+                }
+              } catch (error) {
+                console.error('Error parsing order items:', error);
+                parsedItems = [];
+              }
+              
               return (
               <div key={order.id} className="group">
                 <div 
@@ -206,15 +241,50 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                             <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-tight">
                               {order.delivery_type}
                             </span>
-                            {order.delivery_latitude && (
+                            {(order.delivery_type === 'pickup' ? (order.vendor_pickup_latitude) : (order.delivery_latitude)) && (
                               <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-[10px] font-bold text-emerald-600 uppercase tracking-tight flex items-center gap-1">
                                 <MapPinIcon className="h-3 w-3" /> Pin Set
                               </span>
                             )}
                           </div>
 
-                          {order.delivery_latitude && order.delivery_longitude && (
+                          {/* Pickup Location Display */}
+                          {order.delivery_type === 'pickup' && order.vendor_pickup_latitude && order.vendor_pickup_longitude && (
                             <div className="mt-4 space-y-3">
+                              <h6 className="text-xs font-bold text-slate-700">Pickup Location</h6>
+                              <div className="h-40 w-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
+                                <OrderMap lat={order.vendor_pickup_latitude} lng={order.vendor_pickup_longitude} />
+                                <a  
+                                  href={getGoogleMapsUrl(order.vendor_pickup_latitude, order.vendor_pickup_longitude)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/0 hover:bg-slate-900/10 transition-colors group/maplink"
+                                >
+                                  <span className="bg-white/90 px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-700 shadow-lg opacity-0 group-hover/maplink:opacity-100 transition-opacity">
+                                    Open in Google Maps
+                                  </span>
+                                </a>
+                              </div>
+                              {order.vendor_pickup_address_details && (
+                                <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                  {order.vendor_pickup_address_details}
+                                </p>
+                              )}
+                              <a
+                                href={getGoogleMapsUrl(order.vendor_pickup_latitude, order.vendor_pickup_longitude)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                              >
+                                <MapPinIcon className="h-4 w-4 text-emerald-500" /> View in Google Maps
+                              </a>
+                            </div>
+                          )}
+
+                          {/* Delivery Location Display */}
+                          {order.delivery_type === 'delivery' && order.delivery_latitude && order.delivery_longitude && (
+                            <div className="mt-4 space-y-3">
+                              <h6 className="text-xs font-bold text-slate-700">Delivery Location</h6>
                               <div className="h-40 w-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
                                 <OrderMap lat={order.delivery_latitude} lng={order.delivery_longitude} />
                                 <a  

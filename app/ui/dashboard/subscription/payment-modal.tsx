@@ -14,16 +14,7 @@ interface PaymentModalProps {
   onClose: () => void;
 }
 
-// Declare Paystack type for TypeScript
-declare global {
-  interface Window {
-    PaystackPop?: {
-      setup: (config: any) => {
-        openIframe: () => void;
-      };
-    };
-  }
-}
+
 
 export default function PaymentModal({
   tier,
@@ -112,36 +103,38 @@ export default function PaymentModal({
         throw new Error(result.error || 'Failed to initialize payment');
       }
 
-      const { authorization_url, reference } = result.data;
+      const { authorization_url, reference, email: userEmail } = result.data;
 
-      if (!authorization_url || !reference) {
+      if (!authorization_url || !reference || !userEmail) {
         throw new Error('Invalid payment initialization response');
       }
 
       // Initialize Paystack popup
       const handler = window.PaystackPop!.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: '', // Will be filled by the API
-        amount: amount * 100, // Convert to kobo
+        email: userEmail,
+        amount: amount, // Amount is already in kobo from plan.price_kobo
         ref: reference,
         onClose: () => {
           setIsProcessing(false);
         },
-        callback: async (response: any) => {
-          // Verify payment
-          const verifyResult = await verifyPayment(response.reference);
+        callback: (response: any) => {
+          void (async () => {
+            // Verify payment
+            const verifyResult = await verifyPayment(response.reference);
 
-          if (!verifyResult.ok) {
-            setError(
-              verifyResult.error || 'Payment verification failed. Please contact support.'
-            );
-            setIsProcessing(false);
-            return;
-          }
+            if (!verifyResult.ok) {
+              setError(
+                verifyResult.error || 'Payment verification failed. Please contact support.'
+              );
+              setIsProcessing(false);
+              return;
+            }
 
-          // Success - refresh the page
-          router.refresh();
-          onClose();
+            // Success - refresh the page
+            router.refresh();
+            onClose();
+          })();
         },
       });
 

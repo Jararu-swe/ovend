@@ -177,7 +177,8 @@ export async function getVendorSubscription(vendorId: string): Promise<VendorSub
   if (!users[0]) return null;
   
   const user = users[0];
-  const plan = await getSubscriptionPlan(user.subscription_tier as SubscriptionTier);
+  const tier = (user.subscription_tier || 'starter') as SubscriptionTier;
+  const plan = await getSubscriptionPlan(tier);
   
   if (!plan) return null;
   
@@ -199,7 +200,7 @@ export async function getVendorSubscription(vendorId: string): Promise<VendorSub
   }
   
   return {
-    tier: user.subscription_tier as SubscriptionTier,
+    tier: tier,
     status: user.subscription_status as SubscriptionStatus,
     expires_at: user.subscription_expires_at,
     last_payment_reference: user.subscription_last_payment_reference,

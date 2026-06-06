@@ -26,6 +26,7 @@ import {
   type StoreHoursJson,
   parseHHMM,
 } from "@/app/lib/store-availability";
+import OnboardingPickupStep from "@/app/ui/dashboard/onboarding-pickup-step";
 
 interface OnboardingWizardProps {
   user: User;
@@ -60,7 +61,21 @@ export default function OnboardingWizard({
   const [themeError, setThemeError] = useState<string | null>(null);
 
   const storeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/s/${storeSlug || user.store_slug}`;
-  const totalSteps = 7;
+  const totalSteps = 8; // Updated from 7 to 8 to include pickup step
+
+  // Pickup Location State
+  const [offersPickup, setOffersPickup] = useState(user.offers_pickup || false);
+  const [pickupLatitude, setPickupLatitude] = useState<number | null>(
+    user.pickup_latitude || null
+  );
+  const [pickupLongitude, setPickupLongitude] = useState<number | null>(
+    user.pickup_longitude || null
+  );
+  const [pickupAddressDetails, setPickupAddressDetails] = useState(
+    user.pickup_address_details || ""
+  );
+  const [isSavingPickup, setIsSavingPickup] = useState(false);
+  const [pickupError, setPickupError] = useState<string | null>(null);
 
   // Availability State
   const [timezone, setTimezone] = useState(
@@ -217,6 +232,58 @@ export default function OnboardingWizard({
       setIsSavingAvailability(false);
       return false;
     }
+  };
+
+  const savePickupLocation = async () => {
+    setPickupError(null);
+    setIsSavingPickup(true);
+
+    // Validate: if offers pickup is enabled, location must be set
+    if (offersPickup && (!pickupLatitude || !pickupLongitude)) {
+      setPickupError("Please select a pickup location on the map.");
+      setIsSavingPickup(false);
+      return false;
+    }
+
+    try {
+      const resp = await fetch("/api/vendor/onboarding-pickup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          offers_pickup: offersPickup,
+          pickup_latitude: offersPickup ? pickupLatitude : null,
+          pickup_longitude: offersPickup ? pickupLongitude : null,
+          pickup_address_details: offersPickup ? pickupAddressDetails : null,
+        }),
+      });
+
+      const body = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setPickupError(body?.error || "Failed to save pickup location.");
+        setIsSavingPickup(false);
+        return false;
+      }
+
+      setIsSavingPickup(false);
+      router.refresh();
+      return true;
+    } catch (e: any) {
+      setPickupError(e?.message || "Failed to save pickup location.");
+      setIsSavingPickup(false);
+      return false;
+    }
+  };
+
+  const handlePickupDataChange = (data: {
+    offersPickup: boolean;
+    pickupLatitude: number | null;
+    pickupLongitude: number | null;
+    pickupAddressDetails: string | null;
+  }) => {
+    setOffersPickup(data.offersPickup);
+    setPickupLatitude(data.pickupLatitude);
+    setPickupLongitude(data.pickupLongitude);
+    setPickupAddressDetails(data.pickupAddressDetails || "");
   };
 
   return (
@@ -699,15 +766,54 @@ export default function OnboardingWizard({
                 disabled={isSavingAvailability}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
               >
-                {isSavingAvailability ? "Saving…" : "Next: Choose Theme"}
+                {isSavingAvailability ? "Saving…" : "Next: Pickup Location"}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 5: Choose Theme */}
+        {/* Step 5: Pickup Location */}
         {step === 5 && (
+          <div className="space-y-6">
+            <OnboardingPickupStep
+              initialOffersPickup={offersPickup}
+              initialPickupLatitude={pickupLatitude}
+              initialPickupLongitude={pickupLongitude}
+              initialPickupAddressDetails={pickupAddressDetails}
+              onPickupDataChange={handlePickupDataChange}
+            />
+
+            {pickupError && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {pickupError}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(4)}
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+              >
+                Back
+              </button>
+              <button
+                onClick={async () => {
+                  const ok = await savePickupLocation();
+                  if (ok) setStep(6);
+                }}
+                disabled={isSavingPickup}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
+              >
+                {isSavingPickup ? "Saving…" : offersPickup ? "Next: Choose Theme" : "Skip for now"}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Choose Theme */}
+        {step === 6 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -762,7 +868,7 @@ export default function OnboardingWizard({
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(5)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
@@ -770,7 +876,7 @@ export default function OnboardingWizard({
               <button
                 onClick={async () => {
                   const ok = await saveTheme();
-                  if (ok) setStep(6);
+                  if (ok) setStep(7);
                 }}
                 disabled={isSavingTheme}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
@@ -782,8 +888,8 @@ export default function OnboardingWizard({
           </div>
         )}
 
-        {/* Step 6: Add Products */}
-        {step === 6 && (
+        {/* Step 7: Add Products */}
+        {step === 7 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
@@ -829,13 +935,13 @@ export default function OnboardingWizard({
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(5)}
+                onClick={() => setStep(6)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
               </button>
               <button
-                onClick={() => setStep(7)}
+                onClick={() => setStep(8)}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
               >
                 {hasProducts ? "Next" : "Skip for now"}
@@ -845,8 +951,8 @@ export default function OnboardingWizard({
           </div>
         )}
 
-        {/* Step 7: Share Your Link */}
-        {step === 7 && (
+        {/* Step 8: Share Your Link */}
+        {step === 8 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-indigo-100 p-4 mb-4 text-2xl">
@@ -902,7 +1008,7 @@ export default function OnboardingWizard({
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(6)}
+                onClick={() => setStep(7)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
