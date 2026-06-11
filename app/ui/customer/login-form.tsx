@@ -5,7 +5,6 @@ import {
   KeyIcon,
   ExclamationCircleIcon,
   ArrowRightIcon,
-  UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -17,7 +16,7 @@ import GoogleSignInButton from '@/app/ui/google-signin-button';
 export default function CustomerLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/profile';
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
   const registered = searchParams.get('registered');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,13 +58,8 @@ export default function CustomerLoginForm() {
 
       {/* Card */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-            <UserCircleIcon className="h-5 w-5" />
-          </div>
-          <h1 className="text-xl font-semibold text-slate-900">Welcome back</h1>
-        </div>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-xl font-semibold text-slate-900">Welcome back</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Sign in to your customer profile
         </p>
 
@@ -139,7 +133,7 @@ export default function CustomerLoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
           >
             {isSubmitting ? 'Signing in…' : 'Sign in'}
             {!isSubmitting && <ArrowRightIcon className="h-4 w-4" />}

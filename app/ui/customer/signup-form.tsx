@@ -7,7 +7,6 @@ import {
   PhoneIcon,
   ExclamationCircleIcon,
   ArrowRightIcon,
-  UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
@@ -19,7 +18,7 @@ import GoogleSignInButton from '@/app/ui/google-signin-button';
 export default function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/profile';
+  const callbackUrl = searchParams.get('callbackUrl') || '/';
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,13 +50,8 @@ export default function SignupForm() {
 
       {/* Card */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-            <UserCircleIcon className="h-5 w-5" />
-          </div>
-          <h1 className="text-xl font-semibold text-slate-900">Create your account</h1>
-        </div>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-xl font-semibold text-slate-900">Create your account</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Join Vendle to track your orders and checkout faster.
         </p>
 

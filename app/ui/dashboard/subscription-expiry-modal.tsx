@@ -210,14 +210,14 @@ export default function SubscriptionExpiryModal({
               <button
                 onClick={handlePayNow}
                 disabled={isPaying}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-500 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-400 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isPaying ? 'Processing...' : `Pay ₦${MONTHLY_AMOUNT_NAIRA.toLocaleString()} Now`}
               </button>
               <button
                 onClick={handleDismiss}
                 disabled={isPaying}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-200 active:scale-95 disabled:opacity-60"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-200 active:scale-95 disabled:opacity-60"
               >
                 Remind Me Later
               </button>

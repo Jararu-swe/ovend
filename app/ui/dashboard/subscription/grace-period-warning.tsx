@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { VendorSubscriptionInfo } from '@/app/lib/definitions';
 import { calculateDaysRemaining, formatSubscriptionDate } from '@/app/lib/subscription-utils';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
@@ -99,24 +100,20 @@ export default function GracePeriodWarning({
 
           {/* Call to Action */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                // This will be handled by the parent component or redirect to billing settings
-                window.location.href = '/dashboard/billing';
-              }}
-              className="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            <Link
+              href="/dashboard/billing"
+              className="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               aria-label="Update payment method to restore subscription"
             >
               Update Payment Method
-            </button>
+            </Link>
 
-            <a
+            <Link
               href="/dashboard/settings"
-              className="inline-flex items-center justify-center px-4 py-2 bg-white hover:bg-red-50 text-red-700 text-sm font-medium border border-red-300 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="inline-flex items-center justify-center px-4 py-2 bg-white hover:bg-red-50 text-red-700 text-sm font-medium border border-red-300 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               Go to Settings
-            </a>
+            </Link>
           </div>
         </div>
       </div>

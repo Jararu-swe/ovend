@@ -3,24 +3,25 @@ import {
   fetchVendorStats,
   fetchUserById,
   fetchWeeklyAnalytics,
+  fetchTopProducts,
 } from "@/app/lib/data";
 import {
   getVendorNewGuideNotifications,
   getNewGuideNotificationsCount,
 } from "@/app/lib/guide-triggers";
+import { getVendorSubscription } from "@/app/lib/subscriptions";
 import { auth } from "@/auth";
 import CopyLinkButton from "@/app/ui/dashboard/copy-link";
 import LearningHubSection from "@/app/ui/dashboard/learning-hub-section";
 import ContextualGuideBanner from "@/app/ui/dashboard/contextual-guide-banner";
+import ProAnalyticsSection from "@/app/ui/dashboard/pro-analytics-section";
 import {
-  ChartBarIcon,
   ArrowTrendingUpIcon,
   ShoppingBagIcon,
   ClipboardDocumentListIcon,
   LinkIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import { formatCurrency } from "@/app/lib/utils";
 
 export default async function Page() {
   const session = await auth();
@@ -30,19 +31,36 @@ export default async function Page() {
     return null;
   }
 
-  const [stats, user, weeklyAnalytics, recommendedGuides, newGuideCount] =
+  const [stats, user, weeklyAnalytics, recommendedGuides, newGuideCount, subscription, topProducts] =
     await Promise.all([
       fetchVendorStats(userId),
       fetchUserById(userId),
       fetchWeeklyAnalytics(userId),
       getVendorNewGuideNotifications(userId),
       getNewGuideNotificationsCount(userId),
+      getVendorSubscription(userId),
+      fetchTopProducts(userId),
     ]);
 
   const totalWeeklyVisits = weeklyAnalytics.reduce(
     (sum, day) => sum + Number(day.visits || 0),
     0,
   );
+  const totalWeeklyOrders = weeklyAnalytics.reduce(
+    (sum, day) => sum + Number(day.orders_count || 0),
+    0,
+  );
+  const totalWeeklyRevenue = weeklyAnalytics.reduce(
+    (sum, day) => sum + Number(day.revenue || 0),
+    0,
+  );
+  const conversionRate =
+    totalWeeklyVisits > 0
+      ? Math.round((totalWeeklyOrders / totalWeeklyVisits) * 100)
+      : 0;
+
+  const subscriptionTier = subscription?.tier || 'starter';
+  const isProOrBusiness = subscriptionTier === 'pro' || subscriptionTier === 'business';
 
   return (
     <div className="space-y-8">
@@ -151,100 +169,17 @@ export default async function Page() {
         </div>
       </div>
 
-      {/* Analytics Section */}
-      {weeklyAnalytics.length > 0 ? (
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center">
-              <ChartBarIcon className="h-5 w-5 text-slate-600" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Last 7 Days Performance
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 p-4 hover:shadow-md transition-shadow">
-              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-2">
-                Visits
-              </p>
-              <p className="text-3xl font-bold text-blue-900">
-                {totalWeeklyVisits}
-              </p>
-              <div className="h-1 w-12 bg-blue-300 rounded-full mt-3" />
-            </div>
-            <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-100 p-4 hover:shadow-md transition-shadow">
-              <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-2">
-                Orders
-              </p>
-              <p className="text-3xl font-bold text-emerald-900">
-                {weeklyAnalytics.reduce(
-                  (sum, day) => sum + Number(day.orders_count || 0),
-                  0,
-                )}
-              </p>
-              <div className="h-1 w-12 bg-emerald-300 rounded-full mt-3" />
-            </div>
-            <div className="rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100 p-4 hover:shadow-md transition-shadow">
-              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-2">
-                Revenue
-              </p>
-              <p className="text-3xl font-bold text-amber-900">
-                {formatCurrency(
-                  weeklyAnalytics.reduce(
-                    (sum, day) => sum + Number(day.revenue || 0),
-                    0,
-                  ),
-                )}
-              </p>
-              <div className="h-1 w-12 bg-amber-300 rounded-full mt-3" />
-            </div>
-            <div className="rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-100 p-4 hover:shadow-md transition-shadow">
-              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-2">
-                Conversion
-              </p>
-              <p className="text-3xl font-bold text-purple-900">
-                {totalWeeklyVisits > 0
-                  ? Math.round(
-                      (weeklyAnalytics.reduce(
-                        (sum, day) => sum + Number(day.orders_count || 0),
-                        0,
-                      ) /
-                        totalWeeklyVisits) *
-                        100,
-                    )
-                  : 0}
-                %
-              </p>
-              <div className="h-1 w-12 bg-purple-300 rounded-full mt-3" />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-gradient-to-b from-slate-50 to-slate-100/50 p-12 text-center">
-          <div className="flex items-center justify-center mb-6">
-            <div className="h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center">
-              <ChartBarIcon className="h-8 w-8 text-slate-400" />
-            </div>
-          </div>
-          <h3 className="text-base font-bold text-slate-900">
-            No Analytics Yet
-          </h3>
-          <p className="mt-3 text-sm text-slate-600 max-w-md mx-auto">
-            Once you start sharing your store link, you'll see your store
-            visits, orders, and revenue here.
-          </p>
-          <div className="mt-6 flex justify-center">
-            <a
-              href={user?.store_slug ? `/s/${user.store_slug}` : "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-emerald-600 hover:text-emerald-500 underline"
-            >
-              View your store →
-            </a>
-          </div>
-        </div>
-      )}
+      {/* Analytics Section — Gated by subscription tier */}
+      <ProAnalyticsSection
+        weeklyAnalytics={weeklyAnalytics}
+        totalWeeklyVisits={totalWeeklyVisits}
+        totalWeeklyOrders={totalWeeklyOrders}
+        totalWeeklyRevenue={totalWeeklyRevenue}
+        conversionRate={conversionRate}
+        topProducts={topProducts}
+        isProOrBusiness={isProOrBusiness}
+        subscriptionTier={subscriptionTier}
+      />
     </div>
   );
 }

@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Image from "next/image";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import {
+  CheckCircleIcon,
+  MapPinIcon,
+  ShareIcon,
+} from "@heroicons/react/24/outline";
 import { User, Product, OrderItem, StoreTheme } from "@/app/lib/definitions";
 import type { StoreAvailability } from "@/app/lib/store-availability";
 import {
@@ -15,27 +19,14 @@ import {
   getBorderRadiusClass,
 } from "@/app/lib/utils";
 import { createOrder, validateDiscountAction } from "@/app/lib/actions";
-import { fetchVendorPickupLocation } from "@/app/lib/data";
+import { useSound } from "@/app/lib/sound-manager";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 
 const LocationPicker = dynamic(() => import("./location-picker"), {
   ssr: false,
 });
-
-// Import Leaflet components for pickup location display
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false }
-);
+const OrderMap = dynamic(() => import("../orders/order-map"), { ssr: false });
 import {
   TemplateSection,
   TemplateSectionContent,
@@ -49,47 +40,6 @@ import DynamicNav from "@/app/ui/store/nav-renderers";
 import { StoreAvailabilityBanner } from "@/app/ui/store/store-availability-badge";
 import StoreIcon from "@/app/ui/store/storefront-icons";
 import { CldImage } from "next-cloudinary";
-
-// Nigerian states for vendor-customer location matching
-const NIGERIAN_STATES = [
-  "Abia",
-  "Adamawa",
-  "Akwa Ibom",
-  "Anambra",
-  "Bauchi",
-  "Bayelsa",
-  "Benue",
-  "Borno",
-  "Cross River",
-  "Delta",
-  "Ebonyi",
-  "Edo",
-  "Ekiti",
-  "Enugu",
-  "FCT",
-  "Gombe",
-  "Imo",
-  "Jigawa",
-  "Kaduna",
-  "Kano",
-  "Katsina",
-  "Kebbi",
-  "Kogi",
-  "Kwara",
-  "Lagos",
-  "Nasarawa",
-  "Niger",
-  "Ogun",
-  "Ondo",
-  "Osun",
-  "Oyo",
-  "Plateau",
-  "Rivers",
-  "Sokoto",
-  "Taraba",
-  "Yobe",
-  "Zamfara",
-];
 
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
@@ -170,14 +120,17 @@ export default function Storefront({
   theme,
   customer,
   availability,
+  hideVendleBranding = false,
 }: {
   vendor: User;
   products: Product[];
   theme: StoreTheme;
   customer?: any;
   availability: StoreAvailability;
+  hideVendleBranding?: boolean;
 }) {
   const searchParams = useSearchParams();
+  const { playSound } = useSound();
   const isPreview = searchParams.get("preview") === "true";
   const [previewTheme, setPreviewTheme] = useState<StoreTheme | null>(null);
   const [cart, setCart] = useState<OrderItem[]>([]);
@@ -188,14 +141,13 @@ export default function Storefront({
     id: string;
     total: number;
     paymentMethod: "cash" | "card";
+    items: OrderItem[];
+    deliveryType: "delivery" | "pickup";
   } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
   const [customerEmail, setCustomerEmail] = useState(customer?.email || "");
   const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup">(
     "delivery",
-  );
-  const [customerState, setCustomerState] = useState<string>(
-    customer?.location_state || "",
   );
   const [deliveryLocation, setDeliveryLocation] = useState<{
     lat: number;
@@ -213,7 +165,6 @@ export default function Storefront({
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(
     null,
   );
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<{
@@ -222,13 +173,6 @@ export default function Storefront({
   } | null>(null);
   const [discountError, setDiscountError] = useState("");
   const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
-
-  // Vendor pickup location state
-  const [vendorPickupLocation, setVendorPickupLocation] = useState<{
-    lat: number;
-    lng: number;
-    details?: string;
-  } | null>(null);
 
   const activeProducts = products.filter((p) => p.status === "active");
   const activeTheme = useMemo(
@@ -259,20 +203,6 @@ export default function Storefront({
     },
     [],
   );
-
-  // Fetch vendor pickup location when delivery type is pickup
-  useEffect(() => {
-    if (deliveryType === "pickup" && vendor.id) {
-      fetchVendorPickupLocation(vendor.id)
-        .then((location) => {
-          setVendorPickupLocation(location);
-        })
-        .catch((error) => {
-          console.error("Error fetching vendor pickup location:", error);
-          setVendorPickupLocation(null);
-        });
-    }
-  }, [deliveryType, vendor.id]);
 
   const fontSizeClass =
     activeTheme.font_size === "small"
@@ -355,13 +285,12 @@ export default function Storefront({
           ? "shadow-[4px_4px_0px_rgba(0,0,0,0.1)]"
           : "shadow-sm";
 
-  const layoutWidthClass = isPreview
-    ? "max-w-none"
-    : activeTheme.layout_width === "full"
-      ? "max-w-none"
-      : activeTheme.layout_width === "standard"
-        ? "max-w-2xl"
-        : "max-w-6xl";
+  const layoutWidthClass =
+    activeTheme.layout_width === "wide"
+      ? "max-w-6xl"
+      : activeTheme.layout_width === "full"
+        ? "max-w-none"
+        : "max-w-2xl";
 
   const logoPos = activeTheme.logo_position ?? "left";
   const logoFrame = (activeTheme.logo_frame ?? "profile") as string;
@@ -629,13 +558,19 @@ export default function Storefront({
     </div>
   );
 
+  const lastPreviewPayloadRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!isPreview) return;
 
     function handlePreviewMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type !== "VENDLE_PREVIEW_THEME_UPDATE") return;
-      setPreviewTheme(event.data.payload as StoreTheme);
+      const payload = event.data.payload as StoreTheme;
+      const serialized = JSON.stringify(payload);
+      if (serialized === lastPreviewPayloadRef.current) return;
+      lastPreviewPayloadRef.current = serialized;
+      setPreviewTheme(payload);
     }
 
     window.addEventListener("message", handlePreviewMessage);
@@ -643,25 +578,6 @@ export default function Storefront({
   }, [isPreview]);
 
   const addToCart = (product: Product, qty = 1) => {
-    // Check if customer and vendor are in the same state
-    if (
-      vendor.location_state &&
-      customerState &&
-      vendor.location_state !== customerState
-    ) {
-      alert(
-        `This vendor only delivers to ${vendor.location_state}. You have selected ${customerState}. Please change your state to match the vendor's location.`,
-      );
-      return;
-    }
-
-    if (vendor.location_state && !customerState) {
-      alert(
-        `This vendor only delivers to ${vendor.location_state}. Please select your state before adding items to cart.`,
-      );
-      return;
-    }
-
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
@@ -699,33 +615,13 @@ export default function Storefront({
 
   const handleCheckoutSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // Validate state match before checkout
-    if (
-      vendor.location_state &&
-      customerState &&
-      vendor.location_state !== customerState
-    ) {
-      alert(
-        `This vendor only delivers to ${vendor.location_state}. You have selected ${customerState}. Please change your state before proceeding.`,
-      );
-      return;
-    }
-
-    if (vendor.location_state && !customerState) {
-      alert(
-        `This vendor only delivers to ${vendor.location_state}. Please select your state before checking out.`,
-      );
-      return;
-    }
-
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
 
     try {
-      if (paymentMethod === "card") {
+      if (paymentMethod === "card" || paymentMethod === "cash") {
         if (!customerEmail || !customerEmail.includes("@")) {
-          alert("Please enter a valid email address for card payment.");
+          alert("Please enter a valid email address for payment.");
           setIsSubmitting(false);
           return;
         }
@@ -740,6 +636,8 @@ export default function Storefront({
           return;
         }
 
+        const channels = ["card", "bank", "ussd", "qr", "bank_transfer"];
+
         // @ts-ignore
         const handler = window.PaystackPop.setup({
           key: publicKey,
@@ -747,11 +645,11 @@ export default function Storefront({
           amount: grandTotal * 100,
           currency: "NGN",
           ref: `OVD-${Date.now()}`,
+          channels,
           metadata: {
             delivery_latitude: deliveryLocation?.lat,
             delivery_longitude: deliveryLocation?.lng,
             delivery_address_details: deliveryLocation?.details,
-            customer_state: customerState,
           },
           onClose: function () {
             setIsSubmitting(false);
@@ -779,15 +677,12 @@ export default function Storefront({
                       deliveryLocation.details || "",
                     );
                   }
-                  if (customerState) {
-                    formData.append("customer_state", customerState);
-                  }
                   return createOrder(
                     vendor.id,
                     cart,
                     grandTotal,
                     formData,
-                    "card",
+                    paymentMethod,
                     response.reference,
                     appliedDiscount?.code,
                     appliedDiscount?.amount,
@@ -798,10 +693,13 @@ export default function Storefront({
               })
               .then((result) => {
                 if (result?.success) {
+                  playSound("success");
                   setPlacedOrder({
                     id: result.id,
                     total: grandTotal,
-                    paymentMethod: "card",
+                    paymentMethod,
+                    items: [...cart],
+                    deliveryType,
                   });
                   setCart([]);
                   setAppliedDiscount(null);
@@ -811,6 +709,7 @@ export default function Storefront({
               })
               .catch((err) => {
                 console.error("Payment error:", err);
+                playSound("error");
                 alert("Payment verification failed. Please contact support.");
                 setIsSubmitting(false);
               });
@@ -831,6 +730,7 @@ export default function Storefront({
       }
     } catch (err) {
       console.error(err);
+      playSound("error");
       alert("Order failed. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -846,9 +746,6 @@ export default function Storefront({
         deliveryLocation.details || "",
       );
     }
-    if (customerState) {
-      formData.append("customer_state", customerState);
-    }
     const result = await createOrder(
       vendor.id,
       cart,
@@ -860,10 +757,13 @@ export default function Storefront({
       appliedDiscount?.amount,
     );
     if (result.success) {
+      playSound("success");
       setPlacedOrder({
         id: result.id,
         total: grandTotal,
         paymentMethod: "cash",
+        items: [...cart],
+        deliveryType,
       });
       setCart([]);
       setIsCartOpen(true);
@@ -890,17 +790,41 @@ export default function Storefront({
 
   // ─── Order confirmation screen ──────────────────────────────
   if (placedOrder) {
-    const orderItemsList = cart
+    const orderItemsList = placedOrder.items
       .map(
         (item) =>
           `• ${item.quantity}x ${item.name} - ${formatCurrency(item.price * item.quantity)}`,
       )
-      .join("%0A");
+      .join("\n");
 
-    const message = `Hello *${vendor.store_name}*! 👋%0A%0AI just placed an order on your Vendle store:%0A%0A📦 *Order ID:* ${placedOrder.id.slice(0, 8)}%0A%0A*Items:*%0A${orderItemsList}%0A%0A💰 *Total:* ${formatCurrency(placedOrder.total)}%0A%0APlease confirm my order. Thank you!`;
+    let locationText = "";
+    if (placedOrder.deliveryType === "pickup" && vendor.offers_pickup) {
+      locationText = "\n\n📍 *Pickup Location*";
+      if (vendor.pickup_address) locationText += `\n${vendor.pickup_address}`;
+      if (vendor.location_state) locationText += `, ${vendor.location_state}`;
+      if (vendor.pickup_latitude && vendor.pickup_longitude) {
+        locationText += `\nMaps: https://www.google.com/maps/search/?api=1&query=${vendor.pickup_latitude},${vendor.pickup_longitude}`;
+      }
+      if (vendor.pickup_address_details)
+        locationText += `\nNote: ${vendor.pickup_address_details}`;
+    } else if (placedOrder.deliveryType === "delivery") {
+      locationText = "\n\n📦 *Delivery Order*";
+      if (deliveryLocation) {
+        locationText += `\n📍 *Delivery Point:* ${deliveryLocation.lat.toFixed(4)}, ${deliveryLocation.lng.toFixed(4)}`;
+        locationText += `\nMaps: https://www.google.com/maps/search/?api=1&query=${deliveryLocation.lat},${deliveryLocation.lng}`;
+        if (deliveryLocation.details) {
+          locationText += `\nNote: ${deliveryLocation.details}`;
+        }
+      }
+    }
 
-    const whatsappLink = vendor.whatsapp_number
-      ? `https://wa.me/${vendor.whatsapp_number.replace(/\D/g, "")}?text=${message}`
+    const message = `Hello *${vendor.store_name}*! 👋\n\nI just placed an order on your Vendle store:\n\n📦 *Order ID:* ${placedOrder.id.slice(0, 8)}\n\n*Items:*\n${orderItemsList}\n\n💰 *Total:* ${formatCurrency(placedOrder.total)}${locationText}\n\nPlease confirm my order. Thank you!`;
+
+    const formattedVendorPhone = vendor.whatsapp_number
+      ? vendor.whatsapp_number.replace(/\D/g, "").replace(/^0/, "234")
+      : "";
+    const whatsappLink = formattedVendorPhone
+      ? `https://wa.me/${formattedVendorPhone}?text=${encodeURIComponent(message)}`
       : null;
 
     return (
@@ -970,6 +894,159 @@ export default function Storefront({
           </div>
         )}
 
+        {/* Pickup Location Map on Confirmation */}
+        {placedOrder.deliveryType === "pickup" &&
+          vendor.offers_pickup &&
+          vendor.pickup_latitude &&
+          vendor.pickup_longitude && (
+            <div className="mt-6 w-full max-w-md rounded-2xl border border-emerald-200 bg-emerald-50 overflow-hidden text-left">
+              <div className="h-48 w-full bg-slate-100 relative">
+                <OrderMap
+                  lat={Number(vendor.pickup_latitude)}
+                  lng={Number(vendor.pickup_longitude)}
+                />
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                    <MapPinIcon className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-emerald-900 text-sm">
+                      Pickup Location
+                    </h4>
+                    {vendor.pickup_address && (
+                      <p className="text-sm text-emerald-800 mt-0.5">
+                        {vendor.pickup_address}
+                      </p>
+                    )}
+                    {vendor.location_state && (
+                      <p className="text-xs text-emerald-600 mt-0.5">
+                        {vendor.location_state}
+                      </p>
+                    )}
+                    {vendor.pickup_address_details && (
+                      <p className="text-xs text-emerald-700 mt-1 italic">
+                        {vendor.pickup_address_details}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${vendor.pickup_latitude},${vendor.pickup_longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-white border border-emerald-200 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition"
+                  >
+                    <MapPinIcon className="h-3.5 w-3.5" />
+                    Get Directions
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = `https://www.google.com/maps/search/?api=1&query=${vendor.pickup_latitude},${vendor.pickup_longitude}`;
+                      const text = `📍 Pickup Location for ${vendor.store_name}: ${url}`;
+                      if (navigator.share) {
+                        navigator
+                          .share({
+                            title: `${vendor.store_name} - Pickup Location`,
+                            text,
+                            url,
+                          })
+                          .catch(() => {});
+                      } else {
+                        navigator.clipboard
+                          .writeText(text)
+                          .then(() =>
+                            alert("Location link copied to clipboard!"),
+                          );
+                      }
+                    }}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 transition"
+                  >
+                    <ShareIcon className="h-3.5 w-3.5" />
+                    Share
+                  </button>
+                </div>
+                <p className="text-[10px] text-emerald-600 text-center pt-1">
+                  Show this location to your rider or share it to navigate
+                </p>
+              </div>
+            </div>
+          )}
+
+        {/* Delivery Location Map on Confirmation */}
+        {placedOrder.deliveryType === "delivery" && deliveryLocation && (
+          <div className="mt-6 w-full max-w-md rounded-2xl border border-sky-200 bg-sky-50 overflow-hidden text-left">
+            <div className="h-48 w-full bg-slate-100 relative">
+              <OrderMap lat={deliveryLocation.lat} lng={deliveryLocation.lng} />
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 h-8 w-8 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
+                  <MapPinIcon className="h-4 w-4 text-sky-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sky-900 text-sm">
+                    Delivery Location
+                  </h4>
+                  <p className="text-xs font-mono text-sky-700 mt-1 bg-sky-100/50 rounded-lg px-2 py-1 inline-block">
+                    {deliveryLocation.lat.toFixed(4)},{" "}
+                    {deliveryLocation.lng.toFixed(4)}
+                  </p>
+                  {deliveryLocation.details && (
+                    <p className="text-xs text-sky-700 mt-2 italic">
+                      {deliveryLocation.details}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${deliveryLocation.lat},${deliveryLocation.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-white border border-sky-200 px-3 py-2 text-xs font-bold text-sky-700 hover:bg-sky-50 transition"
+                >
+                  <MapPinIcon className="h-3.5 w-3.5" />
+                  Open in Maps
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `https://www.google.com/maps/search/?api=1&query=${deliveryLocation.lat},${deliveryLocation.lng}`;
+                    const text = `📍 Delivery Location for ${vendor.store_name}: ${url}`;
+                    if (navigator.share) {
+                      navigator
+                        .share({
+                          title: `${vendor.store_name} - Delivery Location`,
+                          text,
+                          url,
+                        })
+                        .catch(() => {});
+                    } else {
+                      navigator.clipboard
+                        .writeText(text)
+                        .then(() =>
+                          alert("Location link copied to clipboard!"),
+                        );
+                    }
+                  }}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 transition"
+                >
+                  <ShareIcon className="h-3.5 w-3.5" />
+                  Share
+                </button>
+              </div>
+              <p className="text-[10px] text-sky-600 text-center pt-1">
+                Share this location with the vendor so they know where to
+                deliver
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="mt-8 flex flex-col w-full max-w-xs gap-3">
           {whatsappLink ? (
             <a
@@ -985,12 +1062,6 @@ export default function Storefront({
               Vendor WhatsApp not available
             </p>
           )}
-          <a
-            href="/order-status"
-            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
-          >
-            📦 Track your order
-          </a>
           <button
             onClick={() => setPlacedOrder(null)}
             className="rounded-2xl bg-slate-100 p-4 font-bold text-slate-600 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
@@ -1020,18 +1091,6 @@ export default function Storefront({
 
   const entranceAnim = getEntranceClass(activeTheme.animation_style);
 
-  const handleOpenCheckout = () => {
-    if (availability.state === "closed") {
-      alert(
-        availability.label ||
-          "This store is currently closed and not accepting orders.",
-      );
-      return;
-    }
-    setIsCheckingOut(true);
-    setIsCartOpen(false);
-  };
-
   // ─── Product grid renderer (passed to SectionRenderer) ──────
   const renderProductGrid = () => {
     // Get button props using the helper
@@ -1049,14 +1108,8 @@ export default function Storefront({
       activeTheme.card_style || "modern",
     );
 
-    // Get spacing for consistent section separation
-    const spacing = getSectionSpacing(activeTheme.spacing || "comfortable");
-
     return (
-      <section 
-        id="item-list"
-        style={{ marginBottom: spacing.section }}
-      >
+      <section id="item-list">
         <div className="mb-6 flex items-center justify-between">
           <h3
             className="text-lg font-bold"
@@ -1267,9 +1320,7 @@ export default function Storefront({
                       </div>
 
                       <button
-                        disabled={
-                          isOutOfStock || availability.state === "closed"
-                        }
+                        disabled={isOutOfStock}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (hasOptions || isOutOfStock) {
@@ -1279,9 +1330,7 @@ export default function Storefront({
                           }
                         }}
                         className={`flex shrink-0 items-center justify-center font-bold shadow-lg ${btn.className} ${
-                          isOutOfStock || availability.state === "closed"
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
+                          isOutOfStock ? "opacity-50 cursor-not-allowed" : ""
                         } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
                         style={{
                           ...btn.style,
@@ -1294,8 +1343,6 @@ export default function Storefront({
                       >
                         {isOutOfStock ? (
                           "Sold"
-                        ) : availability.state === "closed" ? (
-                          "Closed"
                         ) : hasOptions ? (
                           "Options"
                         ) : (
@@ -1393,6 +1440,67 @@ export default function Storefront({
           .bty-delay-2 { animation-delay: 0.6s; }
         `}</style>
       )}
+      {/* Crystal Diamond-specific global styles */}
+      {activeTheme.template_id === "crystal-diamond" && (
+        <style>{`
+          @keyframes floatSlow {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-8px) rotate(3deg); }
+            50% { transform: translateY(-4px) rotate(0deg); }
+            75% { transform: translateY(-8px) rotate(-3deg); }
+          }
+          .animate-float-slow {
+            animation: floatSlow 6s ease-in-out infinite;
+          }
+        `}</style>
+      )}
+      {/* Neon Nights-specific global styles */}
+      {activeTheme.template_id === "neon-nights" && (
+        <style>{`
+          @keyframes neonScan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+          @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+          }
+          .neon-scan {
+            animation: neonScan 4s ease-in-out infinite;
+          }
+        `}</style>
+      )}
+      {/* Noir Luxe-specific global styles */}
+      {activeTheme.template_id === "noir-luxe" && (
+        <style>{`
+          @keyframes noirReveal {
+            from { opacity: 0; transform: translateY(20px); filter: blur(4px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+          }
+          .noir-reveal {
+            animation: noirReveal 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+          }
+          .noir-delay-1 { animation-delay: 0.3s; }
+          .noir-delay-2 { animation-delay: 0.6s; }
+        `}</style>
+      )}
+      {/* Tropical Paradise-specific global styles */}
+      {activeTheme.template_id === "tropical-paradise" && (
+        <style>{`
+          @keyframes tropicBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+          }
+          .tropic-bounce {
+            animation: tropicBounce 3s ease-in-out infinite;
+          }
+          @keyframes leafDrift {
+            0% { transform: rotate(0deg) translateX(0); opacity: 0.3; }
+            50% { opacity: 0.6; }
+            100% { transform: rotate(10deg) translateX(10px); opacity: 0.3; }
+          }
+        `}</style>
+      )}
       {/* Midnight-specific global styles */}
       {activeTheme.template_id === "midnight-luxe" && (
         <style>{`
@@ -1435,24 +1543,6 @@ export default function Storefront({
             borderColor={activeTheme.border_color || "#e2e8f0"}
             textColor={activeTheme.text_color}
           />
-
-          {/* State Restriction Banner */}
-          {vendor.location_state && (
-            <div className="mt-4 rounded-xl border-l-4 border-blue-500 bg-blue-50 p-4 flex items-start gap-3">
-              <span className="text-xl flex-shrink-0">📍</span>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-blue-900">
-                  Delivery Location Restricted
-                </p>
-                <p className="text-sm text-blue-800 mt-1">
-                  This vendor currently delivers to{" "}
-                  <span className="font-bold">{vendor.location_state}</span>{" "}
-                  only. You can still browse products, but you must be in{" "}
-                  {vendor.location_state} to place an order.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         <main
@@ -1478,7 +1568,6 @@ export default function Storefront({
             vendor={vendor}
             products={products}
             theme={activeTheme}
-            availability={availability}
             onAddToCart={addToCart}
             renderProductGrid={renderProductGrid}
           />
@@ -1498,28 +1587,30 @@ export default function Storefront({
             >
               {vendor.store_name || vendor.name}
             </p>
-            <p
-              className="text-xs"
-              style={{ color: activeTheme.text_color, opacity: 0.5 }}
-            >
-              Powered by{" "}
-              <a
-                href="https://vendle.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded"
-                style={
-                  {
-                    color: activeTheme.primary_color,
-                    "--tw-ring-color": activeTheme.primary_color,
-                  } as React.CSSProperties
-                }
+            {!hideVendleBranding && (
+              <p
+                className="text-xs"
+                style={{ color: activeTheme.text_color, opacity: 0.5 }}
               >
-                Vendle
-              </a>
-              {" · "}
-              {new Date().getFullYear()}
-            </p>
+                Powered by{" "}
+                <a
+                  href="https://vendle.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 rounded"
+                  style={
+                    {
+                      color: activeTheme.primary_color,
+                      "--tw-ring-color": activeTheme.primary_color,
+                    } as React.CSSProperties
+                  }
+                >
+                  Vendle
+                </a>
+                {" · "}
+                {new Date().getFullYear()}
+              </p>
+            )}
           </div>
         </footer>
 
@@ -1577,18 +1668,17 @@ export default function Storefront({
                 </div>
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className={`flex items-center justify-center gap-2 px-6 py-2.5 font-bold min-w-[140px] ${btnProps.className}`}
+                  className={`flex items-center gap-2 px-6 py-2.5 font-bold text-white ${btnProps.className}`}
                   style={{
                     ...btnProps.style,
                     backgroundColor: activeTheme.primary_color,
-                    color: '#ffffff',
                   }}
                 >
-                  <span className="text-sm text-white">Checkout</span>
+                  Checkout
                   <StoreIcon
                     name="chevron-right"
                     theme={activeTheme}
-                    className="h-4 w-4 text-white"
+                    className="h-4 w-4"
                   />
                 </button>
               </div>
@@ -1817,43 +1907,6 @@ export default function Storefront({
                                   />
                                 </div>
 
-                                {/* Customer State Selection */}
-                                {vendor.location_state && (
-                                  <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1 italic">
-                                      Your State
-                                    </label>
-                                    <select
-                                      name="customer_state"
-                                      value={customerState}
-                                      onChange={(e) =>
-                                        setCustomerState(e.target.value)
-                                      }
-                                      required
-                                      className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition"
-                                    >
-                                      <option value="">
-                                        Select your state...
-                                      </option>
-                                      {NIGERIAN_STATES.map((state) => (
-                                        <option key={state} value={state}>
-                                          {state}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    {vendor.location_state &&
-                                      customerState &&
-                                      vendor.location_state !==
-                                        customerState && (
-                                        <p className="mt-2 text-sm text-red-600 font-medium">
-                                          ⚠️ This vendor only delivers to{" "}
-                                          {vendor.location_state}. Please select
-                                          the correct state.
-                                        </p>
-                                      )}
-                                  </div>
-                                )}
-
                                 {/* Payment Method */}
                                 <div>
                                   <label className="block text-sm font-bold text-slate-700 mb-2 italic">
@@ -1943,43 +1996,110 @@ export default function Storefront({
                                   </div>
                                 ) : (
                                   <div className="space-y-4">
-                                    {/* Pickup Location Display */}
-                                    <div className="space-y-2">
-                                      <h3 className="text-sm font-bold text-slate-700">
-                                        Pickup Location
-                                      </h3>
-                                      {vendorPickupLocation ? (
-                                        <>
-                                          {/* Map Display */}
-                                          <div className="h-48 w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-                                            <MapContainer
-                                              center={[vendorPickupLocation.lat, vendorPickupLocation.lng]}
-                                              zoom={15}
-                                              style={{ height: "100%", width: "100%" }}
-                                              scrollWheelZoom={false}
-                                            >
-                                              <TileLayer
-                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                              />
-                                              <Marker position={[vendorPickupLocation.lat, vendorPickupLocation.lng]} />
-                                            </MapContainer>
-                                          </div>
-                                          {/* Address Details */}
-                                          {vendorPickupLocation.details && (
-                                            <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                              📍 {vendorPickupLocation.details}
-                                            </p>
-                                          )}
-                                        </>
-                                      ) : (
-                                        <p className="text-sm text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                                          Pickup location information is not available.
-                                        </p>
-                                      )}
-                                    </div>
+                                    {/* Vendor Pickup Location with Map */}
+                                    {vendor.offers_pickup &&
+                                    vendor.pickup_latitude &&
+                                    vendor.pickup_longitude ? (
+                                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 overflow-hidden">
+                                        {/* Map */}
+                                        <div className="h-48 w-full bg-slate-100 relative">
+                                          <OrderMap
+                                            lat={Number(vendor.pickup_latitude)}
+                                            lng={Number(
+                                              vendor.pickup_longitude,
+                                            )}
+                                          />
+                                        </div>
 
-                                    {/* Pickup Note */}
+                                        {/* Address Info */}
+                                        <div className="p-4 space-y-3">
+                                          <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                                              <MapPinIcon className="h-4 w-4 text-emerald-600" />
+                                            </div>
+                                            <div>
+                                              <h4 className="font-bold text-emerald-900 text-sm">
+                                                Pickup Location
+                                              </h4>
+                                              {vendor.pickup_address && (
+                                                <p className="text-sm text-emerald-800 mt-0.5">
+                                                  {vendor.pickup_address}
+                                                </p>
+                                              )}
+                                              {vendor.location_state && (
+                                                <p className="text-xs text-emerald-600 mt-0.5">
+                                                  {vendor.location_state}
+                                                </p>
+                                              )}
+                                              {vendor.pickup_address_details && (
+                                                <p className="text-xs text-emerald-700 mt-1 italic">
+                                                  {
+                                                    vendor.pickup_address_details
+                                                  }
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          {/* Action buttons */}
+                                          <div className="flex gap-2 pt-1">
+                                            <a
+                                              href={`https://www.google.com/maps/search/?api=1&query=${vendor.pickup_latitude},${vendor.pickup_longitude}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-white border border-emerald-200 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition"
+                                            >
+                                              <MapPinIcon className="h-3.5 w-3.5" />
+                                              Open in Maps
+                                            </a>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const url = `https://www.google.com/maps/search/?api=1&query=${vendor.pickup_latitude},${vendor.pickup_longitude}`;
+                                                const text = `📍 Pickup Location for ${vendor.store_name}: ${url}`;
+                                                if (navigator.share) {
+                                                  navigator
+                                                    .share({
+                                                      title: `${vendor.store_name} - Pickup Location`,
+                                                      text,
+                                                      url,
+                                                    })
+                                                    .catch(() => {});
+                                                } else {
+                                                  navigator.clipboard
+                                                    .writeText(text)
+                                                    .then(() =>
+                                                      alert(
+                                                        "Location link copied! Share it with your rider.",
+                                                      ),
+                                                    );
+                                                }
+                                              }}
+                                              className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 transition"
+                                            >
+                                              <ShareIcon className="h-3.5 w-3.5" />
+                                              Share
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : vendor.pickup_address ? (
+                                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                                        <h4 className="font-bold text-emerald-900 mb-2 flex items-center gap-2">
+                                          <MapPinIcon className="h-5 w-5 text-emerald-600" />
+                                          Pickup Location
+                                        </h4>
+                                        <p className="text-sm text-emerald-800">
+                                          {vendor.pickup_address}
+                                        </p>
+                                        {vendor.location_state && (
+                                          <p className="text-xs text-emerald-600 mt-1">
+                                            {vendor.location_state}
+                                          </p>
+                                        )}
+                                      </div>
+                                    ) : null}
+
                                     <div>
                                       <label className="block text-sm font-bold text-slate-700 mb-1 italic">
                                         Pickup Note (optional)
@@ -2010,12 +2130,13 @@ export default function Storefront({
                                       ...getButtonStyles(activeTheme).style,
                                       backgroundColor:
                                         activeTheme.primary_color,
-                                      color: '#ffffff',
                                     }}
                                   >
                                     {isSubmitting
                                       ? "Processing..."
-                                      : "Checkout"}
+                                      : paymentMethod === "card"
+                                        ? "Pay Now"
+                                        : "Confirm Order"}
                                   </button>
                                 </div>
                               </form>
@@ -2029,13 +2150,7 @@ export default function Storefront({
                   {!isCheckingOut && cart.length > 0 && (
                     <div className="border-t border-slate-100 px-6 py-8">
                       <button
-                        onClick={() => {
-                          if (!customer) {
-                            setShowAuthModal(true);
-                          } else {
-                            handleOpenCheckout();
-                          }
-                        }}
+                        onClick={() => setIsCheckingOut(true)}
                         className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                         style={
                           {
@@ -2058,129 +2173,11 @@ export default function Storefront({
             </div>
           </div>
         )}
-        {/* Auth Gate Modal */}
-        {showAuthModal && (
-          <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
-              onClick={() => setShowAuthModal(false)}
-            />
-            {/* Modal */}
-            <div className="relative w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl">
-              {/* Close */}
-              <button
-                onClick={() => setShowAuthModal(false)}
-                className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
-                aria-label="Close"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
-              <div className="mb-6 text-center">
-                <div
-                  className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl"
-                  style={{ backgroundColor: `${activeTheme.primary_color}18` }}
-                >
-                  <svg
-                    className="h-7 w-7"
-                    style={{ color: activeTheme.primary_color }}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-black text-slate-900">
-                  Sign in to checkout faster
-                </h2>
-                <p className="mt-1.5 text-sm text-slate-500">
-                  Save your details and track your order history, or continue as
-                  a guest.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <a
-                  href={`/customer/login?callbackUrl=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "/")}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-bold text-white transition hover:opacity-90 active:scale-95"
-                  style={{ backgroundColor: activeTheme.primary_color }}
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Sign In
-                </a>
-                <a
-                  href={`/customer/signup?callbackUrl=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "/")}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 py-3 font-bold transition hover:bg-slate-50 active:scale-95"
-                  style={{
-                    borderColor: activeTheme.primary_color,
-                    color: activeTheme.primary_color,
-                  }}
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                    />
-                  </svg>
-                  Create Account
-                </a>
-                <button
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    handleOpenCheckout();
-                  }}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-200 active:scale-95"
-                >
-                  Continue as Guest
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Product Quick View Modal */}
         <ProductQuickView
           product={quickViewProduct}
           theme={activeTheme}
-          isClosed={availability.state === "closed"}
           onClose={() => setQuickViewProduct(null)}
           onAddToCart={addToCart}
         />

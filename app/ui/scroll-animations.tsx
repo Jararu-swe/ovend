@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, type Variants } from 'framer-motion';
 
 export function FadeInUp({ 
   children, 
@@ -34,7 +34,7 @@ export function StaggerContainer({ children, className = '' }: { children: React
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -58,7 +58,7 @@ export function StaggerContainer({ children, className = '' }: { children: React
 }
 
 export function StaggerItem({ children, className = '' }: { children: React.ReactNode, className?: string }) {
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 30 },
     show: { 
       opacity: 1, 

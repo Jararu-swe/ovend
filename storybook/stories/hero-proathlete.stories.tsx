@@ -1,5 +1,6 @@
 import React from "react";
 import { ProAthleteHero } from "../../app/ui/store/hero-renderers";
+import type { StoreTheme } from "../../app/lib/definitions";
 
 export default {
   title: "Store/Hero/ProAthlete",
@@ -22,7 +23,7 @@ const sampleTheme = {
   heading_color: "#ffffff",
   text_color: "#e6e6e6",
   heading_font: "Inter",
-};
+} as StoreTheme;
 
 export const Default = () => (
   <ProAthleteHero content={sampleContent} theme={sampleTheme} />

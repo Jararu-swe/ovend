@@ -114,8 +114,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      // Note: We removed the subscription refresh logic here because it causes Edge Runtime errors.
-      // Subscription status updates on login or can be refreshed via server actions after payment.
+      // ── Team member override ─────────────────────────────────────
+      // If the user is NOT a vendor (i.e. they're a customer/regular user)
+      // but they ARE an active team member, inject the vendor ID as their
+      // effective identity so all existing dashboard code works unchanged.
+      if (token.id && token.role !== 'vendor') {
+        try {
+          const { getTeamMemberAccess } = await import('@/app/lib/team');
+          const teamAccess = await getTeamMemberAccess(token.id as string);
+          if (teamAccess) {
+            // Store the real user ID and permissions
+            token.teamMemberId = token.id;
+            token.teamPermissions = teamAccess.permissions;
+            // Override the ID with the vendor's ID — everything from
+            // subscription checks to data queries uses session.user.id
+            token.id = teamAccess.vendorId;
+            // Clear subscription fields — the vendor's subscription is
+            // what matters, and it'll be looked up via the new token.id
+            token.subscription_expires_at = null;
+            token.subscription_status = null;
+          }
+        } catch (error) {
+          console.error('Error checking team membership:', error);
+        }
+      }
+
       return token;
     },
     session({ session, token }) {
@@ -124,6 +147,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).role = token.role as string;
         (session.user as any).subscription_expires_at = (token as any).subscription_expires_at ?? null;
         (session.user as any).subscription_status = (token as any).subscription_status ?? null;
+
+        // Pass team member data through to the session
+        if ((token as any).teamMemberId) {
+          (session.user as any).teamMemberId = (token as any).teamMemberId;
+          (session.user as any).teamPermissions = (token as any).teamPermissions;
+        }
       }
       return session;
     },

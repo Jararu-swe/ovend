@@ -205,6 +205,19 @@ export const STORE_CATEGORIES = [
 ];
 
 /**
+ * Returns custom padding styles from content object
+ */
+export function getCustomPadding(content: Record<string, any>): React.CSSProperties {
+  const padding: React.CSSProperties = {};
+  if (content.padding_top) padding.paddingTop = content.padding_top;
+  if (content.padding_bottom) padding.paddingBottom = content.padding_bottom;
+  if (content.padding_left) padding.paddingLeft = content.padding_left;
+  if (content.padding_right) padding.paddingRight = content.padding_right;
+  if (content.padding) padding.padding = content.padding;
+  return padding;
+}
+
+/**
  * Validates pickup location data according to requirements 8.1-8.5
  * 
  * @param location - Location object to validate (can be null)

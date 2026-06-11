@@ -4,7 +4,7 @@ import { fetchProductsList } from '@/app/lib/data';
 import { auth } from '@/auth';
 import { formatCurrency } from '@/app/lib/utils';
 import Image from 'next/image';
-import { deleteProduct } from '@/app/lib/actions';
+import DeleteProductButton from '@/app/ui/products/delete-product-button';
 import ContextualGuideBanner from '@/app/ui/dashboard/contextual-guide-banner';
 import { getProductLimit } from '@/app/lib/subscriptions';
 
@@ -184,15 +184,7 @@ export default async function ProductsPage() {
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                   </Link>
-                  <form action={deleteProduct.bind(null, product.id)}>
-                    <button
-                      type="submit"
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-red-50 hover:text-red-500 hover:border-red-100"
-                      title="Delete product"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </form>
+                  <DeleteProductButton id={product.id} name={product.name} />
                 </div>
               </div>
             </div>

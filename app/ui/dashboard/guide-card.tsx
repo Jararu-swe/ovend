@@ -7,7 +7,7 @@ interface GuideCardProps {
   guide: {
     id: number;
     title: string;
-    description: string;
+    description: string | null;
     slug: string;
     reading_time: number;
     difficulty: "beginner" | "intermediate" | "advanced";

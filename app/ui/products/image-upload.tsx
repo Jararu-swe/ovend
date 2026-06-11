@@ -41,7 +41,7 @@ export default function ImageUpload({ value, onChange, onRemove }: ImageUploadPr
           <button
             type="button"
             onClick={onRemove}
-            className="absolute top-2 right-2 rounded-full bg-red-500 p-2 text-white shadow-lg transition hover:bg-red-600"
+            className="absolute top-2 right-2 rounded-xl bg-red-600 p-2 text-white shadow-sm transition hover:bg-red-700"
           >
             <XMarkIcon className="h-4 w-4" />
           </button>

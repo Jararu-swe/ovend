@@ -1,5 +1,6 @@
 import React from "react";
 import { GymIronHero } from "../../app/ui/store/hero-renderers";
+import type { StoreTheme } from "../../app/lib/definitions";
 
 export default {
   title: "Store/Hero/GymIron",
@@ -20,7 +21,7 @@ const sampleTheme = {
   heading_color: "#ffffff",
   text_color: "#e5e7eb",
   heading_font: "Inter",
-};
+} as StoreTheme;
 
 export const Default = () => (
   <GymIronHero content={sampleContent} theme={sampleTheme} />

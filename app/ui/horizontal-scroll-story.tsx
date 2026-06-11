@@ -71,7 +71,7 @@ export function HorizontalScrollStory() {
     <motion.section
       ref={targetRef}
       style={{ backgroundColor }}
-      className="relative h-[500vh]"
+      className="relative h-[300vh]"
     >
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         {/* Progress bar */}

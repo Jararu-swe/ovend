@@ -52,7 +52,9 @@ function ChangeView({ center }: { center: L.LatLngExpression }) {
 
 export default function LocationPicker({ onLocationSelect, initialLat, initialLng }: LocationPickerProps) {
   const [position, setPosition] = useState<{lat: number, lng: number} | null>(
-    initialLat && initialLng ? {lat: initialLat, lng: initialLng} : null
+    initialLat != null && initialLng != null
+      ? { lat: Number(initialLat), lng: Number(initialLng) }
+      : null
   );
   const [isLocating, setIsLocating] = useState(false);
   const [address, setAddress] = useState('');
@@ -149,7 +151,7 @@ export default function LocationPicker({ onLocationSelect, initialLat, initialLn
         <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 rounded-xl border border-emerald-100">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight">
-            Location Set: {position.lat.toFixed(6)}, {position.lng.toFixed(6)}
+            Location Set: {Number(position.lat).toFixed(6)}, {Number(position.lng).toFixed(6)}
           </span>
         </div>
       )}

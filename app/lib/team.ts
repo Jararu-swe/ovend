@@ -10,6 +10,62 @@ import { sql } from './db';
 import { hasFeatureAccess } from './subscriptions';
 import { TeamMember, TeamMemberPermissions } from './definitions';
 
+// ─── Schema Migration ────────────────────────────────────────────
+
+let ensureTeamSchemaPromise: Promise<void> | null = null;
+
+/**
+ * Ensures the team_members table has the required schema (email column,
+ * unique constraint). Idempotent — safe to call on every request.
+ */
+export async function ensureTeamSchema(): Promise<void> {
+  if (ensureTeamSchemaPromise) return ensureTeamSchemaPromise;
+
+  ensureTeamSchemaPromise = (async () => {
+    try {
+      // Add email column if missing (from older create-team-members-table.js)
+      await sql.unsafe(`
+        ALTER TABLE team_members ADD COLUMN IF NOT EXISTS email VARCHAR(255)
+      `);
+
+      // Add NOT NULL constraint to email — first set any NULLs to a placeholder
+      await sql.unsafe(`
+        UPDATE team_members SET email = user_id::text || '@pending' WHERE email IS NULL
+      `);
+      await sql.unsafe(`
+        ALTER TABLE team_members ALTER COLUMN email SET NOT NULL
+      `);
+
+      // Add created_at / updated_at columns if missing
+      await sql.unsafe(`
+        ALTER TABLE team_members ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      `);
+      await sql.unsafe(`
+        ALTER TABLE team_members ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      `);
+
+      // Add UNIQUE(vendor_id, email) constraint if not present
+      // Drop any old constraints that might conflict
+      await sql.unsafe(`
+        ALTER TABLE team_members DROP CONSTRAINT IF EXISTS team_members_vendor_id_user_id_key
+      `);
+      await sql.unsafe(`
+        ALTER TABLE team_members DROP CONSTRAINT IF EXISTS team_members_vendor_id_email_key
+      `);
+      await sql.unsafe(`
+        ALTER TABLE team_members DROP CONSTRAINT IF EXISTS unique_vendor_email
+      `);
+      await sql.unsafe(`
+        ALTER TABLE team_members ADD CONSTRAINT team_members_vendor_id_email_key UNIQUE(vendor_id, email)
+      `);
+    } catch (error) {
+      console.error('ensureTeamSchema error:', error);
+    }
+  })();
+
+  return ensureTeamSchemaPromise;
+}
+
 export interface TeamMemberWithUser {
   id: string;
   vendor_id: string;
@@ -279,6 +335,101 @@ export async function hasTeamPermission(
     : member.permissions;
   
   return permissions[permission] === true;
+}
+
+/**
+ * Ensures the vendor has an owner record in the team_members table.
+ * If the vendor doesn't have one, creates it automatically.
+ * This should be called when the team page loads.
+ *
+ * @param vendorId - The vendor's user ID
+ */
+export async function ensureOwnerTeamMember(vendorId: string): Promise<void> {
+  // Ensure the schema is up to date (idempotent)
+  await ensureTeamSchema();
+
+  const [existing] = await sql`
+    SELECT id FROM team_members
+    WHERE vendor_id = ${vendorId} AND role = 'owner'
+    LIMIT 1
+  `;
+
+  if (existing) return; // Owner record already exists
+
+  const [vendor] = await sql<{ name: string; email: string }[]>`
+    SELECT name, email FROM users WHERE id = ${vendorId} LIMIT 1
+  `;
+
+  if (!vendor) return;
+
+  // Create the owner record
+  const defaultPermissions = JSON.stringify({
+    products: true,
+    orders: true,
+    settings: true,
+  });
+
+  try {
+    // Use INSERT without ON CONFLICT since we already checked for existence;
+    // the unique constraint will catch race conditions gracefully
+    await sql`
+      INSERT INTO team_members (vendor_id, user_id, email, role, permissions, invited_by, status, accepted_at)
+      VALUES (
+        ${vendorId},
+        ${vendorId},
+        ${vendor.email},
+        'owner',
+        ${defaultPermissions},
+        ${vendorId},
+        'active',
+        CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (error: any) {
+    // If a duplicate was inserted by a concurrent request, that's fine
+    if (error?.code === '23505') {
+      // unique_violation — another request already created the owner
+      return;
+    }
+    console.error('ensureOwnerTeamMember error:', error);
+  }
+}
+
+/**
+ * Looks up a user's active team membership and returns the vendor ID they work for
+ * along with their permissions. Used in the JWT callback to grant dashboard access.
+ *
+ * @param userId - The user's real ID
+ * @returns Vendor ID and permissions if they're an active team member, null otherwise
+ */
+export async function getTeamMemberAccess(
+  userId: string
+): Promise<{ vendorId: string; permissions: TeamMemberPermissions } | null> {
+  if (!userId) return null;
+
+  try {
+    const [member] = await sql`
+      SELECT vendor_id, permissions
+      FROM team_members
+      WHERE user_id = ${userId} AND status = 'active'
+      LIMIT 1
+    `;
+
+    if (!member) return null;
+
+    const permissions =
+      typeof member.permissions === 'string'
+        ? JSON.parse(member.permissions)
+        : member.permissions;
+
+    return {
+      vendorId: member.vendor_id,
+      permissions: permissions as TeamMemberPermissions,
+    };
+  } catch (error) {
+    console.error('getTeamMemberAccess error:', error);
+    return null;
+  }
 }
 
 // Legacy functions for backward compatibility

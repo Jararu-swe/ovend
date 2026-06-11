@@ -3,13 +3,32 @@
 import { useState, useRef, useEffect } from 'react';
 import { Template, TEMPLATES, TEMPLATE_CATEGORIES, FONT_MAP } from '@/app/lib/template-presets';
 
+/** Tier priority for comparison — higher index = higher tier */
+const TIER_ORDER = ['starter', 'pro', 'business'] as const;
+
+function isTemplateLocked(template: Template, userTier: string): boolean {
+  if (!template.minTier || template.minTier === 'starter') return false;
+  const userIdx = TIER_ORDER.indexOf(userTier as typeof TIER_ORDER[number]);
+  const requiredIdx = TIER_ORDER.indexOf(template.minTier);
+  return userIdx < requiredIdx;
+}
+
+function getUpgradeLabel(tier: string): string {
+  const labels: Record<string, string> = {
+    pro: 'Pro',
+    business: 'Business',
+  };
+  return labels[tier] || 'Pro';
+}
+
 interface TemplatePickerProps {
   activeTemplateId: string;
   onSelect: (template: Template) => void;
+  subscriptionTier?: string;
 }
 
 /** Mini storefront mockup rendered with CSS using the theme's actual colors/fonts */
-function ThemePreview({ template, isActive }: { template: Template; isActive: boolean }) {
+function ThemePreview({ template, isActive, isLocked }: { template: Template; isActive: boolean; isLocked?: boolean }) {
   const t = template.theme;
 
   return (
@@ -70,7 +89,7 @@ function ThemePreview({ template, isActive }: { template: Template; isActive: bo
       </div>
 
       {/* Active badge overlay */}
-      {isActive && (
+      {isActive && !isLocked && (
         <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/10 backdrop-blur-[1px]">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -79,12 +98,25 @@ function ThemePreview({ template, isActive }: { template: Template; isActive: bo
           </div>
         </div>
       )}
+
+      {/* Lock overlay for premium templates */}
+      {isLocked && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-[2px]">
+          <svg className="h-8 w-8 text-white/90 mb-1" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+          </svg>
+          <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider">
+            {getUpgradeLabel(template.minTier || 'pro')} only
+          </span>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function TemplatePicker({ activeTemplateId, onSelect }: TemplatePickerProps) {
+export default function TemplatePicker({ activeTemplateId, onSelect, subscriptionTier }: TemplatePickerProps) {
   const activeRef = useRef<HTMLButtonElement>(null);
+  const userTier = subscriptionTier || 'starter';
   const [activeCategory, setActiveCategory] = useState(() => {
     // Default to the category of the active theme if it exists, otherwise 'all'
     const activeTemplate = TEMPLATES.find(t => t.id === activeTemplateId);
@@ -104,6 +136,19 @@ export default function TemplatePicker({ activeTemplateId, onSelect }: TemplateP
 
   return (
     <div className="p-3 space-y-3">
+      {/* Subscription tier badge */}
+      {userTier === 'starter' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+          <p className="text-[11px] text-amber-800 leading-snug">
+            Premium themes are available on the <strong>Pro</strong> plan.{' '}
+            <a href="/dashboard/billing" className="font-bold underline underline-offset-2 hover:text-amber-900">
+              Upgrade now
+            </a>
+          </p>
+        </div>
+      )}
+
       {/* Category filter */}
       <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
         {TEMPLATE_CATEGORIES.map((cat) => (
@@ -126,20 +171,29 @@ export default function TemplatePicker({ activeTemplateId, onSelect }: TemplateP
       <div className="space-y-2">
         {filtered.map((tpl) => {
           const isActive = tpl.id === activeTemplateId;
+          const locked = isTemplateLocked(tpl, userTier);
           return (
             <button
               key={tpl.id}
               ref={isActive ? activeRef : null}
               type="button"
-              onClick={() => onSelect(tpl)}
+              onClick={() => {
+                if (locked) {
+                  window.location.href = '/dashboard/billing';
+                  return;
+                }
+                onSelect(tpl);
+              }}
               className={`group w-full overflow-hidden text-left transition-all ${
                 isActive
                   ? 'rounded-2xl ring-2 ring-emerald-500 ring-offset-2'
-                  : 'rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md'
+                  : locked
+                    ? 'rounded-2xl border border-slate-200 opacity-70'
+                    : 'rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md'
               }`}
             >
               {/* Visual preview */}
-              <ThemePreview template={tpl} isActive={isActive} />
+              <ThemePreview template={tpl} isActive={isActive} isLocked={locked} />
 
               {/* Theme info */}
               <div className={`px-3 py-2.5 ${isActive ? 'bg-emerald-50' : 'bg-white'}`}>
@@ -148,7 +202,14 @@ export default function TemplatePicker({ activeTemplateId, onSelect }: TemplateP
                   <span className={`text-sm font-bold ${isActive ? 'text-emerald-700' : 'text-slate-800'}`}>
                     {tpl.name}
                   </span>
-                  {isActive && (
+                  {locked ? (
+                    <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                      </svg>
+                      {getUpgradeLabel(tpl.minTier || 'pro')}
+                    </span>
+                  ) : isActive && (
                     <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
                       Active
                     </span>
@@ -163,7 +224,7 @@ export default function TemplatePicker({ activeTemplateId, onSelect }: TemplateP
                     <span
                       key={tag}
                       className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
-                        isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                        isActive ? 'bg-emerald-100 text-emerald-600' : locked ? 'bg-slate-100 text-slate-300' : 'bg-slate-100 text-slate-400'
                       }`}
                     >
                       {tag}

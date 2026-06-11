@@ -330,7 +330,7 @@ export default function ProductDetail({ vendor, product, theme }: ProductDetailP
               <p className="font-bold">{vendor.store_name || vendor.name}</p>
               {vendor.whatsapp_number && (
                 <a
-                  href={`https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '')}`}
+                  href={`https://wa.me/${vendor.whatsapp_number.replace(/\D/g, '').replace(/^0/, '234')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 mt-3 text-sm font-semibold transition-colors hover:opacity-70"

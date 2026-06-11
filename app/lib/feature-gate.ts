@@ -44,6 +44,11 @@ export const FEATURE_GATE_ERRORS = {
     title: 'Premium Themes Unavailable',
     message: 'Premium theme access requires Pro or Business tier.',
     action: 'Upgrade to Pro'
+  },
+  hide_branding: {
+    title: 'Branding Customization Unavailable',
+    message: 'Removing Vendle branding requires Business tier.',
+    action: 'Upgrade to Business'
   }
 } as const;
 

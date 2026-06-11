@@ -86,6 +86,10 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     share_icon: 'arrow-square',
     add_icon: 'plus',
     layout_width: 'wide',
+    primary_gradient: null,
+    glass_effect: false,
+    show_mobile_checkout_bar: true,
+    draft_config: null,
     sections: JSON.stringify(getDefaultSections()),
     section_content: JSON.stringify(getDefaultSectionContent()),
   };

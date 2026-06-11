@@ -1,4 +1,4 @@
-import { SubscriptionStatus, SubscriptionTier } from './definitions';
+import { SubscriptionStatus } from './definitions';
 
 /**
  * Format an ISO 8601 date string to a human-readable format
@@ -76,14 +76,14 @@ export function getStatusBadgeStyle(status: SubscriptionStatus): string {
  * @param tier - Subscription tier
  * @returns Formatted tier name
  */
-export function getTierDisplayName(tier: SubscriptionTier): string {
-  const tierNames: Record<SubscriptionTier, string> = {
+export function getTierDisplayName(tier: string | null): string {
+  const tierNames: Record<string, string> = {
     starter: 'Starter',
     pro: 'Pro',
     business: 'Business'
   };
   
-  return tierNames[tier] || 'Unknown';
+  return tier ? tierNames[tier] || 'Unknown' : 'Unknown';
 }
 
 /**

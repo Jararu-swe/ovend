@@ -51,55 +51,44 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Comprehensive error suppression for external scripts
+              // Safe error suppression — only filters non-critical external script noise.
+              // Critical errors (React hydration, Next.js router, etc.) are NEVER suppressed.
               (function() {
-                const originalError = console.error;
+                // Lightly filter console.error for Paystack noise only
+                const _origErr = console.error.bind(console);
                 console.error = function(...args) {
                   const msg = args.join(' ');
-                  // Suppress Paystack errors
-                  if (msg.includes('Paystack') || msg.includes('paystack') || msg.includes('inline.js')) {
-                    console.warn('[Suppressed Paystack error]:', msg);
+                  if (msg.includes('Paystack') || (msg.includes('paystack') && msg.includes('inline.js'))) {
+                    console.warn('[Paystack noise suppressed]');
                     return;
                   }
-                  originalError.apply(console, args);
+                  _origErr.apply(console, args);
                 };
+
+                // Capture errors on the window — suppress only Paystack/extension noise
+                // but ALWAYS let Next.js / React errors propagate normally.
+                window.addEventListener('error', function(e) {
+                  const isPaystack = e.message?.includes('Paystack') || e.message?.includes('paystack');
+                  const isExtension = e.filename?.includes('chrome-extension') || e.filename?.includes('moz-extension');
+                  
+                  if (isPaystack || isExtension) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.warn('External script error suppressed:', e.filename || e.message);
+                    return false;
+                  }
+                  // All other errors (React, hydration, router, etc.) pass through
+                }, true);
+
+                // Suppress unhandled promise rejections from external scripts only
+                window.addEventListener('unhandledrejection', function(e) {
+                  if (e.reason?.message?.includes('Paystack')) {
+                    e.preventDefault();
+                    console.warn('Paystack promise rejection suppressed');
+                    return false;
+                  }
+                });
               })();
-              
-              // Prevent external script errors from crashing the app
-              window.addEventListener('error', function(e) {
-                // Suppress Paystack initialization errors
-                if (e.message && (e.message.includes('Paystack') || e.message.includes('paystack'))) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.warn('Paystack error suppressed:', e.message);
-                  return false;
-                }
-                
-                // Suppress browser extension errors
-                if (e.filename && (e.filename.includes('webextension') || e.filename.includes('chrome-extension') || e.filename.includes('moz-extension'))) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.warn('Browser extension error suppressed:', e.message);
-                  return false;
-                }
-                
-                // Suppress errors from external scripts (paystack, inline.js)
-                if (e.filename && (e.filename.includes('paystack') || e.filename.includes('inline.js'))) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.warn('External script error suppressed:', e.filename);
-                  return false;
-                }
-              }, true);
-              
-              // Suppress unhandled promise rejections from external scripts
-              window.addEventListener('unhandledrejection', function(e) {
-                if (e.reason && e.reason.message && (e.reason.message.includes('Paystack') || e.reason.message.includes('paystack'))) {
-                  e.preventDefault();
-                  console.warn('Paystack promise rejection suppressed');
-                  return false;
-                }
-              });
             `,
           }}
         />

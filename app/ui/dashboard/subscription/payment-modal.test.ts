@@ -27,7 +27,7 @@ type SubscriptionTier = 'starter' | 'pro' | 'business';
 type UpgradeResult = {
   ok: boolean;
   error?: string;
-  data?: { authorization_url?: string; reference?: string };
+  data?: { authorization_url?: string; reference?: string; email?: string };
 };
 
 type VerifyResult = {

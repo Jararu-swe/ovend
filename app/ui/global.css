@@ -29,21 +29,169 @@ input[type='number']::-webkit-outer-spin-button {
   margin: 0;
 }
 
-/* Hide scrollbar globally for a cleaner, premium Awwwards aesthetic */
+/* Thin scrollbar — keeps navigation visible while maintaining a clean aesthetic */
 html::-webkit-scrollbar {
-  display: none;
+  width: 4px;
+}
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 html {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: auto;  /* IE and Edge */
+  scrollbar-width: thin;  /* Firefox */
 }
 
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM THEME CUSTOM ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Beauty Theme (bty-*) ───────────────────────────────── */
+@keyframes btyFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
+.bty-fade-up {
+  animation: btyFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.bty-delay-1 {
+  animation-delay: 0.2s;
+}
+.bty-delay-2 {
+  animation-delay: 0.4s;
+}
+
+/* ─── Midnight Luxe Theme (mdn-*) ────────────────────────── */
+@keyframes mdnFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+.mdn-float {
+  animation: mdnFloat 6s ease-in-out infinite;
+}
+
+@keyframes mdnReveal {
+  from {
+    opacity: 0;
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  }
+  to {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+.mdn-reveal {
+  animation: mdnReveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) both;
+  will-change: clip-path, opacity;
+}
+.mdn-delay-1 {
+  animation-delay: 0.3s;
+}
+.mdn-delay-2 {
+  animation-delay: 0.6s;
+}
+
+/* ─── Boutique / Luxe Theme (btq-*) ───────────────────────── */
+@keyframes btqLineGrow {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+.btq-line-grow {
+  animation: btqLineGrow 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: left;
+  will-change: transform, opacity;
+}
+
+@keyframes btqHeroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.btq-hero-reveal {
+  animation: btqHeroReveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes btqSubReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.btq-sub-reveal {
+  animation: btqSubReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── Boutique scroll line pulse ─────────────────────────── */
+@keyframes boutiqueLineGrow {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  51% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* ─── Crystal Diamond floating shapes ────────────────────── */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+  66% {
+    transform: translateY(8px) rotate(-3deg);
+  }
+}
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+/* ─── Neon Nights animated background ────────────────────── */
+@keyframes slideBg {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
 }

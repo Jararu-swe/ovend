@@ -47,7 +47,7 @@ export default function PaymentButton({ amount, email, onSuccess, onClose }: Pay
     <button
       onClick={handlePayment}
       disabled={isLoading}
-      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 p-4 font-bold text-white shadow-lg transition hover:bg-emerald-500 active:scale-95 disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 p-4 font-bold text-white shadow-sm transition hover:bg-emerald-400 active:scale-95 disabled:opacity-60"
     >
       <CreditCardIcon className="h-5 w-5" />
       {isLoading ? 'Processing...' : 'Pay with Card'}

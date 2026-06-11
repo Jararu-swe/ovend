@@ -1,3 +1,5 @@
+'use client';
+
 export default function VendleLogo({ className = '' }: { className?: string }) {
   return (
     <div className={`flex items-center gap-1 ${className}`} style={{ fontFamily: 'var(--font-pacifico), cursive' }}>

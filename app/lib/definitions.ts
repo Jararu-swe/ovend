@@ -17,14 +17,21 @@ export type User = {
   category?: string | null;
   location_state?: string | null;
   role?: string;
+  // Delivery address (where the store delivers to)
   delivery_address?: string | null;
   delivery_latitude?: number | null;
   delivery_longitude?: number | null;
   delivery_address_details?: string | null;
+  // Pickup location (where customers pick up from)
+  offers_pickup?: boolean | null;
+  pickup_address?: string | null;
   pickup_latitude?: number | null;
   pickup_longitude?: number | null;
   pickup_address_details?: string | null;
-  offers_pickup?: boolean | null;
+  // Sound/notification preferences
+  sound_enabled?: boolean | null;
+  sound_volume?: number | null;
+  // Subscription
   subscription_status?: 'active' | 'past_due' | 'inactive' | 'trial' | string | null;
   subscription_expires_at?: string | null;
   subscription_last_payment_reference?: string | null;
@@ -36,6 +43,8 @@ export type User = {
   /** When false, storefront shows as closed / not accepting orders */
   accepting_orders?: boolean | null;
   store_closed_note?: string | null;
+  /** Custom domain (e.g. mybrand.com) for Business tier */
+  custom_domain?: string | null;
 };
 
 export type Customer = {
@@ -154,12 +163,6 @@ export type OrderItem = {
   quantity: number;
 };
 
-export type Location = {
-  lat: number;
-  lng: number;
-  details?: string;
-};
-
 export type Order = {
   id: string;
   vendor_id: string;
@@ -198,58 +201,6 @@ export type DiscountCode = {
   created_at: string;
 };
 
-// Subscription System Types
-
-export type SubscriptionTier = 'starter' | 'pro' | 'business';
-
-export type SubscriptionStatus = 'active' | 'trial' | 'past_due' | 'inactive' | 'cancelled';
-
-export type SubscriptionPlan = {
-  id: string;
-  tier: SubscriptionTier;
-  name: string;
-  price_kobo: number;
-  transaction_fee_percentage: number;
-  product_limit: number;
-  features: SubscriptionFeatures;
-  created_at: string;
-  updated_at: string;
-};
-
-export type SubscriptionFeatures = {
-  analytics: boolean;
-  advanced_analytics?: boolean;
-  team_members: boolean;
-  custom_domain: boolean;
-  priority_support: boolean;
-  theme_level: 'basic' | 'premium' | 'exclusive';
-};
-
-export type SubscriptionPayment = {
-  id: string;
-  vendor_id: string;
-  amount_kobo: number;
-  reference: string;
-  tier: SubscriptionTier;
-  status: 'paid' | 'failed' | 'pending';
-  billing_period_start: string;
-  billing_period_end: string;
-  paid_at: string;
-  created_at: string;
-};
-
-export type VendorSubscriptionInfo = {
-  tier: SubscriptionTier;
-  status: SubscriptionStatus;
-  expires_at: string | null;
-  last_payment_reference: string | null;
-  updated_at: string;
-  plan: SubscriptionPlan;
-  grace_days_remaining: number | null;
-  is_trial: boolean;
-  trial_days_remaining: number | null;
-};
-
 export type TeamMemberPermissions = {
   products: boolean;
   orders: boolean;
@@ -259,11 +210,11 @@ export type TeamMemberPermissions = {
 export type TeamMember = {
   id: string;
   vendor_id: string;
-  user_id: string | null;
+  user_id: string;
   email: string;
-  role: 'admin' | 'assistant';
+  role: 'owner' | 'admin' | 'assistant';
   permissions: TeamMemberPermissions;
-  invited_by: string;
+  invited_by: string | null;
   invited_at: string;
   accepted_at: string | null;
   status: 'pending' | 'active' | 'inactive';
@@ -271,29 +222,7 @@ export type TeamMember = {
   updated_at: string;
 };
 
-export type SubscriptionInvoice = {
-  id: string;
-  vendor_id: string;
-  payment_id: string;
-  invoice_number: string;
-  amount_kobo: number;
-  tier: SubscriptionTier;
-  billing_period_start: string;
-  billing_period_end: string;
-  issued_at: string;
-  pdf_url: string | null;
-  created_at: string;
-};
 
-export type SubscriptionEvent = {
-  id: string;
-  vendor_id: string;
-  event_type: string;
-  from_tier: SubscriptionTier | null;
-  to_tier: SubscriptionTier | null;
-  metadata: Record<string, any> | null;
-  created_at: string;
-};
 
 export type StoreTheme = {
   id: string;
@@ -364,4 +293,99 @@ export type StoreTheme = {
   created_at: string;
   updated_at: string;
   draft_config: string | null;
+};
+
+// ─── Custom Domain Types ────────────────────────────────────────────
+
+export type VendorDomainStatus = 'pending' | 'verifying' | 'verified' | 'failed' | 'removed';
+
+export type VendorDomainSSLStatus = 'pending' | 'provisioning' | 'active' | 'failed';
+
+export type VerificationMethod = 'cname' | 'txt';
+
+export type VendorDomain = {
+  id: string;
+  vendor_id: string;
+  domain: string;
+  verification_method: VerificationMethod;
+  verification_token: string;
+  vercel_domain_id: string | null;
+  status: VendorDomainStatus;
+  ssl_status: VendorDomainSSLStatus;
+  is_primary: boolean;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// ─── Subscription Types ────────────────────────────────────────────
+
+export type SubscriptionTier = 'starter' | 'pro' | 'business';
+
+export type SubscriptionStatus = 'active' | 'past_due' | 'inactive' | 'trial' | 'cancelled';
+
+export type SubscriptionFeatures = {
+  analytics: boolean;
+  advanced_analytics?: boolean;
+  team_members: boolean;
+  custom_domain: boolean;
+  priority_support: boolean;
+  theme_level: 'basic' | 'premium' | 'exclusive';
+  hide_branding?: boolean;
+};
+
+export type SubscriptionPlan = {
+  id: string;
+  tier: SubscriptionTier;
+  name: string;
+  price_kobo: number;
+  transaction_fee_percentage: number;
+  product_limit: number;
+  features: SubscriptionFeatures;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VendorSubscriptionInfo = {
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  expires_at: string | null;
+  last_payment_reference: string | null;
+  updated_at: string | null;
+  plan: SubscriptionPlan;
+  grace_days_remaining: number | null;
+  is_trial: boolean;
+  trial_days_remaining: number | null;
+};
+
+export type SubscriptionPayment = {
+  id: string;
+  vendor_id: string;
+  amount_kobo: number;
+  reference: string;
+  tier: string | null;
+  status: string;
+  billing_period_start: string | null;
+  billing_period_end: string | null;
+  paid_at: string | null;
+  created_at: string | null;
+};
+
+// ─── Guide Types ────────────────────────────────────────────────
+
+export type VendorGuide = {
+  id: number;
+  slug: string;
+  title: string;
+  content: string;
+  description: string | null;
+  category: string | null;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  reading_time: number;
+  trigger_type: string | null;
+  applies_to_categories: string[] | null;
+  featured: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
 };

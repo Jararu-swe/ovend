@@ -1,13 +1,15 @@
-import { fetchVendorBySlug, fetchProducts, trackStoreVisit } from '@/app/lib/data';
+import { fetchVendorBySlug, fetchProducts } from '@/app/lib/data';
 import { getOrCreateVendorTheme } from '@/app/lib/theme';
 import { getStoreAvailability } from '@/app/lib/store-availability';
 import { notFound } from 'next/navigation';
 import Storefront from '@/app/ui/store/storefront';
+import StoreVisitTracker from '@/app/ui/store/store-visit-tracker';
 import Script from 'next/script';
 import { Metadata } from 'next';
 
 import { auth } from '@/auth';
 import { sql } from '@/app/lib/db';
+import { hasFeatureAccess } from '@/app/lib/subscriptions';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -97,8 +99,11 @@ export default async function StorePage(props: Props) {
     }
   }
 
-  // Track store visit (non-blocking)
-  trackStoreVisit(vendor.id).catch(() => {});
+  // Determine if the visitor is the store owner (don't track owner's own visits)
+  const isStoreOwner = session?.user?.id === vendor.id;
+
+  // Use feature gate to check if this vendor's plan allows hiding Vendle branding
+  const hideVendleBranding = await hasFeatureAccess(vendor.id, 'hide_branding');
 
   const availability = getStoreAvailability({
     timeZone: vendor.store_timezone,
@@ -110,7 +115,8 @@ export default async function StorePage(props: Props) {
   return (
     <>
       <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
-      <Storefront vendor={vendor} products={products} theme={theme} customer={customer} availability={availability} />
+      {!isStoreOwner && <StoreVisitTracker vendorId={vendor.id} />}
+      <Storefront vendor={vendor} products={products} theme={theme} customer={customer} availability={availability} hideVendleBranding={hideVendleBranding} />
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { fetchTeamMembers } from '@/app/lib/team';
 import { UsersIcon, ShieldCheckIcon, UserIcon, PlusIcon } from '@heroicons/react/24/outline';
 import RemoveTeamMemberButton from './remove-member-button';
+import PermissionEditor from './permission-editor';
 import Link from 'next/link';
 
 export default async function TeamList({ vendorId }: { vendorId: string }) {
@@ -62,7 +63,7 @@ export default async function TeamList({ vendorId }: { vendorId: string }) {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
                         <span className="text-emerald-700 font-medium text-sm">
-                          {member.user_name.charAt(0).toUpperCase()}
+                          {(member.user_name || member.user_email || '?').charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div className="ml-4">
@@ -107,7 +108,15 @@ export default async function TeamList({ vendorId }: { vendorId: string }) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {member.role !== 'owner' && (
-                      <RemoveTeamMemberButton memberId={member.id} memberName={member.user_name} />
+                      <div className="flex items-center justify-end gap-1">
+                        <PermissionEditor
+                          memberId={member.id}
+                          memberName={member.user_name}
+                          currentRole={member.role}
+                          currentPermissions={member.permissions}
+                        />
+                        <RemoveTeamMemberButton memberId={member.id} memberName={member.user_name} />
+                      </div>
                     )}
                   </td>
                 </tr>

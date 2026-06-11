@@ -117,7 +117,7 @@ async function setupSubscriptionSchema() {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         
-        CONSTRAINT check_team_role CHECK (role IN ('admin', 'assistant')),
+        CONSTRAINT check_team_role CHECK (role IN ('owner', 'admin', 'assistant')),
         CONSTRAINT check_team_status CHECK (status IN ('pending', 'active', 'inactive')),
         CONSTRAINT unique_vendor_email UNIQUE(vendor_id, email)
       )

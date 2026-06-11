@@ -26,6 +26,7 @@ const statusLabels: Record<string, string> = {
 export default function OrderList({ orders }: { orders: Order[] }) {
   const [filter, setFilter] = useState('All');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const getWhatsAppUrl = (order: Order) => {
     try {
@@ -34,19 +35,24 @@ export default function OrderList({ orders }: { orders: Order[] }) {
       if (!Array.isArray(itemsArray) || itemsArray.length === 0) {
         return '#';
       }
-      const itemsText = itemsArray.map(i => `${i.quantity}x ${i.name}`).join('%0A- ');
+      const itemsText = itemsArray.map(i => `${i.quantity}x ${i.name}`).join('\n- ');
       let locationText = '';
-      if (order.delivery_latitude && order.delivery_longitude) {
-        locationText = `%0A%0ADelivery Location: https://www.google.com/maps/search/?api=1&query=${order.delivery_latitude},${order.delivery_longitude}`;
+      if (order.delivery_type === 'pickup') {
+        locationText = `\n\n📍 Pickup Location`;
+        if (order.vendor_pickup_latitude && order.vendor_pickup_longitude) {
+          locationText += `\nMaps: https://www.google.com/maps/search/?api=1&query=${order.vendor_pickup_latitude},${order.vendor_pickup_longitude}`;
+        }
+        if (order.vendor_pickup_address_details) {
+          locationText += `\nNote: ${order.vendor_pickup_address_details}`;
+        }
+      } else if (order.delivery_latitude && order.delivery_longitude) {
+        locationText = `\n\nDelivery Location: https://www.google.com/maps/search/?api=1&query=${order.delivery_latitude},${order.delivery_longitude}`;
       }
-      const message = `Hello ${order.customer_name}!%0A%0AThank you for your order.%0AHere is a quick summary:%0A- ${itemsText}%0A%0ATotal: ${formatCurrency(order.total_amount)}${locationText}%0A%0AWe are processing this right away!`;
+      const message = `Hello ${order.customer_name}!\n\nThank you for your order.\n\n📦 Order ID: ${order.id.slice(0, 8)}\n\nHere is a quick summary:\n- ${itemsText}\n\nTotal: ${formatCurrency(order.total_amount)}${locationText}\n\nWe are processing this right away!`;
       
-      // Naively format Nigerian phone numbers for MVP
-      let phone = order.customer_phone.replace(/\D/g, '');
-      if (phone.startsWith('0')) {
-        phone = '234' + phone.substring(1);
-      }
-      return `https://wa.me/${phone}?text=${message}`;
+      // Format Nigerian phone numbers to international format
+      const phone = order.customer_phone.replace(/\D/g, '').replace(/^0/, '234');
+      return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     } catch (error) {
       console.error('Error generating WhatsApp URL:', error);
       return '#';
@@ -77,19 +83,36 @@ export default function OrderList({ orders }: { orders: Order[] }) {
 
   // Define filter logic
   const getFilteredOrders = () => {
+    let result: Order[];
     switch (filter) {
       case 'New':
-        return orders.filter(order => order.status === 'new');
+        result = orders.filter(order => order.status === 'new');
+        break;
       case 'In Progress':
-        return orders.filter(order => order.status === 'in_progress');
+        result = orders.filter(order => order.status === 'in_progress');
+        break;
       case 'Fulfilled':
-        return orders.filter(order => order.status === 'fulfilled');
+        result = orders.filter(order => order.status === 'fulfilled');
+        break;
       case 'History':
-        return orders.filter(order => order.status === 'fulfilled');
+        result = orders.filter(order => order.status === 'fulfilled');
+        break;
       case 'All':
       default:
-        return orders.filter(order => order.status !== 'cancelled');
+        result = orders.filter(order => order.status !== 'cancelled');
+        break;
     }
+
+    // Apply search query on History tab
+    if (filter === 'History' && searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(order =>
+        order.id.toLowerCase().startsWith(q) ||
+        order.customer_name.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
   };
 
   const filteredOrders = getFilteredOrders();
@@ -120,6 +143,22 @@ export default function OrderList({ orders }: { orders: Order[] }) {
           </button>
         ))}
       </div>
+
+      {/* Order ID search for History tab */}
+      {filter === 'History' && (
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search by Order ID or customer name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-10 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-400/20 transition"
+          />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         {orders.length === 0 ? (
@@ -220,6 +259,7 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                       <div className="space-y-6">
                         <div>
                           <h5 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3">Customer Details</h5>
+                          <p className="text-xs font-mono text-slate-400 mb-1">Order ID: {order.id.slice(0, 8)}</p>
                           <p className="text-sm text-slate-900 font-bold">{order.customer_name}</p>
                           <div className="flex items-center gap-3 mt-1">
                             <p className="text-sm text-slate-600">{order.customer_phone}</p>
@@ -253,9 +293,9 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                             <div className="mt-4 space-y-3">
                               <h6 className="text-xs font-bold text-slate-700">Pickup Location</h6>
                               <div className="h-40 w-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
-                                <OrderMap lat={order.vendor_pickup_latitude} lng={order.vendor_pickup_longitude} />
+                                <OrderMap lat={Number(order.vendor_pickup_latitude)} lng={Number(order.vendor_pickup_longitude)} />
                                 <a  
-                                  href={getGoogleMapsUrl(order.vendor_pickup_latitude, order.vendor_pickup_longitude)}
+                                  href={getGoogleMapsUrl(order.vendor_pickup_latitude!, order.vendor_pickup_longitude!)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/0 hover:bg-slate-900/10 transition-colors group/maplink"
@@ -270,14 +310,30 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                                   {order.vendor_pickup_address_details}
                                 </p>
                               )}
-                              <a
-                                href={getGoogleMapsUrl(order.vendor_pickup_latitude, order.vendor_pickup_longitude)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
-                              >
-                                <MapPinIcon className="h-4 w-4 text-emerald-500" /> View in Google Maps
-                              </a>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => {
+                                    const url = getGoogleMapsUrl(order.vendor_pickup_latitude!, order.vendor_pickup_longitude!);
+                                    const text = `📍 Pickup Location for ${order.customer_name}: ${url}`;
+                                    if (navigator.share) {
+                                      navigator.share({ title: `Order #${order.id.slice(0, 8)} Pickup Location`, text, url }).catch(console.error);
+                                    } else {
+                                      navigator.clipboard.writeText(text).then(() => alert('Location link copied to clipboard!'));
+                                    }
+                                  }}
+                                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800"
+                                >
+                                  <ShareIcon className="h-4 w-4" /> Share with Rider
+                                </button>
+                                <a
+                                  href={getGoogleMapsUrl(order.vendor_pickup_latitude!, order.vendor_pickup_longitude!)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                                >
+                                  <MapPinIcon className="h-4 w-4 text-emerald-500" /> Google Maps
+                                </a>
+                              </div>
                             </div>
                           )}
 
@@ -285,10 +341,17 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                           {order.delivery_type === 'delivery' && order.delivery_latitude && order.delivery_longitude && (
                             <div className="mt-4 space-y-3">
                               <h6 className="text-xs font-bold text-slate-700">Delivery Location</h6>
+                              
+                              {/* Coordinates badge */}
+                              <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-2 text-xs font-mono text-slate-600">
+                                <MapPinIcon className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                                <span className="font-medium">{Number(order.delivery_latitude).toFixed(4)}, {Number(order.delivery_longitude).toFixed(4)}</span>
+                              </div>
+
                               <div className="h-40 w-full rounded-xl overflow-hidden border border-slate-200 shadow-inner relative z-0">
-                                <OrderMap lat={order.delivery_latitude} lng={order.delivery_longitude} />
+                                <OrderMap lat={Number(order.delivery_latitude)} lng={Number(order.delivery_longitude)} />
                                 <a  
-                                  href={getGoogleMapsUrl(order.delivery_latitude, order.delivery_longitude)}
+                                  href={getGoogleMapsUrl(order.delivery_latitude!, order.delivery_longitude!)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="absolute inset-0 z-10 flex items-center justify-center bg-slate-900/0 hover:bg-slate-900/10 transition-colors group/maplink"
@@ -307,7 +370,7 @@ export default function OrderList({ orders }: { orders: Order[] }) {
                                   <ShareIcon className="h-4 w-4" /> Share with Courier
                                 </button>
                                 <a
-                                  href={getGoogleMapsUrl(order.delivery_latitude, order.delivery_longitude)}
+                                  href={getGoogleMapsUrl(order.delivery_latitude!, order.delivery_longitude!)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"

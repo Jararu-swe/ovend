@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 
-export type NotificationType = 'order';
+export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
 interface SoundPreferences {
   enabled: boolean;
@@ -34,7 +34,7 @@ const synthesizeMonochromeSound = (ctx: AudioContext, type: NotificationType, vo
   const now = ctx.currentTime;
 
   switch (type) {
-    case 'order': {
+    case 'success': {
       // Clean ascending double-ping (Trae-like)
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
@@ -52,6 +52,64 @@ const synthesizeMonochromeSound = (ctx: AudioContext, type: NotificationType, vo
 
       osc.start(now);
       osc.stop(now + 0.3);
+      break;
+    }
+    case 'error': {
+      // Low-frequency dull thud
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.4, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+
+      osc.connect(g);
+      g.connect(gainNode);
+
+      osc.start(now);
+      osc.stop(now + 0.3);
+      break;
+    }
+    case 'warning': {
+      // Neutral electronic blip
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(660, now);
+      
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+
+      osc.connect(g);
+      g.connect(gainNode);
+
+      osc.start(now);
+      osc.stop(now + 0.15);
+      break;
+    }
+    case 'info': {
+      // Short high-pitched tick
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1100, now);
+      
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.1, now + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+
+      osc.connect(g);
+      g.connect(gainNode);
+
+      osc.start(now);
+      osc.stop(now + 0.05);
       break;
     }
   }

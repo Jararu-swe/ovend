@@ -1,10 +1,9 @@
-import Link from "next/link";
-import NavLinks from "@/app/ui/dashboard/nav-links";
-import VendleLogo from "@/app/ui/vendle-logo";
-import { SignOutButton } from "@/app/ui/dashboard/sign-out-button";
-import { auth } from "@/auth";
-import { sql } from "@/app/lib/db";
-import { getNewGuideNotificationsCount } from "@/app/lib/guide-triggers";
+import Link from 'next/link';
+import NavLinks from '@/app/ui/dashboard/nav-links';
+import VendleLogo from '@/app/ui/vendle-logo';
+import { SignOutButton } from '@/app/ui/dashboard/sign-out-button';
+import { auth } from '@/auth';
+import { sql } from '@/app/lib/db';
 
 async function getNewOrdersCount(vendorId: string): Promise<number> {
   try {
@@ -16,49 +15,20 @@ async function getNewOrdersCount(vendorId: string): Promise<number> {
     `;
     return Number(result[0]?.count || 0);
   } catch (error) {
-    console.error("Error fetching new orders count:", error);
+    console.error('Error fetching new orders count:', error);
     return 0;
   }
 }
 
-export default async function SideNav({
-  isMobileHeader = false,
-  isMobileFooter = false,
-}: {
-  isMobileHeader?: boolean;
-  isMobileFooter?: boolean;
-}) {
+export default async function SideNav() {
   const session = await auth();
-  const vendorId = session?.user?.id;
-  const [newOrdersCount, newGuidesCount] = vendorId
-    ? await Promise.all([
-        getNewOrdersCount(vendorId),
-        getNewGuideNotificationsCount(vendorId),
-      ])
-    : [0, 0];
+  const newOrdersCount = session?.user?.id ? await getNewOrdersCount(session.user.id) : 0;
 
-  // Mobile Header - Logo only
-  if (isMobileHeader) {
-    return (
-      <Link className="flex h-16 items-center gap-3 px-5 shrink-0" href="/">
-        <VendleLogo />
-      </Link>
-    );
-  }
+  // Extract team member permissions from session (if any)
+  const teamPermissions = (session?.user as any)?.teamPermissions as
+    | { products: boolean; orders: boolean; settings: boolean }
+    | undefined;
 
-  // Mobile Footer - Navigation only
-  if (isMobileFooter) {
-    return (
-      <div className="flex flex-row items-center justify-start space-x-1 overflow-x-auto px-2 py-2 no-scrollbar">
-        <NavLinks
-          newOrdersCount={newOrdersCount}
-          newGuidesCount={newGuidesCount}
-        />
-      </div>
-    );
-  }
-
-  // Desktop Sidebar - Full layout with logo and navigation
   return (
     <div className="flex h-full flex-col bg-white border-r border-slate-200/80">
       {/* Logo area */}
@@ -67,23 +37,18 @@ export default async function SideNav({
         href="/"
       >
         <VendleLogo />
-        <div className="ml-1">
+        <div className="hidden md:block ml-1">
           <p className="text-[10px] text-slate-400 font-medium -mt-0.5">
-            Vendor Dashboard
+            {teamPermissions ? 'Team Dashboard' : 'Vendor Dashboard'}
           </p>
         </div>
       </Link>
 
       {/* Navigation */}
-      <div className="flex grow flex-col space-y-1 px-3 py-3 overflow-y-auto no-scrollbar">
-        <NavLinks
-          newOrdersCount={newOrdersCount}
-          newGuidesCount={newGuidesCount}
-        />
+      <div className="flex grow flex-row justify-between space-x-2 overflow-y-auto px-3 py-3 md:flex-col md:space-x-0 md:space-y-1">
+        <NavLinks newOrdersCount={newOrdersCount} teamPermissions={teamPermissions} />
         <div className="hidden h-auto w-full grow md:block" />
-        <div>
-          <SignOutButton />
-        </div>
+        <SignOutButton />
       </div>
     </div>
   );

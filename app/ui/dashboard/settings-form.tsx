@@ -1,230 +1,486 @@
-'use client';
+"use client";
 
-import { User } from '@/app/lib/definitions';
-import { updateProfile, State } from '@/app/lib/actions';
-import { useActionState, useState, useEffect, useMemo } from 'react';
-import { 
-  CheckCircleIcon, 
-  ExclamationCircleIcon, 
-  BellIcon, 
-  SpeakerWaveIcon, 
+import { User } from "@/app/lib/definitions";
+import { updateProfile, State } from "@/app/lib/actions";
+import { useActionState, useState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  BellIcon,
+  SpeakerWaveIcon,
   SpeakerXMarkIcon,
   ClockIcon,
-  GlobeAltIcon,
-  BanknotesIcon,
-  BuildingStorefrontIcon,
-  TruckIcon
-} from '@heroicons/react/24/outline';
-import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
-import { useSound } from '@/app/lib/sound-manager';
+  MapPinIcon,
+  TruckIcon,
+} from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
+import { NIGERIAN_STATES, STORE_CATEGORIES } from "@/app/lib/utils";
+import { useSound } from "@/app/lib/sound-manager";
 import {
   STORE_DAY_KEYS,
-  type StoreHoursDayKey,
-  type StoreHoursJson,
-  parseHHMM,
-} from '@/app/lib/store-availability';
-import dynamic from 'next/dynamic';
+  StoreHoursDayKey,
+  StoreHoursSlot,
+  StoreHoursJson,
+} from "@/app/lib/store-availability";
 
-const LocationPicker = dynamic(() => import('@/app/ui/store/location-picker'), {
+const LocationPicker = dynamic(() => import("@/app/ui/store/location-picker"), {
   ssr: false,
 });
 
-const DAY_LABELS: Record<StoreHoursDayKey, string> = {
-  mon: 'Monday',
-  tue: 'Tuesday',
-  wed: 'Wednesday',
-  thu: 'Thursday',
-  fri: 'Friday',
-  sat: 'Saturday',
-  sun: 'Sunday',
-};
-
-const COMMON_TIMEZONES = [
-  'Africa/Lagos',
-  'Africa/Abidjan',
-  'Africa/Cairo',
-  'Africa/Johannesburg',
-  'Africa/Nairobi',
-  'UTC',
-  'Europe/London',
-  'Europe/Paris',
-  'America/New_York',
-  'America/Los_Angeles',
-  'Asia/Dubai',
-  'Asia/Singapore',
-];
-
-type DayRow = { enabled: boolean; open: string; close: string };
-
-function deserializeHours(user: User): Record<StoreHoursDayKey, DayRow> {
-  const base = {} as Record<StoreHoursDayKey, DayRow>;
-  for (const k of STORE_DAY_KEYS) {
-    base[k] = { enabled: false, open: '09:00', close: '17:00' };
-  }
-  const raw = user.store_hours;
-  let obj: StoreHoursJson | null = null;
-  if (raw != null && typeof raw === 'string') {
-    try {
-      obj = JSON.parse(raw) as StoreHoursJson;
-    } catch {
-      obj = null;
-    }
-  } else if (raw && typeof raw === 'object') {
-    obj = raw as StoreHoursJson;
-  }
-  if (!obj) return base;
-  for (const k of STORE_DAY_KEYS) {
-    const arr = obj[k];
-    if (Array.isArray(arr) && arr[0]?.open != null && arr[0]?.close != null) {
-      const open = String(arr[0].open).slice(0, 5);
-      const close = String(arr[0].close).slice(0, 5);
-      base[k] = { enabled: true, open, close };
-    }
-  }
-  return base;
-}
-
-function serializeHours(state: Record<StoreHoursDayKey, DayRow>): StoreHoursJson | null {
-  const out: StoreHoursJson = {};
-  for (const k of STORE_DAY_KEYS) {
-    const row = state[k];
-    if (!row.enabled) continue;
-    const o = parseHHMM(row.open);
-    const c = parseHHMM(row.close);
-    if (o == null || c == null || c <= o) continue;
-    out[k] = [{ open: row.open.trim().slice(0, 5), close: row.close.trim().slice(0, 5) }];
-  }
-  return Object.keys(out).length ? out : null;
-}
-
-export default function SettingsForm({ user, children }: { user: User; children?: React.ReactNode }) {
-  const initialState: State = { message: null, errors: {} };
-  const [state, formAction, isPending] = useActionState(updateProfile as any, initialState);
-  const [descriptionLength, setDescriptionLength] = useState(user.store_description?.length || 0);
-  const { preferences, updatePreferences } = useSound();
-  const [isReducedMotion, setIsReducedMotion] = useState(false);
-  
-  // Availability State
-  const [days, setDays] = useState(() => deserializeHours(user));
-  const hoursJson = useMemo(() => JSON.stringify(serializeHours(days)), [days]);
-  const tzValue = user.store_timezone?.trim() || 'Africa/Lagos';
-  const acceptingDefault = user.accepting_orders !== false;
-  const tzOptions = Array.from(new Set([tzValue, ...COMMON_TIMEZONES]));
-
-  // Pickup Location State
-  const [offersPickup, setOffersPickup] = useState(user.offers_pickup ?? false);
-  const [pickupLocation, setPickupLocation] = useState<{lat: number, lng: number} | null>(
-    user.pickup_latitude && user.pickup_longitude 
-      ? { lat: user.pickup_latitude, lng: user.pickup_longitude }
-      : null
-  );
-  const [pickupAddressDetails, setPickupAddressDetails] = useState(user.pickup_address_details || '');
-
-  useEffect(() => {
-    setIsReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, []);
+function SubmitButton() {
+  const { pending } = useFormStatus();
 
   return (
-    <form action={formAction} className="space-y-6">
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+    >
+      {pending ? (
+        <>
+          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          Saving...
+        </>
+      ) : (
+        "Save all settings"
+      )}
+    </button>
+  );
+}
+
+function parseStoreHours(store_hours: unknown): StoreHoursJson {
+  if (!store_hours) return {};
+  try {
+    const parsed =
+      typeof store_hours === "string" ? JSON.parse(store_hours) : store_hours;
+    if (typeof parsed === "object" && parsed !== null) {
+      return parsed as StoreHoursJson;
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function ensureArray<T>(val: T | T[] | null | undefined): T[] {
+  if (val == null) return [];
+  return Array.isArray(val) ? val : [val];
+}
+
+const DEFAULT_SLOT = { open: "09:00", close: "18:00" };
+
+const DAY_LABELS: Record<StoreHoursDayKey, string> = {
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
+};
+
+export default function SettingsForm({ user }: { user: User }) {
+  const router = useRouter();
+  const initialState: State = { message: null, errors: {} };
+  const [state, formAction] = useActionState(
+    updateProfile as any,
+    initialState,
+  );
+  const { playSound } = useSound();
+
+  // ── Store Profile state ──────────────────────────────────
+  const [storeName, setStoreName] = useState(user.store_name || "");
+  const [storeDescription, setStoreDescription] = useState(
+    user.store_description || "",
+  );
+  const [whatsappNumber, setWhatsappNumber] = useState(
+    user.whatsapp_number || "",
+  );
+  const [category, setCategory] = useState(user.category || "");
+  const [locationState, setLocationState] = useState(user.location_state || "");
+  const [storeSlug, setStoreSlug] = useState(user.store_slug || "");
+  const [bankName, setBankName] = useState(user.bank_name || "");
+  const [accountNumber, setAccountNumber] = useState(user.account_number || "");
+  const [accountName, setAccountName] = useState(user.account_name || "");
+  const [descriptionLength, setDescriptionLength] = useState(
+    user.store_description?.length || 0,
+  );
+
+  // ── Sound/Notification state ─────────────────────────────
+  const { preferences, updatePreferences } = useSound();
+  const [soundEnabled, setSoundEnabled] = useState(
+    user.sound_enabled !== false,
+  );
+  const [soundVolume, setSoundVolume] = useState(
+    user.sound_volume ?? 50,
+  );
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  useEffect(() => {
+    setIsReducedMotion(
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    );
+  }, []);
+
+  // ── Availability state ────────────────────────────────────
+  const [acceptingOrders, setAcceptingOrders] = useState(
+    user.accepting_orders !== false,
+  );
+  const [storeClosedNote, setStoreClosedNote] = useState(
+    user.store_closed_note || "",
+  );
+  const [storeHours, setStoreHours] = useState<StoreHoursJson>(() =>
+    parseStoreHours(user.store_hours),
+  );
+
+  // ── Pickup Location state ─────────────────────────────────
+  const [offersPickup, setOffersPickup] = useState(
+    !!user.offers_pickup,
+  );
+  const [pickupAddress, setPickupAddress] = useState(
+    user.pickup_address || "",
+  );
+  const [pickupLatitude, setPickupLatitude] = useState<number | null>(
+    user.pickup_latitude || null,
+  );
+  const [pickupLongitude, setPickupLongitude] = useState<number | null>(
+    user.pickup_longitude || null,
+  );
+  const [pickupAddressDetails, setPickupAddressDetails] = useState(
+    user.pickup_address_details || "",
+  );
+
+  // ── Sync form state when user data changes ────────────────
+  useEffect(() => {
+    setStoreName(user.store_name || "");
+    setStoreDescription(user.store_description || "");
+    setWhatsappNumber(user.whatsapp_number || "");
+    setCategory(user.category || "");
+    setLocationState(user.location_state || "");
+    setStoreSlug(user.store_slug || "");
+    setBankName(user.bank_name || "");
+    setAccountNumber(user.account_number || "");
+    setAccountName(user.account_name || "");
+    setDescriptionLength(user.store_description?.length || 0);
+    setSoundEnabled(user.sound_enabled !== false);
+    setSoundVolume(user.sound_volume ?? 50);
+    setAcceptingOrders(user.accepting_orders !== false);
+    setStoreClosedNote(user.store_closed_note || "");
+    setStoreHours(parseStoreHours(user.store_hours));
+    setOffersPickup(!!user.offers_pickup);
+    setPickupAddress(user.pickup_address || "");
+    setPickupLatitude(user.pickup_latitude || null);
+    setPickupLongitude(user.pickup_longitude || null);
+    setPickupAddressDetails(user.pickup_address_details || "");
+  }, [user]);
+
+  // ── Success feedback + refresh ───────────────────────────
+  useEffect(() => {
+    if (state.message?.includes("Success")) {
+      playSound("success");
+      setTimeout(() => {
+        router.refresh();
+      }, 500);
+    }
+  }, [state.message, playSound, router]);
+
+  // ── Helpers for field-level error display ────────────────
+  const fieldError = (field: string): string | undefined =>
+    state.errors?.[field]?.[0];
+  const hasError = (field: string): boolean => !!fieldError(field);
+  const inputCls = (field: string, extra = "") =>
+    `w-full rounded-xl border px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition-all resize-none ${extra} ${
+      hasError(field)
+        ? "border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+        : "border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+    }`;
+  const selectCls = (field: string) =>
+    `w-full rounded-xl border px-3 py-2.5 text-sm text-slate-800 outline-none transition-all bg-white ${
+      hasError(field)
+        ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+        : "border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+    }`;
+
+  // ── Auto-scroll to first error field ─────────────────────
+  useEffect(() => {
+    if (!state.errors || Object.keys(state.errors).length === 0) return;
+    // Find the first element with a name attribute matching an error key
+    const firstErrorField = Object.keys(state.errors).find(
+      (key) => state.errors?.[key]?.[0],
+    );
+    if (firstErrorField) {
+      const el = document.querySelector<HTMLElement>(
+        `[name="${firstErrorField}"]`,
+      );
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => el.focus(), 400);
+      }
+    }
+  }, [state.errors]);
+
+  // ── Store hours helpers ────────────────────────────────────
+  const addSlot = (day: StoreHoursDayKey) => {
+    setStoreHours((prev) => ({
+      ...prev,
+      [day]: [...ensureArray(prev[day]), { ...DEFAULT_SLOT }],
+    }));
+  };
+
+  const removeSlot = (day: StoreHoursDayKey, index: number) => {
+    setStoreHours((prev) => {
+      const currentSlots = ensureArray(prev[day]);
+      const newSlots = currentSlots.filter((_, i) => i !== index);
+      return { ...prev, [day]: newSlots.length > 0 ? newSlots : undefined };
+    });
+  };
+
+  const updateSlot = (
+    day: StoreHoursDayKey,
+    index: number,
+    field: keyof StoreHoursSlot,
+    value: string,
+  ) => {
+    setStoreHours((prev) => {
+      const currentSlots = ensureArray(prev[day]);
+      const newSlots = [...currentSlots];
+      newSlots[index] = { ...newSlots[index], [field]: value };
+      return { ...prev, [day]: newSlots };
+    });
+  };
+
+  const toggleDay = (day: StoreHoursDayKey) => {
+    setStoreHours((prev) => {
+      if (prev[day]) {
+        const { [day]: _, ...rest } = prev;
+        return rest;
+      } else {
+        return { ...prev, [day]: [DEFAULT_SLOT] };
+      }
+    });
+  };
+
+  const handlePickupToggle = (enabled: boolean) => {
+    setOffersPickup(enabled);
+    if (!enabled) {
+      setPickupLatitude(null);
+      setPickupLongitude(null);
+      setPickupAddressDetails("");
+      setPickupAddress("");
+    }
+  };
+
+  const handleLocationSelect = (lat: number, lng: number, details?: string) => {
+    setPickupLatitude(lat);
+    setPickupLongitude(lng);
+    if (details && !pickupAddressDetails) {
+      setPickupAddressDetails(details);
+    }
+  };
+
+  return (
+    <form action={formAction} className="space-y-6">          {/* Success/Error Message */}
+          {state.message && (
+            <div
+              className={`flex items-start gap-3 rounded-xl px-4 py-3 text-sm ${
+                state.message.includes("Success")
+                  ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                  : "bg-red-50 border border-red-200 text-red-800"
+              }`}
+            >
+              {state.message.includes("Success") ? (
+                <CheckCircleIcon className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
+              ) : (
+                <ExclamationCircleIcon className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+              )}
+              <div>
+                <span className="font-medium">{state.message}</span>
+                {!state.message.includes("Success") &&
+                  state.errors &&
+                  Object.keys(state.errors).length > 0 && (
+                    <ul className="mt-2 list-disc list-inside text-xs text-red-600 space-y-1">
+                      {Object.entries(state.errors).map(([field, msgs]) =>
+                        msgs?.[0] ? (
+                          <li key={field}>
+                            <span className="capitalize">
+                              {field.replace(/_/g, " ")}
+                            </span>
+                            : {msgs[0]}
+                          </li>
+                        ) : null,
+                      )}
+                    </ul>
+                  )}
+              </div>
+            </div>
+          )}
+
+      {/* ── Store Profile Section ───────────────────────────────── */}
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <BuildingStorefrontIcon className="h-5 w-5 text-slate-400" />
-          <h2 className="text-base font-semibold text-slate-800">Store Profile</h2>
-        </div>
+        <h2 className="mb-4 text-base font-semibold text-slate-800">
+          Store Profile
+        </h2>
         <div className="space-y-4">
           <div>
-            <label htmlFor="store_name" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="store_name"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Store Name
             </label>
             <input
               id="store_name"
               name="store_name"
               type="text"
-              defaultValue={user.store_name}
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
               placeholder="e.g. Amaka Threads"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+              className={inputCls("store_name")}
             />
-            {state.errors?.store_name && (
-              <p className="mt-2 text-sm text-red-500">{state.errors.store_name[0]}</p>
+            {hasError("store_name") && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <ExclamationCircleIcon className="h-3.5 w-3.5 shrink-0" />
+                {fieldError("store_name")}
+              </p>
             )}
           </div>
-          
+
           <div>
-            <label htmlFor="store_description" className="block text-sm font-medium text-slate-700 mb-1">
-              Store Description <span className="text-slate-400 font-normal">(Optional)</span>
+            <label
+              htmlFor="store_description"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
+              Store Description{" "}
+              <span className="text-slate-400 font-normal">(Optional)</span>
             </label>
             <textarea
               id="store_description"
               name="store_description"
               rows={3}
               maxLength={200}
-              defaultValue={user.store_description || ''}
-              onChange={(e) => setDescriptionLength(e.target.value.length)}
+              value={storeDescription}
+              onChange={(e) => {
+                setStoreDescription(e.target.value);
+                setDescriptionLength(e.target.value.length);
+              }}
               placeholder="Tell customers what makes your store special..."
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 resize-none"
+              className={inputCls("store_description")}
             />
             <div className="mt-1 flex items-center justify-between">
               <p className="text-xs text-slate-400">
-                This appears on the Explore page and when sharing your store link
+                This appears on the Explore page and when sharing your store
+                link
               </p>
-              <p className={`text-xs ${descriptionLength > 200 ? 'text-red-500' : 'text-slate-400'}`}>
+              <p
+                className={`text-xs ${
+                  descriptionLength > 200 ? "text-red-500" : "text-slate-400"
+                }`}
+              >
                 {descriptionLength}/200
               </p>
             </div>
-            {state.errors?.store_description && (
-              <p className="mt-2 text-sm text-red-500">{state.errors.store_description[0]}</p>
+            {hasError("store_description") && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <ExclamationCircleIcon className="h-3.5 w-3.5 shrink-0" />
+                {fieldError("store_description")}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="whatsapp_number" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="whatsapp_number"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               WhatsApp Number
             </label>
             <input
               id="whatsapp_number"
               name="whatsapp_number"
               type="tel"
-              defaultValue={user.whatsapp_number}
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
               placeholder="+234 801 234 5678"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+              className={inputCls("whatsapp_number")}
             />
           </div>
+
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="category"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Store Category / Niche
             </label>
             <select
               id="category"
               name="category"
-              defaultValue={user.category || 'Other'}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={selectCls("category")}
             >
               {STORE_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
+
           <div>
-            <label htmlFor="location_state" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="location_state"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Store Location (State)
             </label>
             <select
               id="location_state"
               name="location_state"
-              defaultValue={user.location_state || ''}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
+              value={locationState}
+              onChange={(e) => setLocationState(e.target.value)}
+              className={selectCls("location_state")}
             >
               <option value="">Select a state</option>
               {NIGERIAN_STATES.map((state) => (
-                <option key={state} value={state}>{state}</option>
+                <option key={state} value={state}>
+                  {state}
+                </option>
               ))}
             </select>
           </div>
+
           <div>
-            <label htmlFor="store_slug" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="store_slug"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Store URL Slug
             </label>
-            <div className="flex overflow-hidden rounded-xl border border-slate-200 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20">
+            <div
+              className={`flex overflow-hidden rounded-xl border transition-all ${
+                hasError("store_slug")
+                  ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/20"
+                  : "border-slate-200 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/20"
+              }`}
+            >
               <span className="flex items-center bg-slate-50 px-3 text-sm text-slate-500 border-r border-slate-200">
                 vendle.app/s/
               </span>
@@ -232,153 +488,343 @@ export default function SettingsForm({ user, children }: { user: User; children?
                 id="store_slug"
                 name="store_slug"
                 type="text"
-                defaultValue={user.store_slug}
+                value={storeSlug}
+                onChange={(e) => setStoreSlug(e.target.value)}
                 placeholder="your-store"
                 className="flex-1 px-3 py-2.5 text-sm text-slate-800 outline-none"
               />
             </div>
-            {state.errors?.store_slug && (
-              <p className="mt-2 text-sm text-red-500">{state.errors.store_slug[0]}</p>
+            {hasError("store_slug") && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <ExclamationCircleIcon className="h-3.5 w-3.5 shrink-0" />
+                {fieldError("store_slug")}
+              </p>
             )}
             <p className="mt-2 text-xs text-slate-400">
-              Your public store link: <span className="font-medium text-emerald-600">vendle.app/s/{user.store_slug}</span>
+              Your public store link:{" "}
+              <span className="font-medium text-emerald-600">
+                vendle.app/s/{storeSlug || user.store_slug}
+              </span>
             </p>
           </div>
         </div>
       </div>
 
-      {/* Availability Section */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm space-y-5">
-        <div className="flex items-center gap-2 mb-4">
+      {/* ── Store Availability Section ───────────────────────────── */}
+      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-base font-semibold text-slate-800 flex items-center gap-2">
           <ClockIcon className="h-5 w-5 text-slate-400" />
-          <h2 className="text-base font-semibold text-slate-800">Store hours & availability</h2>
-        </div>
-        <p className="-mt-3 text-xs text-slate-500">
-          Customers see Open or Closed on Explore and your storefront. Leave all days off to show no schedule.
-        </p>
+          Store Availability
+        </h2>
 
-        <input type="hidden" name="store_hours_json" value={hoursJson} readOnly />
-
-        <div>
-          <label htmlFor="store_timezone" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
-            <GlobeAltIcon className="h-4 w-4 text-slate-400" />
-            Timezone
-          </label>
-          <select
-            id="store_timezone"
-            name="store_timezone"
-            defaultValue={tzValue}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 bg-white"
-          >
-            {tzOptions.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-100">
-          <input
-            type="checkbox"
-            name="accepting_orders"
-            defaultChecked={acceptingDefault}
-            className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-          />
-          <span>
-            <span className="block text-sm font-medium text-slate-800">Accepting orders</span>
-            <span className="block text-xs text-slate-500 mt-0.5">
-              Turn off for holidays or breaks — your store shows as closed even during listed hours.
-            </span>
-          </span>
-        </label>
-
-        <div>
-          <label htmlFor="store_closed_note" className="block text-sm font-medium text-slate-700 mb-1">
-            Message when closed (optional)
-          </label>
-          <textarea
-            id="store_closed_note"
-            name="store_closed_note"
-            rows={2}
-            defaultValue={user.store_closed_note ?? ''}
-            placeholder="e.g. Back on Monday — orders ship Tuesday."
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
-          />
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-slate-700">Weekly hours</p>
-          <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
-            {STORE_DAY_KEYS.map((key) => (
-              <div key={key} className="flex flex-wrap items-center gap-3 bg-white px-3 py-2.5">
-                <label className="flex items-center gap-2 min-w-[140px]">
-                  <input
-                    type="checkbox"
-                    checked={days[key].enabled}
-                    onChange={(e) =>
-                      setDays((d) => ({
-                        ...d,
-                        [key]: { ...d[key], enabled: e.target.checked },
-                      }))
-                    }
-                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <span className="text-sm text-slate-800">{DAY_LABELS[key]}</span>
-                </label>
-                <div className="flex items-center gap-2 text-sm">
-                  <input
-                    type="time"
-                    disabled={!days[key].enabled}
-                    value={days[key].open}
-                    onChange={(e) =>
-                      setDays((d) => ({
-                        ...d,
-                        [key]: { ...d[key], open: e.target.value },
-                      }))
-                    }
-                    className="rounded-lg border border-slate-200 px-2 py-1 text-sm disabled:opacity-50 bg-slate-50"
-                  />
-                  <span className="text-slate-400 text-xs">to</span>
-                  <input
-                    type="time"
-                    disabled={!days[key].enabled}
-                    value={days[key].close}
-                    onChange={(e) =>
-                      setDays((d) => ({
-                        ...d,
-                        [key]: { ...d[key], close: e.target.value },
-                      }))
-                    }
-                    className="rounded-lg border border-slate-200 px-2 py-1 text-sm disabled:opacity-50 bg-slate-50"
-                  />
-                </div>
-              </div>
-            ))}
+        {/* Accepting Orders Toggle */}
+        <div className="mb-6 flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 cursor-pointer">
+              Accepting orders
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              {acceptingOrders
+                ? "Your store is open for business"
+                : "Your store is temporarily closed"}
+            </p>
           </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              name="accepting_orders"
+              checked={acceptingOrders}
+              onChange={(e) => setAcceptingOrders(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+          </label>
         </div>
+
+        {/* Store Closed Note */}
+        {!acceptingOrders && (
+          <div className="mb-6">
+            <label
+              htmlFor="store_closed_note"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
+              Closed note (Optional)
+            </label>
+            <textarea
+              id="store_closed_note"
+              name="store_closed_note"
+              rows={2}
+              maxLength={280}
+              value={storeClosedNote}
+              onChange={(e) => setStoreClosedNote(e.target.value)}
+              placeholder="Tell customers why you're closed and when you'll be back"
+              className={inputCls("store_closed_note")}
+            />
+            {hasError("store_closed_note") && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <ExclamationCircleIcon className="h-3.5 w-3.5 shrink-0" />
+                {fieldError("store_closed_note")}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Store Hours */}
+        {acceptingOrders && (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-800">
+              Store Hours (Optional)
+            </h3>
+
+            <div className="space-y-3">
+              {STORE_DAY_KEYS.map((day) => (
+                <div
+                  key={day}
+                  className="border border-slate-200 rounded-xl overflow-hidden"
+                >
+                  <div
+                    className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
+                      storeHours[day]
+                        ? "bg-emerald-50 border-b border-emerald-100"
+                        : "bg-white hover:bg-slate-50"
+                    }`}
+                    onClick={() => toggleDay(day)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={!!storeHours[day]}
+                        readOnly
+                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="text-sm font-medium text-slate-700">
+                        {DAY_LABELS[day]}
+                      </span>
+                    </div>
+                    {storeHours[day] && (
+                      <span className="text-xs font-medium text-emerald-700">
+                        {storeHours[day].length} slot
+                        {storeHours[day].length > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+
+                  {storeHours[day] && (
+                    <div className="p-4 bg-white border-t border-slate-100 space-y-3">
+                      {ensureArray(storeHours[day]).map((slot, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <input
+                            type="time"
+                            name={`hours[${day}][${index}][open]`}
+                            value={slot.open}
+                            onChange={(e) =>
+                              updateSlot(day, index, "open", e.target.value)
+                            }
+                            className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          />
+                          <span className="text-slate-400 text-sm">to</span>
+                          <input
+                            type="time"
+                            name={`hours[${day}][${index}][close]`}
+                            value={slot.close}
+                            onChange={(e) =>
+                              updateSlot(day, index, "close", e.target.value)
+                            }
+                            className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeSlot(day, index)}
+                            className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addSlot(day)}
+                        className="w-full py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors flex items-center justify-center gap-1"
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Add time slot
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hidden store_hours_json */}
+        <input
+          type="hidden"
+          name="store_hours_json"
+          value={JSON.stringify(storeHours)}
+        />
       </div>
 
-      {/* Notifications & Audio Section */}
+      {/* ── Pickup Location Section ──────────────────────────────── */}
+      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-base font-semibold text-slate-800 flex items-center gap-2">
+          <TruckIcon className="h-5 w-5 text-slate-400" />
+          Pickup Location
+        </h2>
+
+        {/* Offers Pickup Toggle */}
+        <div className="mb-4 flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 cursor-pointer">
+              I offer pickup for my orders
+            </label>
+            <p className="text-xs text-slate-500 mt-1">
+              Customers can collect orders from your location
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              name="offers_pickup"
+              checked={offersPickup}
+              onChange={(e) => handlePickupToggle(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+          </label>
+        </div>
+
+        {offersPickup && (
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="pickup_address"
+                className="block text-sm font-medium text-slate-700 mb-1"
+              >
+                Pickup Address
+              </label>
+              <input
+                id="pickup_address"
+                name="pickup_address"
+                type="text"
+                value={pickupAddress}
+                onChange={(e) => setPickupAddress(e.target.value)}
+                placeholder="e.g. 123 Market Street, Ikeja, Lagos"              className={inputCls("pickup_address")}
+            />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                <MapPinIcon className="h-4 w-4 text-slate-400" />
+                Pin your location on the map
+              </label>
+              <div className="rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm">
+                <LocationPicker
+                  onLocationSelect={handleLocationSelect}
+                  initialLat={pickupLatitude || undefined}
+                  initialLng={pickupLongitude || undefined}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="pickup_address_details"
+                className="block text-xs font-bold text-slate-600 mb-1"
+              >
+                Address Details (Optional)
+              </label>
+              <textarea
+                id="pickup_address_details"
+                name="pickup_address_details"
+                value={pickupAddressDetails}
+                onChange={(e) =>
+                  setPickupAddressDetails(e.target.value.slice(0, 500))
+                }
+                rows={3}
+                maxLength={500}
+                placeholder="e.g. Look for the blue building next to the bank."
+                className={inputCls("pickup_address_details")}
+              />
+              {hasError("pickup_address_details") && (
+                <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                  <ExclamationCircleIcon className="h-3.5 w-3.5 shrink-0" />
+                  {fieldError("pickup_address_details")}
+                </p>
+              )}
+            </div>
+
+            <input
+              type="hidden"
+              name="pickup_latitude"
+              value={pickupLatitude || ""}
+            />
+            <input
+              type="hidden"
+              name="pickup_longitude"
+              value={pickupLongitude || ""}
+            />
+          </div>
+        )}
+
+        {!offersPickup && (
+          <div className="rounded-xl bg-slate-100 border border-slate-200 p-4">
+            <p className="text-xs text-slate-600">
+              💡 <strong>Tip:</strong> Offering pickup can reduce delivery
+              costs and attract nearby customers.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Notifications & Audio Section ───────────────────────── */}
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BellIcon className="h-5 w-5 text-slate-400" />
-            <h2 className="text-base font-semibold text-slate-800">Notifications & Audio</h2>
+            <h2 className="text-base font-semibold text-slate-800">
+              Notifications & Audio
+            </h2>
           </div>
           <button
             type="button"
             onClick={() => {
-              updatePreferences({ enabled: !preferences.enabled });
+              const newEnabled = !soundEnabled;
+              setSoundEnabled(newEnabled);
+              updatePreferences({ enabled: newEnabled });
             }}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
-              preferences.enabled ? 'bg-emerald-500' : 'bg-slate-200'
+              soundEnabled ? "bg-emerald-500" : "bg-slate-200"
             }`}
             aria-label="Toggle sound notifications"
           >
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.enabled ? 'translate-x-6' : 'translate-x-1'
+                soundEnabled ? "translate-x-6" : "translate-x-1"
               }`}
             />
           </button>
@@ -386,7 +832,9 @@ export default function SettingsForm({ user, children }: { user: User; children?
 
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-600">Enable audio feedback for important actions</p>
+            <p className="text-sm text-slate-600">
+              Enable audio feedback for important actions
+            </p>
             {isReducedMotion && (
               <span className="text-[10px] font-medium bg-amber-50 text-amber-600 px-2 py-0.5 rounded border border-amber-100">
                 Reduced Motion Active
@@ -394,212 +842,138 @@ export default function SettingsForm({ user, children }: { user: User; children?
             )}
           </div>
 
-          {preferences.enabled && (
+          {soundEnabled && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label htmlFor="sound-volume" className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                  {preferences.volume === 0 ? (
+                <label
+                  htmlFor="sound-volume"
+                  className="flex items-center gap-2 text-sm font-medium text-slate-700"
+                >
+                  {soundVolume === 0 ? (
                     <SpeakerXMarkIcon className="h-4 w-4 text-slate-400" />
                   ) : (
                     <SpeakerWaveIcon className="h-4 w-4 text-slate-400" />
                   )}
                   Notification Volume
                 </label>
-                <span className="text-xs font-mono text-slate-400">{preferences.volume}%</span>
+                <span className="text-xs font-mono text-slate-400">
+                  {soundVolume}%
+                </span>
               </div>
               <input
                 id="sound-volume"
                 type="range"
                 min="0"
                 max="100"
-                value={preferences.volume}
-                onChange={(e) => updatePreferences({ volume: parseInt(e.target.value) })}
+                value={soundVolume}
+                onChange={(e) => {
+                  const vol = parseInt(e.target.value);
+                  setSoundVolume(vol);
+                  updatePreferences({ volume: vol });
+                }}
                 className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-slate-100 accent-emerald-500"
               />
               <div className="flex justify-between px-1">
-                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Mute</span>
-                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">Max</span>
+                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">
+                  Mute
+                </span>
+                <span className="text-[10px] text-slate-300 uppercase font-bold tracking-wider">
+                  Max
+                </span>
               </div>
             </div>
           )}
         </div>
+
+        {/* Hidden fields for sound preferences */}
+        <input
+          type="hidden"
+          name="sound_enabled"
+          value={soundEnabled ? "on" : "off"}
+        />
+        <input
+          type="hidden"
+          name="sound_volume"
+          value={soundVolume}
+        />
       </div>
 
-      {/* Bank Account Section */}
+      {/* ── Bank Account Details Section ────────────────────────── */}
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <BanknotesIcon className="h-5 w-5 text-slate-400" />
-          <h2 className="text-base font-semibold text-slate-800">Bank Account Details</h2>
-        </div>
+        <h2 className="mb-2 text-base font-semibold text-slate-800">
+          Bank Account Details
+        </h2>
         <p className="mb-4 text-xs text-slate-500">
-          For cash/transfer payments, customers will see these details to make payment
+          For cash/transfer payments, customers will see these details to make
+          payment
         </p>
         <div className="space-y-4">
           <div>
-            <label htmlFor="bank_name" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="bank_name"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Bank Name
             </label>
             <input
               id="bank_name"
               name="bank_name"
               type="text"
-              defaultValue={user.bank_name}
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
               placeholder="e.g. GTBank, Access Bank, First Bank"
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
             />
           </div>
           <div>
-            <label htmlFor="account_number" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="account_number"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Account Number
             </label>
             <input
               id="account_number"
               name="account_number"
               type="text"
-              defaultValue={user.account_number}
-              placeholder="0123456789"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+              inputMode="numeric"
+              value={accountNumber}
+              onChange={(e) => {
+                // Only allow digits, max 10
+                const cleaned = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setAccountNumber(cleaned);
+              }}
+              placeholder="0123456789"                className={inputCls("account_number")}
             />
+            {accountNumber.length > 0 && accountNumber.length < 10 && (
+              <p className="mt-1 text-xs text-amber-600">
+                Account number should be 10 digits
+              </p>
+            )}
           </div>
           <div>
-            <label htmlFor="account_name" className="block text-sm font-medium text-slate-700 mb-1">
+            <label
+              htmlFor="account_name"
+              className="block text-sm font-medium text-slate-700 mb-1"
+            >
               Account Name
             </label>
             <input
               id="account_name"
               name="account_name"
               type="text"
-              defaultValue={user.account_name}
+              value={accountName}
+              onChange={(e) => setAccountName(e.target.value)}
               placeholder="Name as it appears on your account"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+              className={inputCls("account_name")}
             />
           </div>
         </div>
       </div>
 
-      {/* Delivery Options Section */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <TruckIcon className="h-5 w-5 text-slate-400" />
-          <h2 className="text-base font-semibold text-slate-800">Delivery Options</h2>
-        </div>
-        <p className="mb-4 text-xs text-slate-500">
-          Configure how customers can receive their orders
-        </p>
-        
-        <div className="space-y-4">
-          {/* Offers Pickup Toggle */}
-          <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl bg-slate-50 border border-slate-100">
-            <input
-              type="checkbox"
-              checked={offersPickup}
-              onChange={(e) => setOffersPickup(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-            />
-            <span>
-              <span className="block text-sm font-medium text-slate-800">I offer pickup for my orders</span>
-              <span className="block text-xs text-slate-500 mt-0.5">
-                Allow customers to collect orders from your location instead of delivery
-              </span>
-            </span>
-          </label>
-
-          {/* Hidden input for offers_pickup */}
-          <input type="hidden" name="offers_pickup" value={offersPickup ? 'true' : 'false'} />
-
-          {/* Conditionally render LocationPicker when pickup is enabled */}
-          {offersPickup && (
-            <div className="space-y-4 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Pickup Location
-                </label>
-                <LocationPicker
-                  onLocationSelect={(lat, lng, address) => {
-                    setPickupLocation({ lat, lng });
-                    if (address !== undefined) {
-                      setPickupAddressDetails(address);
-                    }
-                  }}
-                  initialLat={pickupLocation?.lat}
-                  initialLng={pickupLocation?.lng}
-                />
-                {state.errors?.pickup_location && (
-                  <p className="mt-2 text-sm text-red-500">{state.errors.pickup_location[0]}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="pickup_address_details" className="block text-sm font-medium text-slate-700 mb-1">
-                  Pickup Address Details
-                </label>
-                <textarea
-                  id="pickup_address_details"
-                  name="pickup_address_details"
-                  rows={3}
-                  maxLength={500}
-                  value={pickupAddressDetails}
-                  onChange={(e) => setPickupAddressDetails(e.target.value)}
-                  placeholder="e.g. Shop 4, Blue Building, Near Main Gate..."
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 resize-none"
-                />
-                <div className="mt-1 flex items-center justify-between">
-                  <p className="text-xs text-slate-400">
-                    Provide clear directions for customers to find your pickup location
-                  </p>
-                  <p className={`text-xs ${pickupAddressDetails.length > 500 ? 'text-red-500' : 'text-slate-400'}`}>
-                    {pickupAddressDetails.length}/500
-                  </p>
-                </div>
-              </div>
-
-              {/* Hidden inputs for pickup location coordinates */}
-              <input type="hidden" name="pickup_latitude" value={pickupLocation?.lat ?? ''} />
-              <input type="hidden" name="pickup_longitude" value={pickupLocation?.lng ?? ''} />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {children}
-
-      {/* Global Save Button at the Bottom */}
-      <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex-1">
-            {state.message ? (
-              <div className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm ${state.message.includes('Success') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
-                {state.message.includes('Success') ? (
-                  <CheckCircleIcon className="h-5 w-5 shrink-0" />
-                ) : (
-                  <ExclamationCircleIcon className="h-5 w-5 shrink-0" />
-                )}
-                <span className="font-semibold">{state.message}</span>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500 font-medium px-2">
-                Make sure to save all your changes before leaving.
-              </p>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-10 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-emerald-400 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isPending ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving Changes...
-              </>
-            ) : (
-              'Save All Settings'
-            )}
-          </button>
-        </div>
+      {/* ── Save Button ─────────────────────────────────────────── */}
+      <div className="mt-8 flex justify-end">
+        <SubmitButton />
       </div>
     </form>
   );

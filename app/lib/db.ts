@@ -23,10 +23,8 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPostgres.sql = sql;
 }
 
-// Test connection on startup
-if (process.env.NODE_ENV === 'development') {
-  sql`SELECT 1`.catch((err) => {
-    console.error('⚠️  Database connection failed:', err.message);
-    console.error('Please check your POSTGRES_URL and internet connection');
-  });
-}
+// Connection is lazy — postgres connects on first query, not at import time.
+// We intentionally do NOT test the connection at module level because this file
+// is loaded by middleware (Edge Runtime) where Node.js built-in modules like
+// 'perf_hooks' are not available. The real connection will happen on the first
+// server-side query in the Node.js runtime, which has full Node.js support.

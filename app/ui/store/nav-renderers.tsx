@@ -2758,6 +2758,10 @@ export const NAV_RENDERERS: Record<string, React.FC<NavProps>> = {
   "beauty-glow": BeautyGlowNav,
   "midnight-luxe": MidnightLuxeNav,
   "vogue-minimal": VogueMinimalNav,
+  "crystal-diamond": CrystalDiamondNav,
+  "noir-luxe": NoirLuxeNav,
+  "neon-nights": NeonNightsNav,
+  "tropical-paradise": TropicalParadiseNav,
   default: StandardNav,
 };
 
@@ -2766,3 +2770,187 @@ export default function DynamicNav(props: NavProps) {
     NAV_RENDERERS[props.theme.template_id] || NAV_RENDERERS["default"];
   return <Renderer {...props} />;
 }
+
+// ─── Crystal Diamond Nav ───
+export function CrystalDiamondNav({
+  vendor,
+  theme,
+  cartCount,
+  setIsCartOpen,
+  handleShare,
+  layoutWidthClass,
+}: NavProps) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header
+      className="fixed top-0 left-0 right-0 z-[100] transition-all duration-500"
+      style={{
+        backgroundColor: scrolled ? "rgba(255,255,255,0.9)" : "transparent",
+        backdropFilter: scrolled ? "blur(20px)" : "none",
+        borderBottom: scrolled ? "1px solid #e9d5ff" : "1px solid transparent",
+        boxShadow: scrolled ? "0 4px 30px rgba(192,132,252,0.08)" : "none",
+      }}
+    >
+      <div className="mx-auto px-6 md:px-12" style={{ maxWidth: theme.layout_width === 'full' ? 'none' : theme.layout_width === 'standard' ? '42rem' : '72rem' }}>
+        <div className="flex items-center justify-between h-16 md:h-20">
+          <LogoBlock vendor={vendor} theme={theme} scrolled={scrolled} />
+          <div className="flex items-center gap-3">
+            <button onClick={handleShare} className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#c084fc]/10 transition-colors" style={{ color: scrolled ? '#6b21a8' : '#c084fc' }}>
+              <StoreIcon name="share" theme={theme} className="w-5 h-5" />
+            </button>
+            <button onClick={() => setIsCartOpen(true)} className="relative flex h-10 px-4 items-center gap-2 rounded-full font-bold text-sm transition-all" style={{ background: 'linear-gradient(135deg, #c084fc, #a855f7)', color: '#fff' }}>
+              <StoreIcon name="cart" theme={theme} className="w-4 h-4" />
+              <span>Cart</span>
+              {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white text-[10px] font-black shadow-sm" style={{ color: '#a855f7' }}>{cartCount}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ─── Noir Luxe Nav ───
+export function NoirLuxeNav({
+  vendor,
+  theme,
+  cartCount,
+  setIsCartOpen,
+  handleShare,
+  layoutWidthClass,
+}: NavProps) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header
+      className="fixed top-0 left-0 right-0 z-[100] transition-all duration-700"
+      style={{
+        backgroundColor: scrolled ? "rgba(10,10,10,0.98)" : "transparent",
+        borderBottom: scrolled ? "1px solid rgba(212,165,116,0.15)" : "1px solid transparent",
+      }}
+    >
+      <div className="mx-auto px-8 md:px-16" style={{ maxWidth: '100%' }}>
+        <div className="flex h-20 md:h-24 items-center justify-between">
+          <div className="flex-1">
+            <button onClick={handleShare} className="flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(212,165,116,0.2)] hover:border-[#d4a574] transition-all" style={{ color: '#d4a574' }}>
+              <StoreIcon name="share" theme={theme} className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 flex justify-center">
+            <h1 className="text-xl md:text-2xl font-light tracking-[0.3em] uppercase" style={{ fontFamily: FONT_MAP['playfair'], color: '#ffffff' }}>
+              {vendor.store_name || vendor.name}
+            </h1>
+          </div>
+          <div className="flex-1 flex justify-end">
+            <button onClick={() => setIsCartOpen(true)} className="group flex items-center gap-3 px-6 py-3 rounded-sm transition-all hover:bg-[#d4a574]/10" style={{ color: '#d4a574', border: '1px solid rgba(212,165,116,0.3)' }}>
+              <StoreIcon name="cart" theme={theme} className="w-5 h-5" />
+              <span className="text-[10px] tracking-[0.3em] uppercase font-light hidden md:inline">Cart</span>
+              {cartCount > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold bg-[#d4a574] text-[#0a0a0a]">{cartCount}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ─── Neon Nights Nav ───
+export function NeonNightsNav({
+  vendor,
+  theme,
+  cartCount,
+  setIsCartOpen,
+  handleShare,
+  layoutWidthClass,
+}: NavProps) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 30);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header
+      className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300"
+      style={{
+        backgroundColor: scrolled ? "rgba(9,9,11,0.95)" : "transparent",
+        borderBottom: scrolled ? "1px solid rgba(34,211,238,0.2)" : "1px solid transparent",
+      }}
+    >
+      <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#22d3ee] to-transparent opacity-30" />
+      <div className="mx-auto px-6 md:px-10" style={{ maxWidth: '72rem' }}>
+        <div className="flex items-center justify-between h-16 md:h-20">
+          <LogoBlock vendor={vendor} theme={theme} scrolled={scrolled} isTransparent />
+          <div className="flex items-center gap-4">
+            <button onClick={handleShare} className="flex h-10 w-10 items-center justify-center group">
+              <StoreIcon name="share" theme={theme} className="w-5 h-5 text-[#22d3ee] group-hover:text-[#e879f9] transition-colors" />
+            </button>
+            <button onClick={() => setIsCartOpen(true)} className="group relative flex h-11 px-5 items-center gap-2 rounded-sm border transition-all" style={{ borderColor: 'rgba(34,211,238,0.3)', color: '#22d3ee' }}>
+              <StoreIcon name="cart" theme={theme} className="w-4 h-4" />
+              <span className="text-[9px] font-bold uppercase tracking-widest hidden sm:inline">Access</span>
+              {cartCount > 0 && <span className="absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center text-[9px] bg-[#e879f9] shadow-[0_0_10px_rgba(232,121,249,0.8)] text-white">{cartCount}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ─── Tropical Paradise Nav ───
+export function TropicalParadiseNav({
+  vendor,
+  theme,
+  cartCount,
+  setIsCartOpen,
+  handleShare,
+  layoutWidthClass,
+}: NavProps) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 30);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header
+      className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300"
+      style={{
+        backgroundColor: scrolled ? "rgba(255,255,255,0.95)" : "transparent",
+        backdropFilter: scrolled ? "blur(12px)" : "none",
+        borderBottom: scrolled ? "1px solid #bbf7d0" : "1px solid transparent",
+        boxShadow: scrolled ? "0 4px 20px rgba(5,150,105,0.06)" : "none",
+      }}
+    >
+      <div className={`mx-auto px-4 md:px-8 ${layoutWidthClass}`}>
+        <div className="flex items-center justify-between h-16 md:h-20">
+          <LogoBlock vendor={vendor} theme={theme} scrolled={scrolled} />
+          <div className="flex items-center gap-3">
+            <button onClick={handleShare} className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#059669]/10 transition-colors" style={{ color: scrolled ? "#059669" : "#fefce8" }}>
+              <StoreIcon name="share" theme={theme} className="w-5 h-5" />
+            </button>
+            <button onClick={() => setIsCartOpen(true)} className="relative flex h-10 px-5 items-center gap-2 rounded-full font-bold transition-all hover:scale-105" style={{ background: "linear-gradient(135deg, #059669, #f97316)", color: "#fff" }}>
+              <StoreIcon name="cart" theme={theme} className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Cart</span>
+              {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white text-[10px] font-black shadow-sm" style={{ color: "#059669" }}>{cartCount}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+

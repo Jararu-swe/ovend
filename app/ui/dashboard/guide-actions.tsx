@@ -44,7 +44,7 @@ export default function GuideActions({
       className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition ${
         isComplete
           ? "bg-slate-100 text-slate-600 cursor-default"
-          : "bg-emerald-500 text-white hover:bg-emerald-600"
+          : "bg-emerald-500 text-white hover:bg-emerald-400 shadow-sm"
       }`}
     >
       <CheckCircleIcon className="h-5 w-5" />

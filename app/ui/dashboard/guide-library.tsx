@@ -7,12 +7,12 @@ import GuideCard from "./guide-card";
 interface Guide {
   id: number;
   title: string;
-  description: string;
+  description: string | null;
   slug: string;
   reading_time: number;
   difficulty: "beginner" | "intermediate" | "advanced";
   featured?: boolean;
-  category?: string;
+  category?: string | null;
 }
 
 interface GuideLibraryProps {
@@ -46,13 +46,13 @@ export default function GuideLibrary({
   const filteredGuides = guides.filter((guide) => {
     const matchesSearch =
       guide.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      guide.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (guide.description || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesDifficulty =
       !difficultyFilter || guide.difficulty === difficultyFilter;
 
     const matchesCategory =
-      categoryFilter === null || guide.category === categoryFilter;
+      !categoryFilter || guide.category === categoryFilter || false;
 
     return matchesSearch && matchesDifficulty && matchesCategory;
   });

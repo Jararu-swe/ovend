@@ -43,7 +43,7 @@ export default function MultiImageUpload({ value, onChange, onRemove, maxImages 
             <button
               type="button"
               onClick={() => onRemove(url)}
-              className="absolute top-1 right-1 rounded-full bg-red-500 p-1.5 text-white shadow-lg transition hover:bg-red-600"
+              className="absolute top-1 right-1 rounded-xl bg-red-600 p-1.5 text-white shadow-sm transition hover:bg-red-700"
             >
               <XMarkIcon className="h-3 w-3" />
             </button>

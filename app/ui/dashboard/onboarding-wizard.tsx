@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   CheckCircleIcon,
   ArrowRightIcon,
@@ -15,18 +15,18 @@ import {
   ClockIcon,
   GlobeAltIcon,
   BanknotesIcon,
-} from "@heroicons/react/24/outline";
-import { User } from "@/app/lib/definitions";
-import VendleLogo from "@/app/ui/vendle-logo";
-import { NIGERIAN_STATES, STORE_CATEGORIES } from "@/app/lib/utils";
-import { TEMPLATES } from "@/app/lib/template-presets";
+} from '@heroicons/react/24/outline';
+import { User } from '@/app/lib/definitions';
+import VendleLogo from '@/app/ui/vendle-logo';
+import { useSound } from '@/app/lib/sound-manager';
+import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
+import { TEMPLATES } from '@/app/lib/template-presets';
 import {
   STORE_DAY_KEYS,
   type StoreHoursDayKey,
   type StoreHoursJson,
   parseHHMM,
-} from "@/app/lib/store-availability";
-import OnboardingPickupStep from "@/app/ui/dashboard/onboarding-pickup-step";
+} from '@/app/lib/store-availability';
 
 interface OnboardingWizardProps {
   user: User;
@@ -34,97 +34,65 @@ interface OnboardingWizardProps {
   hasWhatsApp: boolean;
 }
 
-export default function OnboardingWizard({
-  user,
-  hasProducts,
-  hasWhatsApp,
-}: OnboardingWizardProps) {
+export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: OnboardingWizardProps) {
   const router = useRouter();
+  const { playSound } = useSound();
   const [step, setStep] = useState(1);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [storeName, setStoreName] = useState(user.store_name || "");
-  const [storeSlug, setStoreSlug] = useState(user.store_slug || "");
-  const [storeDescription, setStoreDescription] = useState(
-    user.store_description || "",
-  );
-  const [whatsApp, setWhatsApp] = useState(user.whatsapp_number || "");
-  const [locationState, setLocationState] = useState(user.location_state || "");
-  const [category, setCategory] = useState(user.category || "");
-  const [bankName, setBankName] = useState(user.bank_name || "");
-  const [accountNumber, setAccountNumber] = useState(user.account_number || "");
-  const [accountName, setAccountName] = useState(user.account_name || "");
-  const [templateId, setTemplateId] = useState("fresh-market");
+  const [storeName, setStoreName] = useState(user.store_name || '');
+  const [storeSlug, setStoreSlug] = useState(user.store_slug || '');
+  const [storeDescription, setStoreDescription] = useState(user.store_description || '');
+  const [whatsApp, setWhatsApp] = useState(user.whatsapp_number || '');
+  const [locationState, setLocationState] = useState(user.location_state || '');
+  const [category, setCategory] = useState(user.category || '');
+  const [bankName, setBankName] = useState(user.bank_name || '');
+  const [accountNumber, setAccountNumber] = useState(user.account_number || '');
+  const [accountName, setAccountName] = useState(user.account_name || '');
+  const [templateId, setTemplateId] = useState('fresh-market');
   const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [themeError, setThemeError] = useState<string | null>(null);
 
-  const storeUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/s/${storeSlug || user.store_slug}`;
-  const totalSteps = 8; // Updated from 7 to 8 to include pickup step
-
-  // Pickup Location State
-  const [offersPickup, setOffersPickup] = useState(user.offers_pickup || false);
-  const [pickupLatitude, setPickupLatitude] = useState<number | null>(
-    user.pickup_latitude || null
-  );
-  const [pickupLongitude, setPickupLongitude] = useState<number | null>(
-    user.pickup_longitude || null
-  );
-  const [pickupAddressDetails, setPickupAddressDetails] = useState(
-    user.pickup_address_details || ""
-  );
-  const [isSavingPickup, setIsSavingPickup] = useState(false);
-  const [pickupError, setPickupError] = useState<string | null>(null);
+  const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/s/${storeSlug || user.store_slug}`;
+  const totalSteps = 7;
 
   // Availability State
-  const [timezone, setTimezone] = useState(
-    user.store_timezone || "Africa/Lagos",
-  );
-  const [days, setDays] = useState<
-    Record<StoreHoursDayKey, { enabled: boolean; open: string; close: string }>
-  >(() => {
-    const base = {} as Record<
-      StoreHoursDayKey,
-      { enabled: boolean; open: string; close: string }
-    >;
+  const [timezone, setTimezone] = useState(user.store_timezone || 'Africa/Lagos');
+  const [days, setDays] = useState<Record<StoreHoursDayKey, { enabled: boolean; open: string; close: string }>>(() => {
+    const base = {} as Record<StoreHoursDayKey, { enabled: boolean; open: string; close: string }>;
     for (const k of STORE_DAY_KEYS) {
       // Default to 9-5 for weekdays, closed for weekends
-      const isWeekend = k === "sat" || k === "sun";
-      base[k] = { enabled: !isWeekend, open: "09:00", close: "17:00" };
+      const isWeekend = k === 'sat' || k === 'sun';
+      base[k] = { enabled: !isWeekend, open: '09:00', close: '17:00' };
     }
     return base;
   });
   const [isSavingAvailability, setIsSavingAvailability] = useState(false);
-  const [availabilityError, setAvailabilityError] = useState<string | null>(
-    null,
-  );
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
 
   const DAY_LABELS: Record<StoreHoursDayKey, string> = {
-    mon: "Mon",
-    tue: "Tue",
-    wed: "Wed",
-    thu: "Thu",
-    fri: "Fri",
-    sat: "Sat",
-    sun: "Sun",
+    mon: 'Mon',
+    tue: 'Tue',
+    wed: 'Wed',
+    thu: 'Thu',
+    fri: 'Fri',
+    sat: 'Sat',
+    sun: 'Sun',
   };
 
   const canProceedFromStep1 = useMemo(() => {
-    return (
-      storeName.trim().length >= 2 &&
-      storeSlug.trim().length >= 2 &&
-      /^[a-z0-9-]+$/.test(storeSlug.trim())
-    );
+    return storeName.trim().length >= 2 && storeSlug.trim().length >= 2 && /^[a-z0-9-]+$/.test(storeSlug.trim());
   }, [storeName, storeSlug]);
 
   const saveProfile = async () => {
     setSaveError(null);
     setIsSaving(true);
     try {
-      const resp = await fetch("/api/vendor/onboarding-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const resp = await fetch('/api/vendor/onboarding-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           store_name: storeName.trim(),
           store_slug: storeSlug.trim(),
@@ -140,7 +108,7 @@ export default function OnboardingWizard({
 
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        setSaveError(body?.error || "Failed to save store details.");
+        setSaveError(body?.error || 'Failed to save store details.');
         setIsSaving(false);
         return false;
       }
@@ -149,7 +117,7 @@ export default function OnboardingWizard({
       router.refresh();
       return true;
     } catch (e: any) {
-      setSaveError(e?.message || "Failed to save store details.");
+      setSaveError(e?.message || 'Failed to save store details.');
       setIsSaving(false);
       return false;
     }
@@ -165,23 +133,26 @@ export default function OnboardingWizard({
     setThemeError(null);
     setIsSavingTheme(true);
     try {
-      const resp = await fetch("/api/vendor/onboarding-theme", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const resp = await fetch('/api/vendor/onboarding-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ template_id: templateId }),
       });
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        setThemeError(body?.error || "Failed to save theme.");
+        setThemeError(body?.error || 'Failed to save theme.');
+        playSound('error');
         setIsSavingTheme(false);
         return false;
       }
 
+      playSound('success');
       setIsSavingTheme(false);
       router.refresh();
       return true;
     } catch (e: any) {
-      setThemeError(e?.message || "Failed to save theme.");
+      setThemeError(e?.message || 'Failed to save theme.');
+      playSound('error');
       setIsSavingTheme(false);
       return false;
     }
@@ -198,18 +169,13 @@ export default function OnboardingWizard({
       const o = parseHHMM(row.open);
       const c = parseHHMM(row.close);
       if (o == null || c == null || c <= o) continue;
-      out[k] = [
-        {
-          open: row.open.trim().slice(0, 5),
-          close: row.close.trim().slice(0, 5),
-        },
-      ];
+      out[k] = [{ open: row.open.trim().slice(0, 5), close: row.close.trim().slice(0, 5) }];
     }
 
     try {
-      const resp = await fetch("/api/vendor/onboarding-availability", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const resp = await fetch('/api/vendor/onboarding-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           store_timezone: timezone,
           store_hours: Object.keys(out).length ? out : null,
@@ -219,71 +185,22 @@ export default function OnboardingWizard({
 
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        setAvailabilityError(body?.error || "Failed to save availability.");
+        setAvailabilityError(body?.error || 'Failed to save availability.');
+        playSound('error');
         setIsSavingAvailability(false);
         return false;
       }
 
+      playSound('success');
       setIsSavingAvailability(false);
       router.refresh();
       return true;
     } catch (e: any) {
-      setAvailabilityError(e?.message || "Failed to save availability.");
+      setAvailabilityError(e?.message || 'Failed to save availability.');
+      playSound('error');
       setIsSavingAvailability(false);
       return false;
     }
-  };
-
-  const savePickupLocation = async () => {
-    setPickupError(null);
-    setIsSavingPickup(true);
-
-    // Validate: if offers pickup is enabled, location must be set
-    if (offersPickup && (!pickupLatitude || !pickupLongitude)) {
-      setPickupError("Please select a pickup location on the map.");
-      setIsSavingPickup(false);
-      return false;
-    }
-
-    try {
-      const resp = await fetch("/api/vendor/onboarding-pickup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          offers_pickup: offersPickup,
-          pickup_latitude: offersPickup ? pickupLatitude : null,
-          pickup_longitude: offersPickup ? pickupLongitude : null,
-          pickup_address_details: offersPickup ? pickupAddressDetails : null,
-        }),
-      });
-
-      const body = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        setPickupError(body?.error || "Failed to save pickup location.");
-        setIsSavingPickup(false);
-        return false;
-      }
-
-      setIsSavingPickup(false);
-      router.refresh();
-      return true;
-    } catch (e: any) {
-      setPickupError(e?.message || "Failed to save pickup location.");
-      setIsSavingPickup(false);
-      return false;
-    }
-  };
-
-  const handlePickupDataChange = (data: {
-    offersPickup: boolean;
-    pickupLatitude: number | null;
-    pickupLongitude: number | null;
-    pickupAddressDetails: string | null;
-  }) => {
-    setOffersPickup(data.offersPickup);
-    setPickupLatitude(data.pickupLatitude);
-    setPickupLongitude(data.pickupLongitude);
-    setPickupAddressDetails(data.pickupAddressDetails || "");
   };
 
   return (
@@ -308,12 +225,8 @@ export default function OnboardingWizard({
       {/* Progress bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold text-emerald-600">
-            Step {step} of {totalSteps}
-          </span>
-          <span className="text-xs text-slate-400">
-            {Math.round((step / totalSteps) * 100)}% complete
-          </span>
+          <span className="text-xs font-bold text-emerald-600">Step {step} of {totalSteps}</span>
+          <span className="text-xs text-slate-400">{Math.round((step / totalSteps) * 100)}% complete</span>
         </div>
         <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
           <div
@@ -331,21 +244,16 @@ export default function OnboardingWizard({
               <div className="inline-flex items-center justify-center rounded-full bg-emerald-100 p-4 mb-4">
                 <BuildingStorefrontIcon className="h-8 w-8 text-emerald-600" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Welcome to Vendle, {user.name.split(" ")[0]}! 🎉
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Welcome to Vendle, {user.name.split(' ')[0]}! 🎉</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Let&apos;s get your store ready. Set your store name, link, and
-                contact details here (you can change them later).
+                Let&apos;s get your store ready. Set your store name, link, and contact details here (you can change them later).
               </p>
             </div>
 
             <div className="space-y-4 rounded-xl bg-slate-50 p-5">
               <div className="grid gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">
-                    Store Name
-                  </label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Store Name</label>
                   <input
                     value={storeName}
                     onChange={(e) => setStoreName(e.target.value)}
@@ -355,35 +263,21 @@ export default function OnboardingWizard({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">
-                    Store Link (slug)
-                  </label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Store Link (slug)</label>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500 font-mono shrink-0">
-                      /s/
-                    </span>
+                    <span className="text-xs text-slate-500 font-mono shrink-0">/s/</span>
                     <input
                       value={storeSlug}
-                      onChange={(e) =>
-                        setStoreSlug(
-                          e.target.value
-                            .toLowerCase()
-                            .replace(/[^a-z0-9-]/g, ""),
-                        )
-                      }
+                      onChange={(e) => setStoreSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                       placeholder="my-store"
                       className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 font-mono"
                     />
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Lowercase letters, numbers, and hyphens only.
-                  </p>
+                  <p className="mt-1 text-[11px] text-slate-400">Lowercase letters, numbers, and hyphens only.</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">
-                    WhatsApp Number
-                  </label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">WhatsApp Number</label>
                   <input
                     value={whatsApp}
                     onChange={(e) => setWhatsApp(e.target.value)}
@@ -394,9 +288,7 @@ export default function OnboardingWizard({
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">
-                      Store Location (State)
-                    </label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Store Location (State)</label>
                     <div className="relative">
                       <select
                         value={locationState}
@@ -405,9 +297,7 @@ export default function OnboardingWizard({
                       >
                         <option value="">Select a state</option>
                         {NIGERIAN_STATES.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
+                          <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
                       <MapPinIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
@@ -415,9 +305,7 @@ export default function OnboardingWizard({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">
-                      Store Category
-                    </label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Store Category</label>
                     <div className="relative">
                       <select
                         value={category}
@@ -426,9 +314,7 @@ export default function OnboardingWizard({
                       >
                         <option value="">Select a category</option>
                         {STORE_CATEGORIES.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
+                          <option key={c} value={c}>{c}</option>
                         ))}
                       </select>
                       <TagIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
@@ -447,9 +333,7 @@ export default function OnboardingWizard({
             <button
               onClick={async () => {
                 if (!canProceedFromStep1) {
-                  setSaveError(
-                    "Please enter a valid store name and slug to continue.",
-                  );
+                  setSaveError('Please enter a valid store name and slug to continue.');
                   return;
                 }
                 const ok = await saveProfile();
@@ -458,7 +342,7 @@ export default function OnboardingWizard({
               disabled={isSaving}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60"
             >
-              {isSaving ? "Saving…" : "Next: Store Description"}
+              {isSaving ? 'Saving…' : 'Next: Store Description'}
               <ArrowRightIcon className="h-4 w-4" />
             </button>
           </div>
@@ -471,26 +355,20 @@ export default function OnboardingWizard({
               <div className="inline-flex items-center justify-center rounded-full bg-purple-100 p-4 mb-4">
                 <SparklesIcon className="h-8 w-8 text-purple-600" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Tell Your Story
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Tell Your Story</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Add a short description to help customers discover your store.
-                This is optional but recommended!
+                Add a short description to help customers discover your store. This is optional but recommended!
               </p>
             </div>
 
             <div className="space-y-4 rounded-xl bg-slate-50 p-5">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Store Description{" "}
-                  <span className="text-slate-400 font-normal">(Optional)</span>
+                  Store Description <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <textarea
                   value={storeDescription}
-                  onChange={(e) =>
-                    setStoreDescription(e.target.value.slice(0, 200))
-                  }
+                  onChange={(e) => setStoreDescription(e.target.value.slice(0, 200))}
                   rows={4}
                   maxLength={200}
                   placeholder="e.g. Premium handcrafted jewelry and accessories. Each piece is uniquely designed with love in Lagos."
@@ -500,9 +378,7 @@ export default function OnboardingWizard({
                   <p className="text-xs text-slate-400">
                     Appears on Explore page and when sharing your store
                   </p>
-                  <p
-                    className={`text-xs ${storeDescription.length > 200 ? "text-red-500" : "text-slate-400"}`}
-                  >
+                  <p className={`text-xs ${storeDescription.length > 200 ? 'text-red-500' : 'text-slate-400'}`}>
                     {storeDescription.length}/200
                   </p>
                 </div>
@@ -530,11 +406,7 @@ export default function OnboardingWizard({
                 disabled={isSaving}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
               >
-                {isSaving
-                  ? "Saving…"
-                  : storeDescription.trim()
-                    ? "Next: Store Hours"
-                    : "Skip for now"}
+                {isSaving ? 'Saving…' : storeDescription.trim() ? 'Next: Store Hours' : 'Skip for now'}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>
@@ -548,20 +420,16 @@ export default function OnboardingWizard({
               <div className="inline-flex items-center justify-center rounded-full bg-blue-100 p-4 mb-4">
                 <BanknotesIcon className="h-8 w-8 text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Payment Details
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Payment Details</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Add your bank details so we can settle payments to you when
-                customers buy from your store.
+                Add your bank details so we can settle payments to you when customers buy from your store.
               </p>
             </div>
 
             <div className="space-y-4 rounded-xl bg-slate-50 p-5">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Bank Name{" "}
-                  <span className="text-slate-400 font-normal">(Optional)</span>
+                  Bank Name <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   value={bankName}
@@ -573,30 +441,22 @@ export default function OnboardingWizard({
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Account Number{" "}
-                  <span className="text-slate-400 font-normal">(Optional)</span>
+                  Account Number <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   value={accountNumber}
-                  onChange={(e) =>
-                    setAccountNumber(
-                      e.target.value.replace(/\D/g, "").slice(0, 10),
-                    )
-                  }
+                  onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="0123456789"
                   type="tel"
                   maxLength={10}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
                 />
-                <p className="mt-1 text-[11px] text-slate-400">
-                  10-digit account number
-                </p>
+                <p className="mt-1 text-[11px] text-slate-400">10-digit account number</p>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Account Name{" "}
-                  <span className="text-slate-400 font-normal">(Optional)</span>
+                  Account Name <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   value={accountName}
@@ -608,9 +468,7 @@ export default function OnboardingWizard({
 
               <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
                 <p className="text-xs text-blue-700">
-                  💡 <strong>Why we need this:</strong> When customers pay via
-                  card or transfer, we&apos;ll settle the funds directly to this
-                  account.
+                  💡 <strong>Why we need this:</strong> When customers pay via card or transfer, we&apos;ll settle the funds directly to this account.
                 </p>
               </div>
 
@@ -636,11 +494,7 @@ export default function OnboardingWizard({
                 disabled={isSaving}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
               >
-                {isSaving
-                  ? "Saving…"
-                  : bankName && accountNumber && accountName
-                    ? "Next: Store Hours"
-                    : "Skip for now"}
+                {isSaving ? 'Saving…' : (bankName && accountNumber && accountName) ? 'Next: Store Hours' : 'Skip for now'}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>
@@ -656,8 +510,7 @@ export default function OnboardingWizard({
               </div>
               <h2 className="text-xl font-bold text-slate-900">Store Hours</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Let customers know when you&apos;re open. Your store will show
-                an &quot;Open&quot; or &quot;Closed&quot; badge automatically.
+                Let customers know when you&apos;re open. Your store will show an &quot;Open&quot; or &quot;Closed&quot; badge automatically.
               </p>
             </div>
 
@@ -675,24 +528,17 @@ export default function OnboardingWizard({
                   <option value="Africa/Lagos">Africa/Lagos (GMT+1)</option>
                   <option value="Africa/Accra">Africa/Accra (GMT)</option>
                   <option value="Africa/Nairobi">Africa/Nairobi (GMT+3)</option>
-                  <option value="Africa/Johannesburg">
-                    Africa/Johannesburg (GMT+2)
-                  </option>
+                  <option value="Africa/Johannesburg">Africa/Johannesburg (GMT+2)</option>
                   <option value="UTC">UTC</option>
                   <option value="Europe/London">Europe/London (GMT/BST)</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-600">
-                  Weekly Schedule
-                </label>
+                <label className="block text-xs font-bold text-slate-600">Weekly Schedule</label>
                 <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white overflow-hidden">
                   {STORE_DAY_KEYS.map((key) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between px-3 py-2"
-                    >
+                    <div key={key} className="flex items-center justify-between px-3 py-2">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -705,11 +551,9 @@ export default function OnboardingWizard({
                           }
                           className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                         />
-                        <span className="text-sm font-medium text-slate-700">
-                          {DAY_LABELS[key]}
-                        </span>
+                        <span className="text-sm font-medium text-slate-700">{DAY_LABELS[key]}</span>
                       </label>
-
+                      
                       <div className="flex items-center gap-1.5">
                         <input
                           type="time"
@@ -723,9 +567,7 @@ export default function OnboardingWizard({
                           }
                           className="rounded-lg border border-slate-200 px-2 py-1 text-xs disabled:opacity-30 bg-slate-50"
                         />
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">
-                          to
-                        </span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">to</span>
                         <input
                           type="time"
                           disabled={!days[key].enabled}
@@ -766,62 +608,21 @@ export default function OnboardingWizard({
                 disabled={isSavingAvailability}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
               >
-                {isSavingAvailability ? "Saving…" : "Next: Pickup Location"}
+                {isSavingAvailability ? 'Saving…' : 'Next: Choose Theme'}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 5: Pickup Location */}
+        {/* Step 5: Choose Theme */}
         {step === 5 && (
-          <div className="space-y-6">
-            <OnboardingPickupStep
-              initialOffersPickup={offersPickup}
-              initialPickupLatitude={pickupLatitude}
-              initialPickupLongitude={pickupLongitude}
-              initialPickupAddressDetails={pickupAddressDetails}
-              onPickupDataChange={handlePickupDataChange}
-            />
-
-            {pickupError && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                {pickupError}
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep(4)}
-                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
-              >
-                Back
-              </button>
-              <button
-                onClick={async () => {
-                  const ok = await savePickupLocation();
-                  if (ok) setStep(6);
-                }}
-                disabled={isSavingPickup}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
-              >
-                {isSavingPickup ? "Saving…" : offersPickup ? "Next: Choose Theme" : "Skip for now"}
-                <ArrowRightIcon className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 6: Choose Theme */}
-        {step === 6 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
                 <SparklesIcon className="h-8 w-8 text-sky-600" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Choose a Theme
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Choose a Theme</h2>
               <p className="mt-2 text-sm text-slate-500">
                 Pick a look for your storefront. You can customize this later.
               </p>
@@ -837,23 +638,17 @@ export default function OnboardingWizard({
                     onClick={() => setTemplateId(t.id)}
                     className={`w-full text-left rounded-2xl border p-4 transition ${
                       selected
-                        ? "border-emerald-300 bg-emerald-50"
-                        : "border-slate-200 bg-white hover:bg-slate-50"
+                        ? 'border-emerald-300 bg-emerald-50'
+                        : 'border-slate-200 bg-white hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="text-2xl leading-none">{t.emoji}</div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-900">
-                          {t.name}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {t.description}
-                        </p>
+                        <p className="text-sm font-bold text-slate-900">{t.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{t.description}</p>
                       </div>
-                      {selected && (
-                        <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
-                      )}
+                      {selected && <CheckCircleIcon className="h-5 w-5 text-emerald-600" />}
                     </div>
                   </button>
                 );
@@ -868,7 +663,7 @@ export default function OnboardingWizard({
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(5)}
+                onClick={() => setStep(4)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
@@ -876,28 +671,26 @@ export default function OnboardingWizard({
               <button
                 onClick={async () => {
                   const ok = await saveTheme();
-                  if (ok) setStep(7);
+                  if (ok) setStep(6);
                 }}
                 disabled={isSavingTheme}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-60"
               >
-                {isSavingTheme ? "Saving…" : "Next: Add Products"}
+                {isSavingTheme ? 'Saving…' : 'Next: Add Products'}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 7: Add Products */}
-        {step === 7 && (
+        {/* Step 6: Add Products */}
+        {step === 6 && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center rounded-full bg-sky-100 p-4 mb-4">
                 <SparklesIcon className="h-8 w-8 text-sky-600" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Add Your Products
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Add Your Products</h2>
               <p className="mt-2 text-sm text-slate-500">
                 Your store needs products! Add your first item to start selling.
               </p>
@@ -907,21 +700,13 @@ export default function OnboardingWizard({
               {hasProducts ? (
                 <div className="space-y-2">
                   <CheckCircleIcon className="mx-auto h-12 w-12 text-emerald-500" />
-                  <p className="font-bold text-emerald-700">
-                    Products added! ✓
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Your store is stocked and ready.
-                  </p>
+                  <p className="font-bold text-emerald-700">Products added! ✓</p>
+                  <p className="text-xs text-slate-500">Your store is stocked and ready.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="mx-auto h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center text-2xl">
-                    📦
-                  </div>
-                  <p className="text-sm font-bold text-slate-700">
-                    No products yet
-                  </p>
+                  <div className="mx-auto h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center text-2xl">📦</div>
+                  <p className="text-sm font-bold text-slate-700">No products yet</p>
                   <Link
                     href="/dashboard/products/create"
                     className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-400"
@@ -935,35 +720,30 @@ export default function OnboardingWizard({
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(6)}
+                onClick={() => setStep(5)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
               </button>
               <button
-                onClick={() => setStep(8)}
+                onClick={() => setStep(7)}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
               >
-                {hasProducts ? "Next" : "Skip for now"}
+                {hasProducts ? 'Next' : 'Skip for now'}
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 8: Share Your Link */}
-        {step === 8 && (
+        {/* Step 7: Share Your Link */}
+        {step === 7 && (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center rounded-full bg-indigo-100 p-4 mb-4 text-2xl">
-                🚀
-              </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Share Your Store!
-              </h2>
+              <div className="inline-flex items-center justify-center rounded-full bg-indigo-100 p-4 mb-4 text-2xl">🚀</div>
+              <h2 className="text-xl font-bold text-slate-900">Share Your Store!</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Your store is live! Share this link on WhatsApp, Instagram,
-                Twitter — anywhere your customers are.
+                Your store is live! Share this link on WhatsApp, Instagram, Twitter — anywhere your customers are.
               </p>
             </div>
 
@@ -977,13 +757,11 @@ export default function OnboardingWizard({
               <button
                 onClick={copyLink}
                 className={`shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
-                  copied
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-emerald-500 text-white hover:bg-emerald-400"
+                  copied ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500 text-white hover:bg-emerald-400'
                 }`}
               >
                 <ClipboardDocumentIcon className="h-3.5 w-3.5" />
-                {copied ? "Copied!" : "Copy"}
+                {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
 
@@ -1008,34 +786,13 @@ export default function OnboardingWizard({
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(7)}
+                onClick={() => setStep(6)}
                 className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
               >
                 Back
               </button>
               <button
-                onClick={async () => {
-                  // Trigger guide for onboarding completion
-                  try {
-                    await fetch("/api/vendor/guides/trigger", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        trigger_type: "onboarding-complete",
-                      }),
-                    });
-                    await fetch("/api/vendor/guides/trigger", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        trigger_type: "category-specific",
-                      }),
-                    });
-                  } catch (error) {
-                    console.error("Error triggering guides:", error);
-                  }
-                  router.push("/dashboard");
-                }}
+                onClick={() => router.push('/dashboard')}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-400"
               >
                 Go to Dashboard
@@ -1049,7 +806,7 @@ export default function OnboardingWizard({
       {/* Skip link */}
       <p className="mt-6 text-center">
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.push('/dashboard')}
           className="text-xs text-slate-400 hover:text-slate-600 transition"
         >
           Skip setup and go to dashboard →

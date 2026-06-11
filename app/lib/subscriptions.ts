@@ -123,7 +123,7 @@ async function seedSubscriptionPlans(): Promise<void> {
     VALUES
       ('starter', 'Starter', 0, 5.00, 10, '{"analytics": false, "team_members": false, "custom_domain": false, "priority_support": false, "theme_level": "basic"}'),
       ('pro', 'Pro', 150000, 3.00, 100, '{"analytics": true, "team_members": false, "custom_domain": false, "priority_support": true, "theme_level": "premium"}'),
-      ('business', 'Business', 350000, 2.00, 1000, '{"analytics": true, "advanced_analytics": true, "team_members": true, "custom_domain": true, "priority_support": true, "theme_level": "exclusive"}')
+      ('business', 'Business', 350000, 2.00, 1000, '{"analytics": true, "advanced_analytics": true, "team_members": true, "custom_domain": true, "priority_support": true, "theme_level": "exclusive", "hide_branding": true}')
   `;
 }
 
@@ -136,7 +136,13 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   const plans = await sql<SubscriptionPlan[]>`
     SELECT * FROM subscription_plans ORDER BY price_kobo ASC
   `;
-  return plans;
+  // Ensure features are parsed objects for each plan
+  return plans.map((plan) => {
+    if (typeof plan.features === 'string') {
+      plan.features = JSON.parse(plan.features);
+    }
+    return plan;
+  });
 }
 
 /**
@@ -149,7 +155,12 @@ export async function getSubscriptionPlan(tier: SubscriptionTier): Promise<Subsc
   const plans = await sql<SubscriptionPlan[]>`
     SELECT * FROM subscription_plans WHERE tier = ${tier} LIMIT 1
   `;
-  return plans[0] || null;
+  const plan = plans[0] || null;
+  // Ensure features is a parsed object (not a string) for proper access
+  if (plan && typeof plan.features === 'string') {
+    plan.features = JSON.parse(plan.features);
+  }
+  return plan;
 }
 
 /**

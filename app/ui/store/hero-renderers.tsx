@@ -7,8 +7,8 @@ import {
   getSectionSpacing,
   getButtonStyles,
   getBorderRadiusClass,
+  getCustomPadding,
 } from "@/app/lib/utils";
-import { getCustomPadding } from "./section-renderer";
 import Image from "next/image";
 
 interface Entrance {
@@ -2631,6 +2631,342 @@ export function GoldReserveHero({
   );
 }
 
+// ─── CRYSTAL DIAMOND HERO ───
+export function CrystalDiamondHero({
+  content,
+  theme,
+  entrance = { className: "", style: "" },
+}: HeroProps) {
+  const align = content.text_align || "center";
+  const textAlignClass =
+    align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
+  const hasImage = !!content.image_url;
+
+  return (
+    <div
+      className={`relative w-full overflow-hidden min-h-[90vh] flex items-center justify-center ${entrance.className}`}
+      style={{
+        ...getCustomPadding(content),
+        backgroundColor: "#faf5ff",
+        marginBottom: "2rem",
+      }}
+    >
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-gradient-to-br from-[#c084fc]/30 to-[#f472b6]/20 blur-[80px] animate-pulse" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-tr from-[#f472b6]/25 to-[#c084fc]/15 blur-[100px] animate-pulse" style={{ animationDelay: "2s" }} />
+        <div className="absolute top-1/4 right-1/4 w-40 h-40 rounded-full bg-[#c084fc]/10 blur-[60px] animate-pulse" style={{ animationDelay: "4s" }} />
+        {/* Floating diamond shapes */}
+        <svg className="absolute top-[15%] left-[10%] w-12 h-12 text-[#c084fc]/20 animate-float-slow" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L2 12l10 10 10-10L12 2z" />
+        </svg>
+        <svg className="absolute bottom-[20%] right-[12%] w-8 h-8 text-[#f472b6]/15 animate-float-slow" viewBox="0 0 24 24" fill="currentColor" style={{ animationDelay: "3s", animationDuration: "8s" }}>
+          <path d="M12 2L2 12l10 10 10-10L12 2z" />
+        </svg>
+        <svg className="absolute top-[40%] right-[20%] w-6 h-6 text-[#a855f7]/20 animate-float-slow" viewBox="0 0 24 24" fill="currentColor" style={{ animationDelay: "1.5s", animationDuration: "6s" }}>
+          <path d="M12 2L2 12l10 10 10-10L12 2z" />
+        </svg>
+      </div>
+
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
+        <div className="relative backdrop-blur-xl bg-white/60 rounded-[3rem] p-8 md:p-16 lg:p-20 shadow-[0_20px_70px_-10px_rgba(192,132,252,0.3)] border border-white/60">
+          <div className={`flex flex-col ${textAlignClass} gap-6`}>
+            <span className="inline-block text-[10px] font-bold uppercase tracking-[0.3em] text-[#a855f7] bg-[#c084fc]/10 rounded-full px-4 py-1.5">
+              Crystal Collection
+            </span>
+            <h2
+              className="text-5xl md:text-7xl lg:text-8xl font-bold leading-[1.05] tracking-tight"
+              style={{
+                fontFamily: FONT_MAP["dmSans"],
+                color: theme.heading_color,
+                backgroundImage: "linear-gradient(135deg, #c084fc, #f472b6, #a855f7)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              {content.title || "Shine Brighter"}
+            </h2>
+            <p className="text-lg md:text-xl text-[#6b21a8] max-w-lg leading-relaxed opacity-80">
+              {content.subtitle || "Discover a collection that sparkles with elegance."}
+            </p>
+            {content.cta_text && (
+              <div className="mt-4">
+                <a
+                  href={content.cta_link || "#item-list"}
+                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-full text-sm font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 hover:shadow-xl"
+                  style={{
+                    background: "linear-gradient(135deg, #c084fc, #a855f7)",
+                  }}
+                >
+                  {content.cta_text}
+                  <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </a>
+              </div>
+            )}
+          </div>
+          {hasImage && (
+            <div className="mt-10 rounded-2xl overflow-hidden shadow-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={content.image_url} alt="" className="w-full h-auto object-cover" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── NOIR LUXE HERO ───
+export function NoirLuxeHero({
+  content,
+  theme,
+  entrance = { className: "", style: "" },
+}: HeroProps) {
+  const align = content.text_align || "center";
+  const textAlignClass =
+    align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
+
+  return (
+    <div
+      className={`relative w-full overflow-hidden min-h-[100vh] flex items-center justify-center ${entrance.className}`}
+      style={{
+        ...getCustomPadding(content),
+        backgroundColor: "#0a0a0a",
+        marginBottom: "2rem",
+      }}
+    >
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full bg-gradient-to-b from-[#d4a574]/10 to-transparent blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#d4a574]/30 to-transparent" />
+        <div className="absolute inset-0 opacity-[0.02]" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, #d4a574 0%, transparent 50%), radial-gradient(circle at 75% 75%, #d4a574 0%, transparent 50%)`,
+        }} />
+      </div>
+
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-8 md:px-16 py-24 flex flex-col items-center">
+        <div className={`flex flex-col ${textAlignClass} max-w-3xl`}>
+          <div className="flex items-center gap-4 mb-10 justify-center">
+            <div className="h-px w-12 bg-[#d4a574]/40" />
+            <span className="text-[#d4a574] text-[10px] uppercase tracking-[0.4em] font-light">Est. MMXXVI</span>
+            <div className="h-px w-12 bg-[#d4a574]/40" />
+          </div>
+          <h2
+            className="text-6xl md:text-8xl lg:text-[7rem] font-normal leading-[0.95] tracking-tighter"
+            style={{
+              fontFamily: FONT_MAP["playfair"],
+              color: "#ffffff",
+            }}
+          >
+            {content.title || "In Black We Trust"}
+          </h2>
+          <div className="w-20 h-px bg-[#d4a574]/50 my-10" />
+          <p className="text-lg md:text-xl text-[#a3a3a3] font-light leading-relaxed max-w-lg">
+            {content.subtitle || "Minimalism meets opulence. For the discerning few."}
+          </p>
+          {content.cta_text && (
+            <div className="mt-10">
+              <a
+                href={content.cta_link || "#item-list"}
+                className="group inline-flex items-center gap-4 px-10 py-4 border border-[#d4a574]/30 text-[#d4a574] text-sm tracking-[0.3em] uppercase font-light transition-all hover:bg-[#d4a574] hover:text-[#0a0a0a]"
+              >
+                {content.cta_text}
+                <span className="transition-transform group-hover:translate-x-2">→</span>
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── NEON NIGHTS HERO ───
+export function NeonNightsHero({
+  content,
+  theme,
+  entrance = { className: "", style: "" },
+}: HeroProps) {
+  const align = content.text_align || "center";
+  const textAlignClass =
+    align === "left" ? "text-left items-start" : align === "right" ? "text-right items-end" : "text-center items-center";
+  const hasImage = !!content.image_url;
+
+  return (
+    <div
+      className={`relative w-full overflow-hidden min-h-[100vh] flex items-center justify-center ${entrance.className}`}
+      style={{
+        ...getCustomPadding(content),
+        backgroundColor: "#09090b",
+        marginBottom: "3rem",
+      }}
+    >
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Scan lines */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)",
+        }} />
+        {/* Neon glow orbs */}
+        <div className="absolute top-[-10%] right-[-5%] w-[60%] h-[60%] rounded-full bg-[#22d3ee]/5 blur-[150px]" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[60%] h-[60%] rounded-full bg-[#e879f9]/5 blur-[150px]" />
+        {/* Animated neon border lines */}
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#22d3ee] to-transparent opacity-70 neon-scan" />
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#e879f9] to-transparent opacity-70 neon-scan" style={{ animationDelay: "2s" }} />
+        {/* Grid overlay */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }} />
+      </div>
+
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-8 py-20">
+        <div className="relative p-[1px] rounded-2xl" style={{
+          background: "linear-gradient(135deg, #22d3ee, #e879f9)",
+          boxShadow: "0 0 40px rgba(34,211,238,0.15), 0 0 80px rgba(232,121,249,0.1)",
+        }}>
+          <div className="rounded-2xl bg-[#0a0a0e]/90 backdrop-blur-xl p-8 md:p-16">
+            <div className={`flex flex-col ${textAlignClass}`}>
+              <div className="flex items-center gap-3 mb-8 justify-center">
+                <span className="w-2 h-2 rounded-full bg-[#22d3ee] animate-pulse shadow-[0_0_8px_#22d3ee]" />
+                <span className="text-[#22d3ee] text-xs font-mono uppercase tracking-[0.3em]">System Online</span>
+              </div>
+              <h2
+                className="text-6xl md:text-8xl lg:text-[8rem] font-black uppercase tracking-tighter leading-[0.85]"
+                style={{
+                  fontFamily: FONT_MAP["spaceGrotesk"],
+                  backgroundImage: "linear-gradient(135deg, #22d3ee, #e879f9, #22d3ee)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  backgroundSize: "200% 200%",
+                  animation: "gradientShift 4s ease infinite",
+                }}
+              >
+                {content.title || "After Dark"}
+              </h2>
+              <p className="text-lg md:text-xl text-[#a5f3fc] font-mono mt-8 max-w-lg opacity-80">
+                {content.subtitle || "Where style meets the neon underground."}
+              </p>
+              {content.cta_text && (
+                <div className="mt-10">
+                  <a
+                    href={content.cta_link || "#item-list"}
+                    className="group relative inline-flex items-center gap-4 px-10 py-4 rounded-sm text-sm font-bold uppercase tracking-[0.3em] transition-all overflow-hidden"
+                    style={{
+                      border: "1px solid rgba(34,211,238,0.4)",
+                      color: "#22d3ee",
+                    }}
+                  >
+                    <span className="absolute inset-0 bg-[#22d3ee]/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
+                    <span className="relative z-10 group-hover:text-[#09090b] transition-colors">{content.cta_text}</span>
+                    <span className="relative z-10 transition-transform group-hover:translate-x-2">→</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {hasImage && (
+        <div className="absolute inset-0 z-0 opacity-30 mix-blend-screen pointer-events-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={content.image_url} alt="" className="w-full h-full object-cover grayscale" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#09090b] via-transparent to-[#09090b]" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TROPICAL PARADISE HERO ───
+export function TropicalParadiseHero({
+  content,
+  theme,
+  entrance = { className: "", style: "" },
+}: HeroProps) {
+  const align = content.text_align || "left";
+  const textAlignClass =
+    align === "center" ? "text-center items-center" : align === "right" ? "text-right items-end" : "text-left items-start";
+  const hasImage = !!content.image_url;
+
+  return (
+    <div
+      className={`relative w-full overflow-hidden min-h-[85vh] flex items-center ${entrance.className}`}
+      style={{
+        ...getCustomPadding(content),
+        background: "linear-gradient(135deg, #fefce8 0%, #fef3c7 30%, #ffedd5 60%, #fefce8 100%)",
+        marginBottom: "3rem",
+        borderRadius: "0 0 4rem 4rem",
+      }}
+    >
+      {/* Leaf pattern overlay */}
+      <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0C30 0 35 15 45 15C55 15 60 30 60 30C60 30 45 35 45 45C45 55 30 60 30 60C30 60 25 45 15 45C5 45 0 30 0 30C0 30 15 25 15 15C15 5 30 0 30 0Z' fill='%23059669'/%3E%3C/svg%3E")`,
+        backgroundSize: "80px 80px",
+      }} />
+
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-br from-[#f97316]/20 to-[#f59e0b]/10 blur-[100px]" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-gradient-to-tr from-[#059669]/20 to-[#10b981]/10 blur-[100px]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 py-20">
+        <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
+          <div className={`flex-1 flex flex-col ${textAlignClass}`}>
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-[#059669]/10 text-[#059669] text-xs font-bold uppercase tracking-wider mb-8">
+              <span className="w-2 h-2 rounded-full bg-[#f97316] animate-pulse" />
+              Island Vibes
+            </div>
+            <h2
+              className="text-5xl md:text-7xl lg:text-8xl font-black leading-[1.0] tracking-tight"
+              style={{
+                fontFamily: FONT_MAP["montserrat"],
+                color: "#064e3b",
+              }}
+            >
+              {content.title || "Escape to Paradise"}
+            </h2>
+            <p className="text-lg md:text-xl text-[#14532d] mt-8 max-w-md leading-relaxed opacity-80">
+              {content.subtitle || "Sun, sand, and vibrant finds for your tropical soul."}
+            </p>
+            {content.cta_text && (
+              <div className="mt-10">
+                <a
+                  href={content.cta_link || "#item-list"}
+                  className="inline-flex items-center gap-3 px-10 py-4 rounded-full text-base font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    background: "linear-gradient(135deg, #059669, #f97316)",
+                    boxShadow: "0 8px 30px rgba(5,150,105,0.3)",
+                  }}
+                >
+                  {content.cta_text}
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </a>
+              </div>
+            )}
+          </div>
+          {hasImage && (
+            <div className="flex-1 w-full relative">
+              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl aspect-[4/5]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={content.image_url} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#064e3b]/20 to-transparent" />
+              </div>
+              {/* Decorative palm-like shape */}
+              <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-[#059669]/10 blur-[20px]" />
+              <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-[#f97316]/10 blur-[20px]" />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── DYNAMIC REGISTRY ───
 export const HERO_RENDERERS: Record<string, React.FC<HeroProps>> = {
   "leather-grain": LeatherGrainHero,
@@ -2659,6 +2995,10 @@ export const HERO_RENDERERS: Record<string, React.FC<HeroProps>> = {
   "pro-athlete": ProAthleteHero,
   "urban-runner": UrbanRunnerHero,
   "gym-iron": GymIronHero,
+  "crystal-diamond": CrystalDiamondHero,
+  "noir-luxe": NoirLuxeHero,
+  "neon-nights": NeonNightsHero,
+  "tropical-paradise": TropicalParadiseHero,
   default: StandardHero,
 };
 

@@ -45,7 +45,7 @@ export default function TierCard({
         <button
           type="button"
           disabled
-          className="w-full py-3 px-4 bg-slate-100 text-slate-500 font-medium rounded-lg cursor-not-allowed"
+          className="w-full py-3 px-4 bg-slate-100 text-slate-500 font-medium rounded-xl cursor-not-allowed"
           aria-label="Current plan"
         >
           Current Plan
@@ -60,7 +60,7 @@ export default function TierCard({
           <button
             type="button"
             onClick={() => onStartTrial(plan.tier)}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
             aria-label={`Start 14-day trial for ${plan.name} tier`}
           >
             Start 14-Day Trial
@@ -72,7 +72,7 @@ export default function TierCard({
         <button
           type="button"
           onClick={() => onUpgrade(plan.tier)}
-          className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
+          className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-xl shadow-sm transition-colors"
           aria-label={`Upgrade to ${plan.name} tier for ${getPricingDisplay()}`}
         >
           Upgrade
@@ -85,7 +85,7 @@ export default function TierCard({
         <button
           type="button"
           onClick={() => onDowngrade(plan.tier)}
-          className="w-full py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors"
+          className="w-full py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-xl transition-colors"
           aria-label={`Downgrade to ${plan.name} tier`}
         >
           Downgrade

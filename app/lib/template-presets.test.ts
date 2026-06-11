@@ -152,12 +152,12 @@ describe('Task 9: Theme-Specific Refinements Verification', () => {
       expect(theme?.theme.card_shadow).toBe('elevated');
     });
 
-    it('should use slide animation for dynamic modern feel', () => {
-      expect(theme?.theme.animation_style).toBe('slide');
+    it('should use zoom animation for dynamic modern feel', () => {
+      expect(theme?.theme.animation_style).toBe('zoom');
     });
 
-    it('should use landscape image aspect ratio', () => {
-      expect(theme?.theme.image_aspect_ratio).toBe('landscape');
+    it('should use square image aspect ratio for product display', () => {
+      expect(theme?.theme.image_aspect_ratio).toBe('square');
     });
 
     it('should have all required theme properties', () => {
@@ -378,9 +378,502 @@ describe('Task 9: Theme-Specific Refinements Verification', () => {
     });
   });
 
+  // ── Premium (Pro-Tier) Theme Tests ─────────────────────────
+  //
+  // These themes are gated behind the Pro subscription tier (minTier: 'pro').
+  // They provide advanced styling, glassmorphism, and luxury design elements
+  // that are exclusive to paying subscribers.
+  //
+
+  describe('9.9: Monochrome Pro Theme (strict black/white, minimal, ultra-clean)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'monochrome-pro');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Monochrome Pro');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('pro');
+    });
+
+    it('should have strict black and white color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#000000');
+      expect(theme?.theme.secondary_color).toBe('#000000');
+      expect(theme?.theme.background_color).toBe('#ffffff');
+      expect(theme?.theme.accent_color).toBe('#000000');
+    });
+
+    it('should use Inter font for both headings and body', () => {
+      expect(theme?.theme.font_family).toBe('inter');
+      expect(theme?.theme.heading_font).toBe('inter');
+    });
+
+    it('should have minimal card style with no shadows', () => {
+      expect(theme?.theme.card_style).toBe('minimal');
+      expect(theme?.theme.card_shadow).toBe('none');
+    });
+
+    it('should have sharp border radius for precise architectural edges', () => {
+      expect(theme?.theme.border_radius).toBe('sharp');
+      expect(theme?.theme.button_radius).toBe('sharp');
+    });
+
+    it('should have no animation for ultra-clean minimalism', () => {
+      expect(theme?.theme.animation_style).toBe('none');
+    });
+
+    it('should use full layout width with spacious spacing', () => {
+      expect(theme?.theme.layout_width).toBe('full');
+      expect(theme?.theme.spacing).toBe('spacious');
+    });
+
+    it('should use transparent header with centered logo', () => {
+      expect(theme?.theme.header_style).toBe('transparent');
+      expect(theme?.theme.logo_position).toBe('center');
+      expect(theme?.theme.logo_frame).toBe('none');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Monochrome Pro', theme?.theme);
+    });
+  });
+
+  describe('9.10: Gold Reserve Theme (navy/gold, glassmorphism, luxury)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'gold-reserve');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Gold Reserve');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('pro');
+    });
+
+    it('should have deep navy and gold color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#fbbf24');
+      expect(theme?.theme.secondary_color).toBe('#d97706');
+      expect(theme?.theme.background_color).toBe('#020617');
+      expect(theme?.theme.accent_color).toBe('#fbbf24');
+    });
+
+    it('should use Playfair Display for headings and Outfit for body', () => {
+      expect(theme?.theme.heading_font).toBe('playfair');
+      expect(theme?.theme.font_family).toBe('outfit');
+    });
+
+    it('should have modern card style with elevated shadows', () => {
+      expect(theme?.theme.card_style).toBe('modern');
+      expect(theme?.theme.card_shadow).toBe('elevated');
+    });
+
+    it('should use glass button style for premium glassmorphism effects', () => {
+      expect(theme?.theme.button_style).toBe('glass');
+      expect(theme?.theme.glass_effect).toBe(true);
+    });
+
+    it('should use pill button radius for luxurious rounded buttons', () => {
+      expect(theme?.theme.button_radius).toBe('pill');
+    });
+
+    it('should use zoom animation with spacious spacing', () => {
+      expect(theme?.theme.animation_style).toBe('zoom');
+      expect(theme?.theme.spacing).toBe('spacious');
+    });
+
+    it('should use masonry layout for editorial feel', () => {
+      expect(theme?.theme.layout_style).toBe('masonry');
+    });
+
+    it('should have gold gradient background', () => {
+      expect(theme?.theme.primary_gradient).toContain('fbbf24');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Gold Reserve', theme?.theme);
+    });
+  });
+
+  describe('9.11: Crystal Diamond Theme (iridescent, glass, elegant)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'crystal-diamond');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Crystal Diamond');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('pro');
+    });
+
+    it('should have iridescent purple/pink color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#c084fc');
+      expect(theme?.theme.secondary_color).toBe('#a855f7');
+      expect(theme?.theme.accent_color).toBe('#f472b6');
+    });
+
+    it('should use DM Sans for headings and Inter for body', () => {
+      expect(theme?.theme.heading_font).toBe('dmSans');
+      expect(theme?.theme.font_family).toBe('inter');
+    });
+
+    it('should have modern card style with elevated shadows and glass effect', () => {
+      expect(theme?.theme.card_style).toBe('modern');
+      expect(theme?.theme.card_shadow).toBe('elevated');
+      expect(theme?.theme.glass_effect).toBe(true);
+    });
+
+    it('should use glass button style with pill radius', () => {
+      expect(theme?.theme.button_style).toBe('glass');
+      expect(theme?.theme.button_radius).toBe('pill');
+    });
+
+    it('should use fade animation for smooth transitions', () => {
+      expect(theme?.theme.animation_style).toBe('fade');
+    });
+
+    it('should use spacious spacing with portrait aspect ratio', () => {
+      expect(theme?.theme.spacing).toBe('spacious');
+      expect(theme?.theme.image_aspect_ratio).toBe('portrait');
+    });
+
+    it('should have Lucide icon library with outline fill', () => {
+      expect(theme?.theme.icon_library).toBe('lucide');
+      expect(theme?.theme.icon_fill).toBe('outline');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Crystal Diamond', theme?.theme);
+    });
+  });
+
+  describe('9.12: Noir Luxe Theme (all-black, gold accents, ultra-premium)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'noir-luxe');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Noir Luxe');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('pro');
+    });
+
+    it('should have all-black with gold accent color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#d4a574');
+      expect(theme?.theme.background_color).toBe('#0a0a0a');
+      expect(theme?.theme.accent_color).toBe('#d4a574');
+      expect(theme?.theme.surface_color).toBe('#141414');
+    });
+
+    it('should use Playfair Display for headings and Outfit for body', () => {
+      expect(theme?.theme.heading_font).toBe('playfair');
+      expect(theme?.theme.font_family).toBe('outfit');
+    });
+
+    it('should have minimal card style with no shadows', () => {
+      expect(theme?.theme.card_style).toBe('minimal');
+      expect(theme?.theme.card_shadow).toBe('none');
+    });
+
+    it('should use outline button style with sharp radius', () => {
+      expect(theme?.theme.button_style).toBe('outline');
+      expect(theme?.theme.button_radius).toBe('sharp');
+    });
+
+    it('should use fade animation with spacious spacing', () => {
+      expect(theme?.theme.animation_style).toBe('fade');
+      expect(theme?.theme.spacing).toBe('spacious');
+    });
+
+    it('should use full layout width with glass effect', () => {
+      expect(theme?.theme.layout_width).toBe('full');
+      expect(theme?.theme.glass_effect).toBe(true);
+    });
+
+    it('should have Lucide icon library with light weight', () => {
+      expect(theme?.theme.icon_library).toBe('lucide');
+      expect(theme?.theme.icon_weight).toBe('light');
+      expect(theme?.theme.cart_icon).toBe('shopping-bag');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Noir Luxe', theme?.theme);
+    });
+  });
+
+  describe('9.13: Neon Nights Theme (cyberpunk, neon, animated)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'neon-nights');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Neon Nights');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('pro');
+    });
+
+    it('should have cyberpunk neon color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#22d3ee');
+      expect(theme?.theme.accent_color).toBe('#e879f9');
+      expect(theme?.theme.background_color).toBe('#09090b');
+    });
+
+    it('should use Space Grotesk for headings and Inter for body', () => {
+      expect(theme?.theme.heading_font).toBe('spaceGrotesk');
+      expect(theme?.theme.font_family).toBe('inter');
+    });
+
+    it('should have bold card style with elevated shadows', () => {
+      expect(theme?.theme.card_style).toBe('bold');
+      expect(theme?.theme.card_shadow).toBe('elevated');
+    });
+
+    it('should use glass button style with sharp radius', () => {
+      expect(theme?.theme.button_style).toBe('glass');
+      expect(theme?.theme.button_radius).toBe('sharp');
+      expect(theme?.theme.glass_effect).toBe(true);
+    });
+
+    it('should use zoom animation for energetic transitions', () => {
+      expect(theme?.theme.animation_style).toBe('zoom');
+    });
+
+    it('should use compact spacing with landscape aspect ratio', () => {
+      expect(theme?.theme.spacing).toBe('compact');
+      expect(theme?.theme.image_aspect_ratio).toBe('landscape');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Neon Nights', theme?.theme);
+    });
+  });
+
+  describe('9.14: Tropical Paradise Theme (vibrant, lush, tropical)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'tropical-paradise');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Tropical Paradise');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('pro');
+    });
+
+    it('should have vibrant tropical green/orange color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#059669');
+      expect(theme?.theme.accent_color).toBe('#f97316');
+      expect(theme?.theme.background_color).toBe('#fefce8');
+    });
+
+    it('should use Poppins font for body and Montserrat for headings', () => {
+      expect(theme?.theme.font_family).toBe('poppins');
+      expect(theme?.theme.heading_font).toBe('montserrat');
+    });
+
+    it('should have modern card style with soft shadows', () => {
+      expect(theme?.theme.card_style).toBe('modern');
+      expect(theme?.theme.card_shadow).toBe('soft');
+    });
+
+    it('should use solid button style with pill radius', () => {
+      expect(theme?.theme.button_style).toBe('solid');
+      expect(theme?.theme.button_radius).toBe('pill');
+    });
+
+    it('should use bounce animation for energetic tropical feel', () => {
+      expect(theme?.theme.animation_style).toBe('bounce');
+    });
+
+    it('should have announcement bar enabled and tropical gradient', () => {
+      expect(theme?.theme.primary_gradient).toContain('059669');
+      expect(theme?.sections.some(s => s.id === 'announcement-bar' && s.enabled)).toBe(true);
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Tropical Paradise', theme?.theme);
+    });
+  });
+
+  // ── Business Tier Theme Tests ────────────────────────────
+  describe('9.15: Elite Reserve Theme (dark, platinum, ultra-luxury, business tier)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'elite-reserve');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Elite Reserve');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('business');
+    });
+
+    it('should have platinum silver and navy color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#e2e8f0');
+      expect(theme?.theme.secondary_color).toBe('#0f172a');
+      expect(theme?.theme.background_color).toBe('#020617');
+      expect(theme?.theme.accent_color).toBe('#94a3b8');
+    });
+
+    it('should use Outfit for body and Playfair for headings', () => {
+      expect(theme?.theme.font_family).toBe('outfit');
+      expect(theme?.theme.heading_font).toBe('playfair');
+    });
+
+    it('should have minimal card style with no shadows', () => {
+      expect(theme?.theme.card_style).toBe('minimal');
+      expect(theme?.theme.card_shadow).toBe('none');
+    });
+
+    it('should use glass button style with sharp radius', () => {
+      expect(theme?.theme.button_style).toBe('glass');
+      expect(theme?.theme.button_radius).toBe('sharp');
+    });
+
+    it('should use masonry layout with spacious spacing', () => {
+      expect(theme?.theme.layout_style).toBe('masonry');
+      expect(theme?.theme.spacing).toBe('spacious');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Elite Reserve', theme?.theme);
+    });
+  });
+
+  describe('9.16: Aura Theme (ethereal, light, pastel, business tier)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'aura');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Aura');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('business');
+    });
+
+    it('should have purple pastel color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#a78bfa');
+      expect(theme?.theme.secondary_color).toBe('#c084fc');
+      expect(theme?.theme.accent_color).toBe('#f472b6');
+    });
+
+    it('should use DM Sans for both headings and body', () => {
+      expect(theme?.theme.font_family).toBe('dmSans');
+      expect(theme?.theme.heading_font).toBe('dmSans');
+    });
+
+    it('should have modern card style with soft shadows', () => {
+      expect(theme?.theme.card_style).toBe('modern');
+      expect(theme?.theme.card_shadow).toBe('soft');
+    });
+
+    it('should use glass button style with pill radius', () => {
+      expect(theme?.theme.button_style).toBe('glass');
+      expect(theme?.theme.button_radius).toBe('pill');
+    });
+
+    it('should use portrait image aspect ratio with spacious spacing', () => {
+      expect(theme?.theme.image_aspect_ratio).toBe('portrait');
+      expect(theme?.theme.spacing).toBe('spacious');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Aura', theme?.theme);
+    });
+  });
+
+  describe('9.17: Nexus Theme (futuristic, dark, neon, business tier)', () => {
+    const theme = TEMPLATES.find(t => t.id === 'nexus');
+
+    it('should exist and have correct metadata', () => {
+      expect(theme).toBeDefined();
+      expect(theme?.name).toBe('Nexus');
+      expect(theme?.category).toBe('premium');
+      expect(theme?.minTier).toBe('business');
+    });
+
+    it('should have cyan and purple neon color palette', () => {
+      expect(theme?.theme.primary_color).toBe('#06b6d4');
+      expect(theme?.theme.secondary_color).toBe('#0891b2');
+      expect(theme?.theme.accent_color).toBe('#8b5cf6');
+    });
+
+    it('should use Space Grotesk for both headings and body', () => {
+      expect(theme?.theme.font_family).toBe('spaceGrotesk');
+      expect(theme?.theme.heading_font).toBe('spaceGrotesk');
+    });
+
+    it('should have modern card style with elevated shadows', () => {
+      expect(theme?.theme.card_style).toBe('modern');
+      expect(theme?.theme.card_shadow).toBe('elevated');
+    });
+
+    it('should use glass button style with rounded radius', () => {
+      expect(theme?.theme.button_style).toBe('glass');
+      expect(theme?.theme.button_radius).toBe('rounded');
+    });
+
+    it('should use zoom animation for dynamic feel', () => {
+      expect(theme?.theme.animation_style).toBe('zoom');
+    });
+
+    it('should have all required theme properties', () => {
+      verifyThemeProperties('Nexus', theme?.theme);
+    });
+  });
+
+  // ── Premium Tier Access & Feature Gate Tests ──────────────
+  describe('Premium Tier Access Verification', () => {
+    const allGatedThemes = TEMPLATES.filter(t => t.minTier && t.minTier !== 'starter');
+    const proThemes = TEMPLATES.filter(t => t.minTier === 'pro');
+    const businessThemes = TEMPLATES.filter(t => t.minTier === 'business');
+    const allPremiumCategories = TEMPLATES.filter(t => t.category === 'premium');
+
+    it('should have all premium-category themes gated behind pro or business tier', () => {
+      // Every theme with category 'premium' must have minTier set
+      allPremiumCategories.forEach(theme => {
+        expect(theme.minTier, `${theme.id}: premium themes must have minTier set`).toBeDefined();
+      });
+    });
+
+    it('should have business-tier themes with minTier="business"', () => {
+      businessThemes.forEach(theme => {
+        expect(theme.minTier, `${theme.id}: should require business tier`).toBe('business');
+      });
+    });
+
+    it('should have correct minTier value for all pro-gated themes', () => {
+      proThemes.forEach(theme => {
+        expect(theme.minTier, `${theme.id}: should require pro tier`).toBe('pro');
+      });
+    });
+
+    it('should have all gated themes with advanced styling properties configured', () => {
+      allGatedThemes.forEach(theme => {
+        expect(theme.theme.glass_effect, `${theme.id}: glass_effect should be defined`).toBeDefined();
+        expect(theme.theme.button_style, `${theme.id}: button_style should be defined`).toBeDefined();
+        expect(theme.theme.card_shadow, `${theme.id}: card_shadow should be defined`).toBeDefined();
+        expect(theme.theme.layout_width, `${theme.id}: layout_width should be defined`).toBeDefined();
+      });
+    });
+
+    it('should have all pro/business-tier themes with icon fields consistent when set', () => {
+      allGatedThemes.forEach(theme => {
+        const hasIconLibrary = theme.theme.icon_library !== undefined;
+        const hasIconFill = theme.theme.icon_fill !== undefined;
+        const hasIconWeight = theme.theme.icon_weight !== undefined;
+        if (hasIconLibrary || hasIconFill || hasIconWeight) {
+          expect(theme.theme.icon_library, `${theme.id}: icon_library should be set when any icon field is set`).toBeDefined();
+          expect(theme.theme.icon_fill, `${theme.id}: icon_fill should be set when any icon field is set`).toBeDefined();
+          expect(theme.theme.icon_weight, `${theme.id}: icon_weight should be set when any icon field is set`).toBeDefined();
+        }
+      });
+    });
+
+    it('should have no non-premium themes with minTier set', () => {
+      TEMPLATES.filter(t => t.category !== 'premium').forEach(theme => {
+        expect(theme.minTier, `${theme.id}: non-premium themes should not have minTier`).toBeUndefined();
+      });
+    });
+
+    it('should have unique IDs for all gated themes', () => {
+      const gatedIds = allGatedThemes.map(t => t.id);
+      const uniqueIds = new Set(gatedIds);
+      expect(uniqueIds.size).toBe(allGatedThemes.length);
+    });
+  });
+
   describe('Overall Theme System Verification', () => {
-    it('should have exactly 8 themes defined', () => {
-      expect(TEMPLATES.length).toBe(8);
+    it('should have exactly 34 themes defined', () => {
+      expect(TEMPLATES.length).toBe(34);
     });
 
     it('should have all themes with unique IDs', () => {
@@ -433,6 +926,23 @@ describe('Task 9: Theme-Specific Refinements Verification', () => {
           expect(FONT_MAP[template.theme.heading_font]).toBeDefined();
         }
       });
+    });
+
+    it('should have all themes with valid minTier values', () => {
+      const validTiers = ['starter', 'pro', 'business', undefined];
+      TEMPLATES.forEach(template => {
+        expect(validTiers).toContain(template.minTier);
+      });
+    });
+
+    it('should have correct distribution of free vs gated themes', () => {
+      const freeThemes = TEMPLATES.filter(t => !t.minTier || t.minTier === 'starter').length;
+      const proThemes = TEMPLATES.filter(t => t.minTier === 'pro').length;
+      const businessThemes = TEMPLATES.filter(t => t.minTier === 'business').length;
+      // 23 free themes + 8 pro-gated + 3 business-gated = 34 total
+      expect(freeThemes).toBe(23);
+      expect(proThemes).toBe(8);
+      expect(businessThemes).toBe(3);
     });
   });
 });

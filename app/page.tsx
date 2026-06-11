@@ -58,13 +58,13 @@ export default async function Page() {
           <div className="flex items-center gap-3 md:gap-6 text-xs md:text-sm font-medium">
             <Link
               href="/login"
-              className="text-slate-600 hover:text-emerald-700 transition-colors"
+              className="relative z-20 pointer-events-auto text-slate-600 hover:text-emerald-700 transition-colors"
             >
               Sign in
             </Link>
             <Link
               href="/signup"
-              className="inline-flex items-center gap-1.5 md:gap-2 rounded-full bg-slate-900 px-4 md:px-5 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:-translate-y-0.5"
+              className="relative z-20 pointer-events-auto inline-flex items-center gap-1.5 md:gap-2 rounded-full bg-slate-900 px-4 md:px-5 py-2 text-xs font-semibold text-white shadow-md transition hover:bg-emerald-600 hover:-translate-y-0.5"
             >
               <span className="hidden sm:inline">Get started free</span>
               <span className="sm:hidden">Start</span>
@@ -121,14 +121,14 @@ export default async function Page() {
               <div className="flex flex-wrap items-center gap-4 mt-2">
                 <Link
                   href="/signup"
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-4 text-sm font-bold tracking-wide text-white shadow-xl shadow-emerald-500/30 transition-all hover:-translate-y-1 hover:bg-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/40 md:text-base"
+                  className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-4 text-sm font-bold tracking-wide text-white shadow-xl shadow-emerald-500/30 transition-all hover:-translate-y-1 hover:bg-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/40 md:text-base"
                 >
                   <span>Launch Your Store</span>
                   <ArrowRightIcon className="h-5 w-5 stroke-2" />
                 </Link>
                 <Link
                   href="/explore"
-                  className="inline-flex items-center gap-2 rounded-full border-2 border-slate-900 bg-transparent px-8 py-4 text-sm font-bold tracking-wide text-slate-900 transition-all hover:bg-slate-900 hover:text-white md:text-base"
+                  className="pointer-events-auto inline-flex items-center gap-2 rounded-full border-2 border-slate-900 bg-transparent px-8 py-4 text-sm font-bold tracking-wide text-slate-900 transition-all hover:bg-slate-900 hover:text-white md:text-base"
                 >
                   <MagnifyingGlassIcon className="h-5 w-5 stroke-2" />
                   <span>Explore Vendors</span>
@@ -148,6 +148,26 @@ export default async function Page() {
                   <span className="text-emerald-500">✦</span> Unified social
                   links
                 </span>
+              </div>
+
+              {/* Scroll indicator */}
+              <div className="mt-12 flex flex-col items-center gap-2 animate-bounce">
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                  Scroll to explore
+                </span>
+                <svg
+                  className="h-5 w-5 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                  />
+                </svg>
               </div>
             </FadeInUp>
           </div>
@@ -290,9 +310,16 @@ export default async function Page() {
             <FadeInUp delay={0.1}>
               <div className="relative h-[400px] md:h-[480px] lg:h-[560px] flex items-end justify-center lg:justify-start group/stack">
                 {/* Mobile Screenshot 1 - Left Card */}
-                <div className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-10" style={{ transform: 'translateX(-50%) translateX(-80px) rotate(-15deg)', transformOrigin: 'bottom center' }}>
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-10"
+                  style={{
+                    transform:
+                      "translateX(-50%) translateX(-80px) rotate(-15deg)",
+                    transformOrigin: "bottom center",
+                  }}
+                >
                   <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-700 rounded-[1.5rem] md:rounded-[2rem] scale-105 opacity-15 blur-sm"></div>
-                  
+
                   <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 md:border-[6px] border-white shadow-2xl ring-1 ring-slate-900/10 transition-all duration-500 group hover:rotate-0 hover:shadow-3xl cursor-pointer hover:-translate-y-8">
                     <Image
                       src="/images/platform-mockup-1.png"
@@ -306,9 +333,15 @@ export default async function Page() {
                 </div>
 
                 {/* Mobile Screenshot 2 - Center Card */}
-                <div className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-20" style={{ transform: 'translateX(-50%) rotate(0deg)', transformOrigin: 'bottom center' }}>
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-20"
+                  style={{
+                    transform: "translateX(-50%) rotate(0deg)",
+                    transformOrigin: "bottom center",
+                  }}
+                >
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-600 to-emerald-500 rounded-[1.5rem] md:rounded-[2rem] scale-105 opacity-15 blur-sm"></div>
-                  
+
                   <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 md:border-[6px] border-white shadow-2xl ring-1 ring-emerald-900/10 transition-all duration-500 group hover:shadow-3xl cursor-pointer hover:-translate-y-8">
                     <Image
                       src="/images/platform-mockup-2.png"
@@ -322,9 +355,16 @@ export default async function Page() {
                 </div>
 
                 {/* Mobile Screenshot 3 - Right Card */}
-                <div className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-30" style={{ transform: 'translateX(-50%) translateX(80px) rotate(15deg)', transformOrigin: 'bottom center' }}>
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 lg:left-1/2 lg:-translate-x-1/2 bottom-0 w-full max-w-[140px] md:max-w-[180px] lg:max-w-[220px] origin-bottom transition-all duration-500 group-hover/stack:opacity-40 hover:!opacity-100 hover:!z-50 hover:!scale-105 z-30"
+                  style={{
+                    transform:
+                      "translateX(-50%) translateX(80px) rotate(15deg)",
+                    transformOrigin: "bottom center",
+                  }}
+                >
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-600 to-amber-500 rounded-[1.5rem] md:rounded-[2rem] scale-105 opacity-15 blur-sm"></div>
-                  
+
                   <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 md:border-[6px] border-white shadow-2xl ring-1 ring-amber-900/10 transition-all duration-500 group hover:rotate-0 hover:shadow-3xl cursor-pointer hover:-translate-y-8">
                     <Image
                       src="/images/story/platform-mockup-3.png"
@@ -378,7 +418,9 @@ export default async function Page() {
                   <StaggerItem>
                     <div className="flex items-start gap-4 group">
                       <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-slate-900/20 group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-white font-bold text-base">✓</span>
+                        <span className="text-white font-bold text-base">
+                          ✓
+                        </span>
                       </div>
                       <div>
                         <p className="font-bold text-slate-900 mb-2 text-lg">
@@ -395,7 +437,9 @@ export default async function Page() {
                   <StaggerItem>
                     <div className="flex items-start gap-4 group">
                       <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-emerald-900/20 group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-white font-bold text-base">✓</span>
+                        <span className="text-white font-bold text-base">
+                          ✓
+                        </span>
                       </div>
                       <div>
                         <p className="font-bold text-slate-900 mb-2 text-lg">
@@ -412,7 +456,9 @@ export default async function Page() {
                   <StaggerItem>
                     <div className="flex items-start gap-4 group">
                       <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-amber-900/20 group-hover:scale-110 transition-transform duration-300">
-                        <span className="text-white font-bold text-base">✓</span>
+                        <span className="text-white font-bold text-base">
+                          ✓
+                        </span>
                       </div>
                       <div>
                         <p className="font-bold text-slate-900 mb-2 text-lg">
@@ -431,7 +477,7 @@ export default async function Page() {
               <FadeInUp delay={0.35}>
                 <Link
                   href="/signup"
-                  className="inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-r from-slate-900 to-slate-800 hover:from-emerald-600 hover:to-emerald-500 px-10 py-5 text-base font-bold text-white transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 group"
+                  className="pointer-events-auto inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-r from-slate-900 to-slate-800 hover:from-emerald-600 hover:to-emerald-500 px-10 py-5 text-base font-bold text-white transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/30 hover:scale-105 group"
                 >
                   <span>Start Your Store Free</span>
                   <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-2 transition-transform duration-300" />
@@ -487,7 +533,9 @@ export default async function Page() {
 
             <FadeInUp delay={0.2}>
               <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-                Track orders, manage inventory, customize your store, and monitor sales—all from a beautiful, intuitive dashboard designed for speed and simplicity.
+                Track orders, manage inventory, customize your store, and
+                monitor sales—all from a beautiful, intuitive dashboard designed
+                for speed and simplicity.
               </p>
             </FadeInUp>
           </div>
@@ -497,7 +545,7 @@ export default async function Page() {
             <div className="relative max-w-6xl mx-auto">
               {/* Glow effects behind the dashboard */}
               <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 via-blue-500/20 to-purple-500/20 rounded-[3rem] blur-3xl opacity-60"></div>
-              
+
               {/* Browser chrome mockup */}
               <div className="relative rounded-[2rem] overflow-hidden border border-slate-700/50 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm bg-slate-800/50">
                 {/* Browser top bar */}
@@ -525,7 +573,7 @@ export default async function Page() {
                     className="w-full h-full object-cover object-top"
                     priority
                   />
-                  
+
                   {/* Gradient overlay for depth */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent pointer-events-none"></div>
                 </div>
@@ -540,7 +588,9 @@ export default async function Page() {
                         📊
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 text-sm">Real-time Analytics</p>
+                        <p className="font-bold text-slate-900 text-sm">
+                          Real-time Analytics
+                        </p>
                       </div>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
@@ -558,7 +608,9 @@ export default async function Page() {
                         🎨
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 text-sm">Easy Customization</p>
+                        <p className="font-bold text-slate-900 text-sm">
+                          Easy Customization
+                        </p>
                       </div>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
@@ -581,7 +633,7 @@ export default async function Page() {
 
                 {/* Glow effect on hover */}
                 <div className="absolute inset-0 bg-emerald-500/0 transition-all duration-700 group-hover:bg-emerald-500/10"></div>
-                
+
                 {/* Radial glow that appears on hover */}
                 <div className="absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100">
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-emerald-500/25 rounded-full blur-3xl"></div>
@@ -596,7 +648,9 @@ export default async function Page() {
                     Crafted with African Heritage
                   </h3>
                   <p className="text-lg md:text-xl lg:text-2xl text-slate-400 transition-all duration-700 group-hover:text-slate-300 max-w-3xl leading-relaxed px-4">
-                    Every pixel tells a story of tradition, craftsmanship, and innovation. Hover to illuminate the patterns that inspire our design.
+                    Every pixel tells a story of tradition, craftsmanship, and
+                    innovation. Hover to illuminate the patterns that inspire
+                    our design.
                   </p>
                 </div>
 
@@ -723,7 +777,7 @@ export default async function Page() {
           <FadeInUp delay={0.3}>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center gap-3 rounded-full bg-emerald-500 px-10 py-5 text-lg font-bold text-slate-900 transition-all hover:bg-emerald-400 hover:scale-105 hover:shadow-[0_0_40px_rgba(16,185,129,0.3)]"
+              className="pointer-events-auto inline-flex items-center justify-center gap-3 rounded-full bg-emerald-500 px-10 py-5 text-lg font-bold text-slate-900 transition-all hover:bg-emerald-400 hover:scale-105 hover:shadow-[0_0_40px_rgba(16,185,129,0.3)]"
             >
               <span>Create your store free</span>
               <ArrowRightIcon className="h-5 w-5 stroke-[2.5]" />
@@ -738,7 +792,7 @@ export default async function Page() {
         <div className="absolute inset-0 opacity-[0.02] pointer-events-none text-slate-900">
           <MudclothPattern />
         </div>
-        
+
         {/* Subtle background element */}
         <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/3 opacity-[0.03] pointer-events-none text-slate-900">
           <ArewaSymbol className="w-96 h-96" />
@@ -749,7 +803,7 @@ export default async function Page() {
             <div>
               <VendleLogo className="mb-4" />
               <p className="mt-4 text-sm leading-relaxed text-slate-500 max-w-sm font-medium">
-               Sell online with a beautiful storefront.
+                Sell online with a beautiful storefront.
               </p>
             </div>
             <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-bold text-slate-700">
@@ -778,10 +832,16 @@ export default async function Page() {
               &copy; {new Date().getFullYear()} Vendle. Built in Nigeria.
             </div>
             <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-slate-900 transition-colors">
+              <Link
+                href="/privacy"
+                className="hover:text-slate-900 transition-colors"
+              >
                 Privacy
               </Link>
-              <Link href="/terms" className="hover:text-slate-900 transition-colors">
+              <Link
+                href="/terms"
+                className="hover:text-slate-900 transition-colors"
+              >
                 Terms
               </Link>
             </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { UrbanRunnerHero } from "../../app/ui/store/hero-renderers";
+import type { StoreTheme } from "../../app/lib/definitions";
 
 export default {
   title: "Store/Hero/UrbanRunner",
@@ -21,7 +22,7 @@ const sampleTheme = {
   heading_color: "#0f172a",
   text_color: "#334155",
   heading_font: "Inter",
-};
+} as StoreTheme;
 
 export const Default = () => (
   <UrbanRunnerHero content={sampleContent} theme={sampleTheme} />
