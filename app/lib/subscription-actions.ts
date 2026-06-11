@@ -146,44 +146,6 @@ export async function cancelSubscription(): Promise<SubscriptionActionResult> {
 }
 
 /**
- * Downgrades the current subscription to a lower tier.
- * 
- * @param tier - The subscription tier to downgrade to
- * @returns Result object with updated subscription details on success
- */
-export async function downgradeSubscription(tier: string): Promise<SubscriptionActionResult> {
-  try {
-    const response = await fetch('/api/subscriptions/downgrade', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify({ tier })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      return { 
-        ok: false, 
-        error: data.error || 'Failed to downgrade subscription' 
-      };
-    }
-    
-    return { 
-      ok: true, 
-      data: data.subscription
-    };
-  } catch (error) {
-    console.error('Network error downgrading subscription:', error);
-    return { 
-      ok: false, 
-      error: 'Network error. Please check your connection and try again.' 
-    };
-  }
-}
-
-/**
  * Verifies a Paystack payment and activates the subscription.
  * 
  * @param reference - The Paystack payment reference to verify

@@ -19,7 +19,6 @@ import {
   StoreHoursSlot,
   StoreHoursJson,
 } from "@/app/lib/store-availability";
-import { useSound } from "@/app/lib/sound-manager";
 
 function SubmitButton({ text }: { text: string }) {
   const { pending } = useFormStatus();
@@ -99,7 +98,12 @@ export default function StoreAvailabilityForm({ user }: { user: User }) {
     updateProfile as any,
     initialState,
   );
-  const { playSound } = useSound();
+  
+  // Make sound functionality optional - no longer requires SoundProvider
+  const playSound = (soundType: string) => {
+    // Sound disabled for now - can be re-enabled when SoundProvider is added back
+    console.log(`Sound would play: ${soundType}`);
+  };
 
   // Initialize state
   const [acceptingOrders, setAcceptingOrders] = useState(

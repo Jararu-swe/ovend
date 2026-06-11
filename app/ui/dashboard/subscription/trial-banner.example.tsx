@@ -19,6 +19,8 @@ function createExampleSubscription(daysRemaining: number): VendorSubscriptionInf
     expires_at: expiresAt.toISOString(),
     last_payment_reference: null,
     updated_at: now.toISOString(),
+    scheduled_tier_change: null,
+    scheduled_tier_change_at: null,
     plan: {
       id: 'pro-1',
       tier: 'pro',

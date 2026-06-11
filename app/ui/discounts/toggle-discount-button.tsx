@@ -2,7 +2,6 @@
 
 import { toggleDiscountAction } from '@/app/lib/actions';
 import { useActionState, useEffect } from 'react';
-import { useSound } from '@/app/lib/sound-manager';
 
 export default function ToggleDiscountButton({
   discountId,

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { setGoogleIntendedRole } from '@/app/lib/auth-actions';
 import Image from 'next/image';
 
@@ -20,6 +19,8 @@ export default function GoogleSignInButton({
     setIsLoading(true);
     try {
       await setGoogleIntendedRole(role);
+      // Dynamically import signIn to avoid SessionProvider requirement
+      const { signIn } = await import('next-auth/react');
       await signIn('google', { callbackUrl });
     } catch (error) {
       console.error('Google sign in error', error);

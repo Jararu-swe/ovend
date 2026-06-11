@@ -12,7 +12,7 @@ interface GuideCardProps {
     reading_time: number;
     difficulty: "beginner" | "intermediate" | "advanced";
     featured?: boolean;
-    category?: string;
+    category?: string | null;
   };
   viewed?: boolean;
   featured?: boolean;

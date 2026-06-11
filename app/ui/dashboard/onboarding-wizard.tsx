@@ -18,7 +18,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { User } from '@/app/lib/definitions';
 import VendleLogo from '@/app/ui/vendle-logo';
-import { useSound } from '@/app/lib/sound-manager';
 import { NIGERIAN_STATES, STORE_CATEGORIES } from '@/app/lib/utils';
 import { TEMPLATES } from '@/app/lib/template-presets';
 import {
@@ -36,7 +35,13 @@ interface OnboardingWizardProps {
 
 export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: OnboardingWizardProps) {
   const router = useRouter();
-  const { playSound } = useSound();
+  
+  // Make sound functionality optional - no longer requires SoundProvider
+  const playSound = (soundType: string) => {
+    // Sound disabled for now - can be re-enabled when SoundProvider is added back
+    console.log(`Sound would play: ${soundType}`);
+  };
+  
   const [step, setStep] = useState(1);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

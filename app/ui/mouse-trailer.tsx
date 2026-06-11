@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, useSpring, useMotionValue } from 'framer-motion';
 import { MudclothStar } from '@/app/ui/landing-patterns';
 
 export function MouseTrailer() {
   const [isVisible, setIsVisible] = useState(false);
-  const [hasMoved, setHasMoved] = useState(false);
+  const hasMovedRef = useRef(false);
   
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -27,16 +27,16 @@ export function MouseTrailer() {
       const targetY = e.clientY - 16;
 
       // Prevent the cursor from flying in from 0,0 on the first move
-      if (!hasMoved) {
+      if (!hasMovedRef.current) {
         springX.jump(targetX);
         springY.jump(targetY);
-        setHasMoved(true);
+        hasMovedRef.current = true;
       }
 
       mouseX.set(targetX);
       mouseY.set(targetY);
       
-      if (!isVisible) setIsVisible(true);
+      setIsVisible(true);
     };
 
     const handleMouseLeave = () => setIsVisible(false);
@@ -51,14 +51,14 @@ export function MouseTrailer() {
       document.removeEventListener('mouseleave', handleMouseLeave);
       document.removeEventListener('mouseenter', handleMouseEnter);
     };
-  }, [mouseX, mouseY, isVisible, hasMoved, springX, springY]);
+  }, []);
 
   return (
     <motion.div
       style={{
         x: springX,
         y: springY,
-        opacity: isVisible && hasMoved ? 1 : 0,
+        opacity: isVisible && hasMovedRef.current ? 1 : 0,
       }}
       className="fixed top-0 left-0 pointer-events-none z-[9999] hidden lg:block transition-opacity duration-300"
     >

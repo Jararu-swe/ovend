@@ -15,7 +15,7 @@ interface PayoutHistoryProps {
     service_fee: number;
     status: "pending" | "processing" | "completed" | "failed";
     requested_at: string;
-    processed_at?: string;
+    processed_at?: string | null;
     bank_name: string;
     account_number: string;
   }>;

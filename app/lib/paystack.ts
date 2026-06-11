@@ -47,7 +47,6 @@ const bankCodeMap: Record<string, string> = {
   "standard chartered bank": "068",
   "citi bank": "023",
   citi: "023",
-  stanbic: "039",
 };
 
 export function normalizeBankName(bankName: string) {

@@ -18,7 +18,9 @@ export default function PaymentHistorySection({
 
   // Sort payments by date (most recent first)
   const sortedPayments = [...payments].sort((a, b) => {
-    return new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime();
+    const aTime = a.paid_at ? new Date(a.paid_at).getTime() : 0;
+    const bTime = b.paid_at ? new Date(b.paid_at).getTime() : 0;
+    return bTime - aTime;
   });
 
   const handleDownloadInvoice = async (paymentId: string) => {

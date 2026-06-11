@@ -11,7 +11,6 @@ import {
 import TierCard from './tier-card';
 import CancellationDialog from './cancellation-dialog';
 import PaymentModal from './payment-modal';
-import DowngradeDialog from './downgrade-dialog';
 import { startTrial } from '@/app/lib/subscription-actions';
 
 interface TierComparisonProps {
@@ -34,8 +33,6 @@ export default function TierComparison({
   const [error, setError] = useState<string | null>(null);
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
-  const [downgradeTarget, setDowngradeTarget] = useState<SubscriptionTier>('starter');
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('pro');
   const [selectedAmount, setSelectedAmount] = useState<number>(0);
 
@@ -97,6 +94,7 @@ export default function TierComparison({
       }
 
       // Refresh the page to show updated subscription
+      setIsLoading(false);
       router.refresh();
     } catch (err) {
       console.error('Error starting trial:', err);
@@ -105,22 +103,6 @@ export default function TierComparison({
       );
       setIsLoading(false);
     }
-  };
-
-  /**
-   * Handle downgrade flow
-   * Opens downgrade dialog
-   */
-  const handleDowngrade = (tier: SubscriptionTier) => {
-    setDowngradeTarget(tier);
-    setShowDowngradeDialog(true);
-  };
-
-  /**
-   * Close downgrade dialog
-   */
-  const handleCloseDowngradeDialog = () => {
-    setShowDowngradeDialog(false);
   };
 
   /**
@@ -215,7 +197,6 @@ export default function TierComparison({
             currentTier={currentTier}
             canStartTrial={canStartTrial}
             onUpgrade={handleUpgrade}
-            onDowngrade={handleDowngrade}
             onStartTrial={handleStartTrial}
           />
         ))}
@@ -229,13 +210,6 @@ export default function TierComparison({
           onClose={handleCloseCancellationDialog}
         />
       )}
-
-      {/* Downgrade Dialog */}
-      <DowngradeDialog
-        targetTier={downgradeTarget}
-        isOpen={showDowngradeDialog}
-        onClose={handleCloseDowngradeDialog}
-      />
 
       {/* Payment Modal */}
       <PaymentModal

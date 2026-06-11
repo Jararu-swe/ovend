@@ -8,7 +8,6 @@ import { fetchVendorPayouts } from '@/app/lib/payouts';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import Script from 'next/script';
 import { SubscriptionPayment } from '@/app/lib/definitions';
 
 // New subscription components
@@ -18,6 +17,7 @@ import CurrentPlanCard from '@/app/ui/dashboard/subscription/current-plan-card';
 import TierComparison from '@/app/ui/dashboard/subscription/tier-comparison';
 import PaymentHistorySection from '@/app/ui/dashboard/subscription/payment-history-section';
 import PaymentVerifier from '@/app/ui/dashboard/subscription/payment-verifier';
+import PaystackScript from '@/app/ui/dashboard/subscription/paystack-script';
 
 export const metadata: Metadata = {
   title: 'Billing',
@@ -86,7 +86,7 @@ export default async function BillingPage() {
       // Fallback if subscription data not found
       return (
         <>
-          <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+          <PaystackScript />
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-semibold text-slate-900">
@@ -119,7 +119,7 @@ export default async function BillingPage() {
 
     return (
       <>
-        <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+        <PaystackScript />
         <div className="space-y-6">
           {/* Page Header */}
           <div>
@@ -187,7 +187,7 @@ export default async function BillingPage() {
     // Fallback error page
     return (
       <>
-        <Script src="https://js.paystack.co/v1/inline.js" strategy="lazyOnload" />
+        <PaystackScript />
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">

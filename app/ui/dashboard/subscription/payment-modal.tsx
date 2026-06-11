@@ -88,11 +88,20 @@ export default function PaymentModal({
     setError(null);
 
     try {
-      // Check if Paystack script is loaded
+      // Wait a bit for Paystack script to load if needed
       if (typeof window.PaystackPop === 'undefined') {
-        throw new Error(
-          'Paystack payment system is not available. Please refresh the page and try again.'
-        );
+        // Wait up to 3 seconds for script to load
+        let attempts = 0;
+        while (typeof window.PaystackPop === 'undefined' && attempts < 30) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
+        if (typeof window.PaystackPop === 'undefined') {
+          throw new Error(
+            'Paystack payment system is not available. Please refresh the page and try again.'
+          );
+        }
       }
 
       // Initialize payment
@@ -109,9 +118,16 @@ export default function PaymentModal({
         throw new Error('Invalid payment initialization response');
       }
 
+      // Get public key from environment variable (available on client with NEXT_PUBLIC_ prefix)
+      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+
+      if (!publicKey) {
+        throw new Error('Paystack configuration error. Please contact support.');
+      }
+
       // Initialize Paystack popup
       const handler = window.PaystackPop!.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        key: publicKey,
         email: userEmail,
         amount: amount, // Amount is already in kobo from plan.price_kobo
         ref: reference,

@@ -17,7 +17,6 @@ import {
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { NIGERIAN_STATES, STORE_CATEGORIES } from "@/app/lib/utils";
-import { useSound } from "@/app/lib/sound-manager";
 import {
   STORE_DAY_KEYS,
   StoreHoursDayKey,
@@ -103,7 +102,18 @@ export default function SettingsForm({ user }: { user: User }) {
     updateProfile as any,
     initialState,
   );
-  const { playSound } = useSound();
+  
+  // Make sound functionality optional - no longer requires SoundProvider
+  const playSound = (soundType: string) => {
+    // Sound disabled for now - can be re-enabled when SoundProvider is added back
+    console.log(`Sound would play: ${soundType}`);
+  };
+  
+  const preferences = { soundEnabled: false, volume: 50 };
+  const updatePreferences = (prefs?: any) => {
+    // Placeholder for when SoundProvider is re-enabled
+    console.log('Preferences would update:', prefs);
+  };
 
   // ── Store Profile state ──────────────────────────────────
   const [storeName, setStoreName] = useState(user.store_name || "");
@@ -124,7 +134,6 @@ export default function SettingsForm({ user }: { user: User }) {
   );
 
   // ── Sound/Notification state ─────────────────────────────
-  const { preferences, updatePreferences } = useSound();
   const [soundEnabled, setSoundEnabled] = useState(
     user.sound_enabled !== false,
   );

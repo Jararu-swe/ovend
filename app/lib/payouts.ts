@@ -1,8 +1,22 @@
 import { sql } from "@/app/lib/db";
 
-export async function fetchVendorPayouts(vendorId: string) {
+export interface PayoutRecord {
+  id: number;
+  requested_amount: number;
+  net_amount: number;
+  service_fee: number;
+  status: "pending" | "processing" | "completed" | "failed";
+  requested_at: string;
+  processed_at: string | null;
+  bank_name: string;
+  account_number: string;
+}
+
+export async function fetchVendorPayouts(
+  vendorId: string,
+): Promise<PayoutRecord[]> {
   try {
-    const payouts = await sql`
+    const payouts = await sql<PayoutRecord[]>`
       SELECT id, requested_amount, net_amount, service_fee, status, requested_at, processed_at, bank_name, account_number
       FROM payouts
       WHERE vendor_id = ${vendorId}

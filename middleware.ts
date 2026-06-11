@@ -37,10 +37,17 @@ async function lookupSlugByDomain(hostname: string): Promise<string | null> {
 }
 
 export default auth(async (req) => {
+  const pathname = req.nextUrl.pathname;
+  
+  // Skip auth middleware entirely for login/signup pages to prevent loops
+  if (pathname === '/login' || pathname === '/signup') {
+    return NextResponse.next();
+  }
+  
   const isLoggedIn = !!req.auth;
   const role = (req.auth?.user as any)?.role;
   const subscriptionExpiresAt = (req.auth?.user as any)?.subscription_expires_at as string | null | undefined;
-  const isDashboardRoute = req.nextUrl.pathname.startsWith('/dashboard');
+  const isDashboardRoute = pathname.startsWith('/dashboard');
 
   // ── Custom Domain Routing ───────────────────────────────────
   const hostname = req.headers.get('host') || '';
@@ -52,9 +59,9 @@ export default auth(async (req) => {
   if (hostname !== rootDomain && !hostname.endsWith(`.${rootDomain}`)) {
     // Skip middleware handling for Next.js internals and API routes
     if (
-      req.nextUrl.pathname.startsWith('/_next') ||
-      req.nextUrl.pathname.startsWith('/api') ||
-      req.nextUrl.pathname.startsWith('/static')
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api') ||
+      pathname.startsWith('/static')
     ) {
       return NextResponse.next();
     }
@@ -71,7 +78,7 @@ export default auth(async (req) => {
 
     // Allow localhost / 127.0.0.1 through for local development
     const isLocalhost = hostname.startsWith('localhost') || hostname.startsWith('127.0.0.1') || hostname.startsWith('0.0.0.0');
-    if (!isLocalhost && !req.nextUrl.pathname.startsWith('/s/')) {
+    if (!isLocalhost && !pathname.startsWith('/s/')) {
       return new NextResponse(
         `<!DOCTYPE html>
         <html>
@@ -107,7 +114,6 @@ export default auth(async (req) => {
   if (isLoggedIn) {
     // Vendor subscription gating (UX-level). Real enforcement also exists in server actions.
     if (isDashboardRoute && role === 'vendor') {
-      const pathname = req.nextUrl.pathname;
       const allowlist = ['/dashboard/billing', '/dashboard/settings', '/dashboard/onboarding'];
       const isAllowed = allowlist.some((p) => pathname === p || pathname.startsWith(p + '/'));
 

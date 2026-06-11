@@ -356,6 +356,8 @@ export type VendorSubscriptionInfo = {
   grace_days_remaining: number | null;
   is_trial: boolean;
   trial_days_remaining: number | null;
+  scheduled_tier_change: SubscriptionTier | null;
+  scheduled_tier_change_at: string | null;
 };
 
 export type SubscriptionPayment = {

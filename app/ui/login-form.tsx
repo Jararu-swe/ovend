@@ -6,9 +6,8 @@ import {
   ExclamationCircleIcon,
   ArrowRightIcon,
 } from '@heroicons/react/24/outline';
-import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import Link from 'next/link';
 import VendleLogo from '@/app/ui/vendle-logo';
 import GoogleSignInButton from '@/app/ui/google-signin-button';
@@ -16,10 +15,18 @@ import GoogleSignInButton from '@/app/ui/google-signin-button';
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
-  const registered = searchParams.get('registered');
+  const [callbackUrl, setCallbackUrl] = useState('/dashboard');
+  const [registered, setRegistered] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Safely read search params on mount to avoid hydration issues
+  useEffect(() => {
+    const url = searchParams.get('callbackUrl');
+    const reg = searchParams.get('registered');
+    if (url) setCallbackUrl(url);
+    if (reg) setRegistered(true);
+  }, [searchParams]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,21 +37,29 @@ export default function LoginForm() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-      callbackUrl,
-    });
+    try {
+      // Use NextAuth signin endpoint directly without SessionProvider
+      const {signIn} = await import('next-auth/react');
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl,
+      });
 
-    setIsSubmitting(false);
+      setIsSubmitting(false);
 
-    if (!result || result.error) {
-      setError('Invalid email or password');
-      return;
+      if (!result || result.error) {
+        setError('Invalid email or password');
+        return;
+      }
+
+      // Navigate and refresh to update server-side auth state
+      window.location.href = result.url ?? callbackUrl;
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setIsSubmitting(false);
     }
-
-    router.push(result.url ?? callbackUrl);
   }
 
   return (

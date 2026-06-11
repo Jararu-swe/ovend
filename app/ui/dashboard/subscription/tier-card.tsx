@@ -10,7 +10,6 @@ interface TierCardProps {
   currentTier: SubscriptionTier;
   canStartTrial: boolean;
   onUpgrade: (tier: SubscriptionTier) => void;
-  onDowngrade: (tier: SubscriptionTier) => void;
   onStartTrial: (tier: SubscriptionTier) => void;
 }
 
@@ -20,7 +19,6 @@ export default function TierCard({
   currentTier,
   canStartTrial,
   onUpgrade,
-  onDowngrade,
   onStartTrial,
 }: TierCardProps) {
   const tierRank = {
@@ -30,7 +28,6 @@ export default function TierCard({
   };
 
   const isHigherTier = tierRank[plan.tier] > tierRank[currentTier];
-  const isLowerTier = tierRank[plan.tier] < tierRank[currentTier];
 
   const getPricingDisplay = () => {
     if (plan.price_kobo === 0) {
@@ -80,19 +77,7 @@ export default function TierCard({
       );
     }
 
-    if (isLowerTier) {
-      return (
-        <button
-          type="button"
-          onClick={() => onDowngrade(plan.tier)}
-          className="w-full py-3 px-4 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-xl transition-colors"
-          aria-label={`Downgrade to ${plan.name} tier`}
-        >
-          Downgrade
-        </button>
-      );
-    }
-
+    // No downgrade option - users can only upgrade
     return null;
   };
 

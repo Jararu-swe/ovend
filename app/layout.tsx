@@ -57,36 +57,49 @@ export default function RootLayout({
                 // Lightly filter console.error for Paystack noise only
                 const _origErr = console.error.bind(console);
                 console.error = function(...args) {
-                  const msg = args.join(' ');
-                  if (msg.includes('Paystack') || (msg.includes('paystack') && msg.includes('inline.js'))) {
-                    console.warn('[Paystack noise suppressed]');
-                    return;
-                  }
+                  try {
+                    const firstArg = args[0];
+                    if (firstArg) {
+                      const str = typeof firstArg === 'string' 
+                        ? firstArg 
+                        : (firstArg instanceof Error ? firstArg.message : String(firstArg));
+                      if (str.includes('Paystack') || str.includes('paystack')) {
+                        console.warn('[Paystack noise suppressed]');
+                        return;
+                      }
+                    }
+                  } catch (e) {}
                   _origErr.apply(console, args);
                 };
 
                 // Capture errors on the window — suppress only Paystack/extension noise
                 // but ALWAYS let Next.js / React errors propagate normally.
                 window.addEventListener('error', function(e) {
-                  const isPaystack = e.message?.includes('Paystack') || e.message?.includes('paystack');
-                  const isExtension = e.filename?.includes('chrome-extension') || e.filename?.includes('moz-extension');
-                  
-                  if (isPaystack || isExtension) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.warn('External script error suppressed:', e.filename || e.message);
-                    return false;
-                  }
-                  // All other errors (React, hydration, router, etc.) pass through
+                  try {
+                    const msg = e.message || '';
+                    const filename = e.filename || '';
+                    const isPaystack = msg.includes('Paystack') || msg.includes('paystack');
+                    const isExtension = filename.includes('chrome-extension') || filename.includes('moz-extension');
+                    
+                    if (isPaystack || isExtension) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.warn('External script error suppressed:', filename || msg);
+                      return false;
+                    }
+                  } catch (err) {}
                 }, true);
 
                 // Suppress unhandled promise rejections from external scripts only
                 window.addEventListener('unhandledrejection', function(e) {
-                  if (e.reason?.message?.includes('Paystack')) {
-                    e.preventDefault();
-                    console.warn('Paystack promise rejection suppressed');
-                    return false;
-                  }
+                  try {
+                    const msg = e.reason?.message || '';
+                    if (msg.includes('Paystack') || msg.includes('paystack')) {
+                      e.preventDefault();
+                      console.warn('Paystack promise rejection suppressed');
+                      return false;
+                    }
+                  } catch (err) {}
                 });
               })();
             `,

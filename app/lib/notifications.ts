@@ -106,7 +106,7 @@ export async function sendSMS(to: string, body: string): Promise<SendResult> {
 }
 
 // Convenience: fetch vendor contact info by vendor_id
-export async function fetchVendorContact(vendorId: number) {
+export async function fetchVendorContact(vendorId: string | number) {
   try {
     const [user] =
       await sql`SELECT id, email, phone_number, whatsapp_number FROM users WHERE id = ${vendorId}`;

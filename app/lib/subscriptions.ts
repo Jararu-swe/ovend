@@ -48,6 +48,14 @@ export async function ensureSubscriptionSchema(): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier VARCHAR(20) NOT NULL DEFAULT 'starter'
     `);
     
+    // Add scheduled_tier_change for handling downgrades at end of billing period
+    await sql.unsafe(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS scheduled_tier_change VARCHAR(20)
+    `);
+    await sql.unsafe(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS scheduled_tier_change_at TIMESTAMPTZ
+    `);
+    
     // Add tier to vendor_subscription_payments
     await sql.unsafe(`
       ALTER TABLE vendor_subscription_payments ADD COLUMN IF NOT EXISTS tier VARCHAR(20)
@@ -180,7 +188,9 @@ export async function getVendorSubscription(vendorId: string): Promise<VendorSub
       subscription_status,
       subscription_expires_at,
       subscription_last_payment_reference,
-      subscription_updated_at
+      subscription_updated_at,
+      scheduled_tier_change,
+      scheduled_tier_change_at
     FROM users
     WHERE id = ${vendorId}
   `;
@@ -219,7 +229,9 @@ export async function getVendorSubscription(vendorId: string): Promise<VendorSub
     plan,
     grace_days_remaining: graceDaysRemaining,
     is_trial: isTrial,
-    trial_days_remaining: trialDaysRemaining
+    trial_days_remaining: trialDaysRemaining,
+    scheduled_tier_change: user.scheduled_tier_change as SubscriptionTier | null,
+    scheduled_tier_change_at: user.scheduled_tier_change_at
   };
 }
 

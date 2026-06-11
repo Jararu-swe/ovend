@@ -188,12 +188,27 @@ export async function dismissGuideNotification(
   }
 }
 
+/** Guide type matching the LearningHubSection expectations */
+export interface GuideNotification {
+  id: number;
+  title: string;
+  description: string;
+  slug: string;
+  reading_time: number;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  featured?: boolean;
+  notified_at: string;
+  trigger_event: string;
+}
+
 /**
  * Get new guide notifications for a vendor
  */
-export async function getVendorNewGuideNotifications(vendorId: string) {
+export async function getVendorNewGuideNotifications(
+  vendorId: string,
+): Promise<GuideNotification[]> {
   try {
-    const notifications = await sql`
+    const notifications = await sql<GuideNotification[]>`
       SELECT g.*, gn.notified_at, gn.trigger_event
       FROM guide_notifications gn
       JOIN vendor_guides g ON gn.guide_id = g.id

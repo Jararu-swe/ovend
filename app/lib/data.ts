@@ -550,17 +550,16 @@ export async function fetchOrderById(id: string) {
 }
 export async function fetchVendorStats(vendorId: string) {
   try {
-    const data = await Promise.all([
-      sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId}`,
-      sql`SELECT COALESCE(SUM(total_amount), 0) as sum FROM orders WHERE vendor_id = ${vendorId} AND status = 'fulfilled'`,
-      sql`SELECT COUNT(*) FROM products WHERE vendor_id = ${vendorId} AND status = 'active'`,
-      sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId} AND status IN ('new', 'in_progress')`,
-    ]);
+    // Run queries sequentially to avoid prepared statement conflicts in Turbopack
+    const ordersResult = await sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId}`;
+    const revenueResult = await sql`SELECT COALESCE(SUM(total_amount), 0) as sum FROM orders WHERE vendor_id = ${vendorId} AND status = 'fulfilled'`;
+    const productsResult = await sql`SELECT COUNT(*) FROM products WHERE vendor_id = ${vendorId} AND status = 'active'`;
+    const pendingResult = await sql`SELECT COUNT(*) FROM orders WHERE vendor_id = ${vendorId} AND status IN ('new', 'in_progress')`;
 
-    const numberOfOrders = Number(data[0][0].count ?? "0");
-    const totalRevenue = Number(data[1][0].sum ?? "0");
-    const numberOfProducts = Number(data[2][0].count ?? "0");
-    const numberOfPendingOrders = Number(data[3][0].count ?? "0");
+    const numberOfOrders = Number(ordersResult[0].count ?? "0");
+    const totalRevenue = Number(revenueResult[0].sum ?? "0");
+    const numberOfProducts = Number(productsResult[0].count ?? "0");
+    const numberOfPendingOrders = Number(pendingResult[0].count ?? "0");
 
     return {
       numberOfOrders,
@@ -591,9 +590,13 @@ export async function fetchTopProducts(vendorId: string) {
         COALESCE(SUM(oi.price * oi.quantity), 0)::int AS total_revenue
       FROM products p
       JOIN orders o ON o.vendor_id = ${vendorId}
-      CROSS JOIN LATERAL jsonb_to_recordset(o.items::jsonb) AS oi("productId" text, name text, price int, quantity int)
-      WHERE o.vendor_id = ${vendorId}
-        AND o.status = 'fulfilled'
+      CROSS JOIN LATERAL jsonb_to_recordset(
+        CASE 
+          WHEN jsonb_typeof(o.items) = 'array' THEN o.items 
+          ELSE '[]'::jsonb 
+        END
+      ) AS oi("productId" text, name text, price int, quantity int)
+      WHERE o.status = 'fulfilled'
         AND oi."productId"::uuid = p.id
       GROUP BY p.id, p.name
       ORDER BY total_sold DESC
@@ -624,9 +627,15 @@ export async function trackStoreVisit(vendorId: string) {
   }
 }
 
-export async function fetchWeeklyAnalytics(vendorId: string) {
+export async function fetchWeeklyAnalytics(
+  vendorId: string,
+): Promise<
+  { date: string; visits: number; orders_count: number; revenue: number }[]
+> {
   try {
-    const data = await sql`
+    const data = await sql<
+      { date: string; visits: number; orders_count: number; revenue: number }[]
+    >`
       SELECT 
         date,
         visits,
@@ -653,15 +662,20 @@ export async function fetchWeeklyAnalytics(vendorId: string) {
  * or has no location data.
  */
 export async function fetchVendorPickupLocation(
-  vendorId: string
+  vendorId: string,
 ): Promise<{ lat: number; lng: number; details?: string } | null> {
-  if (!vendorId || typeof vendorId !== 'string') {
+  if (!vendorId || typeof vendorId !== "string") {
     return null;
   }
 
   try {
     const [vendor] = await sql<
-      { offers_pickup: boolean | null; pickup_latitude: number | null; pickup_longitude: number | null; pickup_address_details: string | null }[]
+      {
+        offers_pickup: boolean | null;
+        pickup_latitude: number | null;
+        pickup_longitude: number | null;
+        pickup_address_details: string | null;
+      }[]
     >`
       SELECT offers_pickup, pickup_latitude, pickup_longitude, pickup_address_details
       FROM users
@@ -669,17 +683,24 @@ export async function fetchVendorPickupLocation(
       LIMIT 1
     `;
 
-    if (!vendor || !vendor.offers_pickup || vendor.pickup_latitude == null || vendor.pickup_longitude == null) {
+    if (
+      !vendor ||
+      !vendor.offers_pickup ||
+      vendor.pickup_latitude == null ||
+      vendor.pickup_longitude == null
+    ) {
       return null;
     }
 
     return {
       lat: Number(vendor.pickup_latitude),
       lng: Number(vendor.pickup_longitude),
-      ...(vendor.pickup_address_details ? { details: vendor.pickup_address_details } : {}),
+      ...(vendor.pickup_address_details
+        ? { details: vendor.pickup_address_details }
+        : {}),
     };
   } catch (error) {
-    console.error('Database Error (fetchVendorPickupLocation):', error);
+    console.error("Database Error (fetchVendorPickupLocation):", error);
     return null;
   }
 }
@@ -689,10 +710,10 @@ export async function fetchVendorPickupLocation(
  */
 export async function saveVendorPickupLocation(
   vendorId: string,
-  location: { lat: number; lng: number; details?: string }
+  location: { lat: number; lng: number; details?: string },
 ): Promise<{ success: boolean; error?: string }> {
-  if (!vendorId || typeof vendorId !== 'string') {
-    return { success: false, error: 'Invalid vendor ID' };
+  if (!vendorId || typeof vendorId !== "string") {
+    return { success: false, error: "Invalid vendor ID" };
   }
 
   try {
@@ -707,8 +728,8 @@ export async function saveVendorPickupLocation(
     `;
     return { success: true };
   } catch (error) {
-    console.error('Database Error (saveVendorPickupLocation):', error);
-    return { success: false, error: 'Failed to save pickup location' };
+    console.error("Database Error (saveVendorPickupLocation):", error);
+    return { success: false, error: "Failed to save pickup location" };
   }
 }
 
@@ -716,10 +737,10 @@ export async function saveVendorPickupLocation(
  * Clears a vendor's pickup location from the users table.
  */
 export async function clearVendorPickupLocation(
-  vendorId: string
+  vendorId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  if (!vendorId || typeof vendorId !== 'string') {
-    return { success: false, error: 'Invalid vendor ID' };
+  if (!vendorId || typeof vendorId !== "string") {
+    return { success: false, error: "Invalid vendor ID" };
   }
 
   try {
@@ -734,8 +755,8 @@ export async function clearVendorPickupLocation(
     `;
     return { success: true };
   } catch (error) {
-    console.error('Database Error (clearVendorPickupLocation):', error);
-    return { success: false, error: 'Failed to clear pickup location' };
+    console.error("Database Error (clearVendorPickupLocation):", error);
+    return { success: false, error: "Failed to clear pickup location" };
   }
 }
 
@@ -777,12 +798,14 @@ export async function fetchAllPublicStores(
   category?: string,
   sort?: string,
   location?: string,
+  limit = 50,
 ): Promise<PublicStore[]> {
   try {
     await ensureStoreColumns();
     const searchFilter = search ? `%${search}%` : "%";
     const categoryFilter = category && category !== "All" ? category : null;
     const locationFilter = location && location !== "All" ? location : null;
+    const fetchLimit = Number(limit) || 50;
 
     const stores = await sql<
       {
@@ -855,15 +878,17 @@ export async function fetchAllPublicStores(
             ? sql`ORDER BY u.store_name ASC`
             : sql`ORDER BY COUNT(p.id) DESC, u.store_name ASC`
       }
-      LIMIT 50
+      LIMIT ${fetchLimit}
     `;
 
-    // Fetch logo + top 3 products for each store
-    const results: PublicStore[] = await Promise.all(
-      stores.map(async (store) => {
+    // Fetch logo + top 3 products for each store with error handling
+    const results: PublicStore[] = [];
+    
+    for (const store of stores) {
+      try {
         const [logoRow] = await sql<{ logo_url: string | null }[]>`
           SELECT logo_url FROM store_theme WHERE vendor_id = ${store.id} LIMIT 1
-        `;
+        `.catch(() => [{ logo_url: null }]); // Fallback on error
 
         const topProducts = await sql<
           { name: string; image_url: string | null; price: number }[]
@@ -872,9 +897,9 @@ export async function fetchAllPublicStores(
           WHERE vendor_id = ${store.id} AND status = 'active'
           ORDER BY created_at DESC
           LIMIT 3
-        `;
+        `.catch(() => []); // Fallback on error
 
-        return {
+        results.push({
           id: store.id,
           store_name: store.store_name,
           store_slug: store.store_slug,
@@ -890,9 +915,13 @@ export async function fetchAllPublicStores(
             accepting_orders: store.accepting_orders,
             store_closed_note: store.store_closed_note,
           }),
-        };
-      }),
-    );
+        });
+      } catch (error) {
+        console.error(`Error fetching details for store ${store.id}:`, error);
+        // Skip this store if there's an error
+        continue;
+      }
+    }
 
     return results;
   } catch (error) {
@@ -918,7 +947,9 @@ export async function fetchPublishedGuides(): Promise<VendorGuide[]> {
   }
 }
 
-export async function fetchGuideBySlug(slug: string): Promise<VendorGuide | undefined> {
+export async function fetchGuideBySlug(
+  slug: string,
+): Promise<VendorGuide | undefined> {
   try {
     const [guide] = await sql<VendorGuide[]>`
       SELECT * FROM vendor_guides
@@ -933,7 +964,10 @@ export async function fetchGuideBySlug(slug: string): Promise<VendorGuide | unde
   }
 }
 
-export async function isGuideCompleted(vendorId: string, guideId: number): Promise<boolean> {
+export async function isGuideCompleted(
+  vendorId: string,
+  guideId: number,
+): Promise<boolean> {
   try {
     const [result] = await sql<{ completed: boolean }[]>`
       SELECT completed FROM guide_views
@@ -951,7 +985,7 @@ export async function isGuideCompleted(vendorId: string, guideId: number): Promi
 export async function fetchRelatedGuides(
   guideId: number,
   category: string | null,
-  limit: number = 3
+  limit: number = 3,
 ): Promise<VendorGuide[]> {
   try {
     if (category) {
@@ -981,13 +1015,15 @@ export async function fetchRelatedGuides(
   }
 }
 
-export async function getVendorViewedGuideIds(vendorId: string): Promise<number[]> {
+export async function getVendorViewedGuideIds(
+  vendorId: string,
+): Promise<number[]> {
   try {
     const viewed = await sql<{ guide_id: number }[]>`
       SELECT guide_id FROM guide_views
       WHERE vendor_id = ${vendorId}
     `;
-    return viewed.map(v => v.guide_id);
+    return viewed.map((v) => v.guide_id);
   } catch (error) {
     console.error("Database Error (getVendorViewedGuideIds):", error);
     return [];

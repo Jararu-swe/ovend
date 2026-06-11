@@ -19,7 +19,6 @@ import {
   getBorderRadiusClass,
 } from "@/app/lib/utils";
 import { createOrder, validateDiscountAction } from "@/app/lib/actions";
-import { useSound } from "@/app/lib/sound-manager";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 
@@ -130,7 +129,13 @@ export default function Storefront({
   hideVendleBranding?: boolean;
 }) {
   const searchParams = useSearchParams();
-  const { playSound } = useSound();
+  
+  // Make sound functionality optional - no longer requires SoundProvider
+  const playSound = (soundType: string) => {
+    // Sound disabled for now - can be re-enabled when SoundProvider is added back
+    console.log(`Sound would play: ${soundType}`);
+  };
+  
   const isPreview = searchParams.get("preview") === "true";
   const [previewTheme, setPreviewTheme] = useState<StoreTheme | null>(null);
   const [cart, setCart] = useState<OrderItem[]>([]);
@@ -1709,7 +1714,7 @@ export default function Storefront({
                     </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto px-6 py-4">
+                  <div className="relative flex-1 overflow-y-auto px-6 py-4">
                     {cart.length === 0 ? (
                       <div className="flex h-full flex-col items-center justify-center text-center">
                         <StoreIcon
