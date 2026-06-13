@@ -65,6 +65,14 @@ export default function ThemeEditor({
     primary_gradient:
       draftData?.primary_gradient ?? theme.primary_gradient ?? null,
     glass_effect: draftData?.glass_effect ?? theme.glass_effect ?? false,
+    line_height: draftData?.line_height ?? theme.line_height ?? 1.5,
+    letter_spacing: draftData?.letter_spacing ?? theme.letter_spacing ?? 0,
+    text_transform: draftData?.text_transform ?? theme.text_transform ?? 'none',
+    body_font_weight: draftData?.body_font_weight ?? theme.body_font_weight ?? 400,
+    heading_font_weight: draftData?.heading_font_weight ?? theme.heading_font_weight ?? 700,
+    container_width: draftData?.container_width ?? theme.container_width ?? 'standard',
+    design_tokens: draftData?.design_tokens ?? theme.design_tokens ?? null,
+    secondary_gradient: draftData?.secondary_gradient ?? theme.secondary_gradient ?? null,
   }));
 
   const [sections, setSections] = useState<TemplateSection[]>(() =>
@@ -200,6 +208,14 @@ export default function ThemeEditor({
       "custom_css",
       "primary_gradient",
       "glass_effect",
+      "line_height",
+      "letter_spacing",
+      "text_transform",
+      "body_font_weight",
+      "heading_font_weight",
+      "container_width",
+      "design_tokens",
+      "secondary_gradient",
     ];
     const base = draftData || theme;
     const baseSections = draftData?.sections ?? theme.sections;
@@ -458,6 +474,46 @@ export default function ThemeEditor({
           type="hidden"
           name="glass_effect"
           value={localTheme.glass_effect ? "true" : "false"}
+        />
+        <input
+          type="hidden"
+          name="line_height"
+          value={localTheme.line_height ?? ""}
+        />
+        <input
+          type="hidden"
+          name="letter_spacing"
+          value={localTheme.letter_spacing ?? ""}
+        />
+        <input
+          type="hidden"
+          name="text_transform"
+          value={localTheme.text_transform ?? ""}
+        />
+        <input
+          type="hidden"
+          name="body_font_weight"
+          value={localTheme.body_font_weight ?? ""}
+        />
+        <input
+          type="hidden"
+          name="heading_font_weight"
+          value={localTheme.heading_font_weight ?? ""}
+        />
+        <input
+          type="hidden"
+          name="container_width"
+          value={localTheme.container_width ?? ""}
+        />
+        <input
+          type="hidden"
+          name="design_tokens"
+          value={localTheme.design_tokens ?? ""}
+        />
+        <input
+          type="hidden"
+          name="secondary_gradient"
+          value={localTheme.secondary_gradient ?? ""}
         />
         <input type="hidden" name="sections" value={JSON.stringify(sections)} />
         <input

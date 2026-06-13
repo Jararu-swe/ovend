@@ -290,6 +290,22 @@ export type StoreTheme = {
   share_icon: 'dots' | 'paper-plane' | 'arrow-curve' | 'arrow-square' | 'nodes';
   add_icon: 'plus' | 'bag' | 'cart' | 'arrow';
 
+  // NEW: Enhanced Typography (Requirement 3)
+  line_height: number | null;
+  letter_spacing: number | null;
+  text_transform: 'none' | 'uppercase' | 'lowercase' | 'capitalize' | null;
+  body_font_weight: number | null;
+  heading_font_weight: number | null;
+
+  // NEW: Container Width (Requirement 4)
+  container_width: 'narrow' | 'standard' | 'wide' | 'full' | null;
+
+  // NEW: Design Tokens (Requirement 11)
+  design_tokens: string | null;
+
+  // NEW: Secondary Gradient (Requirement 1)
+  secondary_gradient: string | null;
+
   created_at: string;
   updated_at: string;
   draft_config: string | null;
@@ -356,8 +372,8 @@ export type VendorSubscriptionInfo = {
   grace_days_remaining: number | null;
   is_trial: boolean;
   trial_days_remaining: number | null;
-  scheduled_tier_change: SubscriptionTier | null;
-  scheduled_tier_change_at: string | null;
+  scheduled_tier_change?: SubscriptionTier | null;
+  scheduled_tier_change_at?: string | null;
 };
 
 export type SubscriptionPayment = {
@@ -390,4 +406,220 @@ export type VendorGuide = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+// ─── Deep Storefront Customization Types ────────────────────────────────────────────
+
+// Gradient definition (Requirement 1)
+export type GradientDefinition = {
+  type: 'linear' | 'radial';
+  angle?: number;  // For linear gradients (0-360)
+  position?: 'center' | 'top' | 'bottom' | 'left' | 'right';  // For radial
+  stops: Array<{
+    color: string;  // Hex color
+    position: number;  // 0-100 (percentage)
+  }>;
+};
+
+// Overlay definition
+export type ColorOverlay = {
+  color: string;
+  opacity: number;  // 0-100
+};
+
+// Spacing values
+export type SpacingValue = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+
+// Hero section variants (Requirement 5)
+export type HeroLayoutVariant = 
+  | 'centered'      // Content centered, full-width
+  | 'left-aligned'  // Content left, image right
+  | 'right-aligned' // Content right, image left
+  | 'split-screen'  // 50/50 split
+  | 'full-bleed';   // Background image, text overlay
+
+// Feature section variants
+export type FeatureLayoutVariant =
+  | 'horizontal-cards'  // Cards in horizontal row
+  | 'vertical-cards'    // Cards in vertical stack
+  | 'alternating';      // Alternating image-text layout
+
+// Gallery section variants
+export type GalleryLayoutVariant =
+  | 'grid'      // Even grid layout
+  | 'masonry'   // Pinterest-style masonry
+  | 'carousel'; // Horizontal scrolling carousel
+
+// Product grid columns
+export type ProductGridColumns = 2 | 3 | 4 | 5 | 6;
+
+// Animation types
+export type ScrollAnimation = 'fade-in' | 'slide-up' | 'slide-left' | 'slide-right' | 'zoom-in' | 'none';
+export type HoverEffect = 'lift' | 'grow' | 'glow' | 'tilt' | 'none';
+export type TransitionSpeed = 'instant' | 'fast' | 'normal' | 'slow';
+
+// Texture and Pattern types
+export type Texture = 'paper' | 'fabric' | 'concrete' | 'wood' | 'dots' | 'stripes' | 'grid' | 'noise' | 'none';
+export type Pattern = 'dots' | 'diagonal-stripes' | 'horizontal-stripes' | 'grid' | 
+               'triangles' | 'hexagons' | 'waves' | 'circuits' | 'none';
+export type ShapeDivider = 'wave' | 'angle' | 'curve' | 'triangle' | 'arrow' | 'split' | 'none';
+
+// Content block definition
+export type ContentBlock = {
+  id: string;
+  type: 'text' | 'image' | 'button' | 'spacer' | 'divider';
+  content?: string;  // For text blocks (supports rich text HTML)
+  image_url?: string;  // For image blocks
+  button_text?: string;
+  button_link?: string;
+  button_style?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  alignment?: 'left' | 'center' | 'right' | 'justify';
+  spacer_height?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  order: number;  // For drag-and-drop ordering
+};
+
+// Section content schema (expanded)
+export type TemplateSectionContent = {
+  [sectionType: string]: {
+    // Content fields (existing)
+    title?: string;
+    subtitle?: string;
+    buttonText?: string;
+    buttonLink?: string;
+    testimonials?: Array<{ name: string; quote: string; rating: number }>;
+    faqs?: Array<{ question: string; answer: string }>;
+    images?: string[];
+    
+    // NEW: Layout & Alignment (Requirement 5)
+    layout_variant?: 'centered' | 'left-aligned' | 'right-aligned' | 'split-screen' | 'full-bleed' | 
+                     'horizontal-cards' | 'vertical-cards' | 'alternating' | 
+                     'grid' | 'masonry' | 'carousel';
+    alignment?: 'left' | 'center' | 'right';
+    columns?: 2 | 3 | 4 | 5 | 6;  // For product grids
+    
+    // NEW: Spacing Overrides (Requirement 4)
+    padding_top?: SpacingValue;
+    padding_bottom?: SpacingValue;
+    padding_x?: SpacingValue;
+    margin_top?: SpacingValue;
+    margin_bottom?: SpacingValue;
+    
+    // NEW: Style Overrides (Requirement 6)
+    style_overrides?: {
+      background_color?: string;
+      text_color?: string;
+      heading_color?: string;
+      card_style?: 'modern' | 'classic' | 'minimal' | 'bold' | 'none';
+      border_radius?: 'sharp' | 'rounded' | 'pill';
+      glass_effect?: boolean;
+      font_size_override?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
+    };
+    
+    // NEW: Background & Media (Requirement 2)
+    background_image?: string;  // URL
+    background_size?: 'cover' | 'contain' | 'tile';
+    background_position?: 'center' | 'top' | 'bottom' | 'left' | 'right';
+    background_video?: string;  // URL (mp4/webm, max 10MB)
+    background_overlay?: ColorOverlay;
+    texture?: Texture;
+    texture_opacity?: number;  // 0-100
+    parallax?: 'none' | 'slow' | 'medium' | 'fast';
+    
+    // NEW: Brand Identity Elements (Requirement 7)
+    pattern?: Pattern;
+    pattern_color?: string;
+    pattern_opacity?: number;  // 0-100
+    divider_top?: ShapeDivider;
+    divider_bottom?: ShapeDivider;
+    divider_color?: string;
+    divider_flip?: boolean;
+    divider_invert?: boolean;
+    
+    // NEW: Animations (Requirement 8)
+    scroll_animation?: ScrollAnimation;
+    card_hover_effect?: HoverEffect;
+    
+    // NEW: Flexible Content Blocks (Requirement 9)
+    content_blocks?: ContentBlock[];
+  };
+};
+
+// Design Tokens (Requirement 11) - Available only for Pro/Business tiers
+export type DesignTokens = {
+  spacing_scale?: {
+    xs?: string;    // default: '0.25rem'
+    sm?: string;    // default: '0.5rem'
+    md?: string;    // default: '1rem'
+    lg?: string;    // default: '1.5rem'
+    xl?: string;    // default: '2rem'
+    '2xl'?: string; // default: '3rem'
+    '3xl'?: string; // default: '4rem'
+  };
+  font_sizes?: {
+    xs?: string;    // default: '0.75rem'
+    sm?: string;    // default: '0.875rem'
+    base?: string;  // default: '1rem'
+    lg?: string;    // default: '1.125rem'
+    xl?: string;    // default: '1.25rem'
+    '2xl'?: string; // default: '1.5rem'
+    '3xl'?: string; // default: '1.875rem'
+    '4xl'?: string; // default: '2.25rem'
+  };
+  border_radii?: {
+    sharp?: string;   // default: '0'
+    rounded?: string; // default: '0.5rem'
+    pill?: string;    // default: '9999px'
+  };
+  shadows?: {
+    soft?: string;     // default: '0 1px 3px rgba(0,0,0,0.1)'
+    elevated?: string; // default: '0 10px 30px rgba(0,0,0,0.15)'
+    hard?: string;     // default: '4px 4px 0 rgba(0,0,0,0.1)'
+  };
+  transitions?: {
+    fast?: string;    // default: '150ms'
+    normal?: string;  // default: '300ms'
+    slow?: string;    // default: '500ms'
+  };
+  z_index?: {
+    base?: number;      // default: 1
+    dropdown?: number;  // default: 50
+    modal?: number;     // default: 100
+    tooltip?: number;   // default: 150
+  };
+  breakpoints?: {
+    sm?: string;   // default: '640px'
+    md?: string;   // default: '768px'
+    lg?: string;   // default: '1024px'
+    xl?: string;   // default: '1280px'
+  };
+  container_widths?: {
+    narrow?: string;   // default: '960px'
+    standard?: string; // default: '1280px'
+    wide?: string;     // default: '1536px'
+  };
+  icon_sizes?: {
+    sm?: string;  // default: '16px'
+    md?: string;  // default: '24px'
+    lg?: string;  // default: '32px'
+    xl?: string;  // default: '48px'
+  };
+  line_heights?: {
+    tight?: number;   // default: 1.25
+    normal?: number;  // default: 1.5
+    relaxed?: number; // default: 1.75
+    loose?: number;   // default: 2.0
+  };
+  letter_spacing?: {
+    tight?: string;   // default: '-0.025em'
+    normal?: string;  // default: '0'
+    wide?: string;    // default: '0.025em'
+    wider?: string;   // default: '0.05em'
+  };
+  opacity_scale?: {
+    '10'?: string;  // default: '0.1'
+    '20'?: string;  // default: '0.2'
+    '50'?: string;  // default: '0.5'
+    '75'?: string;  // default: '0.75'
+    '90'?: string;  // default: '0.9'
+  };
 };

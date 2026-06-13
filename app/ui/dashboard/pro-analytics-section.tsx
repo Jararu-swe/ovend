@@ -186,10 +186,10 @@ export default function ProAnalyticsSection({
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-5">
             Daily Visit Trend
           </h4>
-          <div className="flex items-end gap-2 sm:gap-3 h-32">
+          <div className="flex items-end gap-2 sm:gap-3 h-32 relative">
             {sortedDays.map((day, i) => {
               const dayOfWeek = new Date(day.date).getDay();
-              const heightPct = Math.max((day.visits / maxVisits) * 100, 2);
+              const heightPct = Math.max((day.visits / maxVisits) * 100, 4); // Minimum 4% height
               const hasOrders = day.orders_count > 0;
 
               return (
@@ -200,7 +200,7 @@ export default function ProAnalyticsSection({
                         ? 'bg-gradient-to-t from-emerald-500 to-emerald-400'
                         : 'bg-gradient-to-t from-blue-500 to-blue-400'
                     }`}
-                    style={{ height: `${heightPct}%` }}
+                    style={{ height: `${heightPct}%`, minHeight: '4px' }}
                   />
                   <span className="text-[10px] font-medium text-slate-500">
                     {dayLabels[dayOfWeek]}
@@ -227,14 +227,14 @@ export default function ProAnalyticsSection({
           <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-5">
             Daily Revenue
           </h4>
-          <div className="flex items-end gap-2 sm:gap-3 h-32">
+          <div className="flex items-end gap-2 sm:gap-3 h-32 relative">
             {sortedDays.map((day, i) => {
-              const heightPct = Math.max((day.revenue / maxRevenue) * 100, 2);
+              const heightPct = Math.max((day.revenue / maxRevenue) * 100, 4); // Minimum 4% height
               return (
                 <div key={day.date} className="flex-1 flex flex-col items-center gap-1 group relative">
                   <div
                     className="w-full rounded-md bg-gradient-to-t from-amber-500 to-amber-400 transition-all duration-300 group-hover:opacity-80"
-                    style={{ height: `${heightPct}%` }}
+                    style={{ height: `${heightPct}%`, minHeight: '4px' }}
                   />
                   <span className="text-[10px] font-medium text-slate-500">
                     {dayLabels[new Date(day.date).getDay()]}

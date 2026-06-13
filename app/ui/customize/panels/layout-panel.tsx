@@ -215,6 +215,37 @@ export default function LayoutPanel({ theme, onChange }: LayoutPanelProps) {
           />
         </div>
 
+        {/* Container Width */}
+        <div className="mt-5 border-t border-slate-100 pt-5">
+          <VisualSelect
+            label="Container Width"
+            value={(theme.container_width as any) || 'standard'}
+            onChange={(v) => onChange('container_width', v)}
+            options={[
+              {
+                value: 'narrow',
+                label: 'Narrow',
+                visual: <div className="w-4 h-8 border-x-2 border-current/30 bg-current/5 mx-auto" />,
+              },
+              {
+                value: 'standard',
+                label: 'Standard',
+                visual: <div className="w-6 h-8 border-x-2 border-current/20 bg-current/5 mx-auto" />,
+              },
+              {
+                value: 'wide',
+                label: 'Wide',
+                visual: <div className="w-8 h-8 border-x-2 border-current/20 bg-current/5 mx-auto" />,
+              },
+              {
+                value: 'full',
+                label: 'Full',
+                visual: <div className="w-full h-8 bg-current/10 rounded-sm" />,
+              },
+            ]}
+          />
+        </div>
+
         {/* Page Width */}
         <div className="mt-5 border-t border-slate-100 pt-5">
           <VisualSelect
@@ -224,7 +255,7 @@ export default function LayoutPanel({ theme, onChange }: LayoutPanelProps) {
             options={[
               { value: 'standard', label: 'Standard', visual: <div className="w-6 h-8 border-x-2 border-current/20 bg-current/5 mx-auto" /> },
               { value: 'wide', label: 'Wide', visual: <div className="w-8 h-8 border-x-2 border-current/20 bg-current/5 mx-auto" /> },
-              { value: 'full', label: 'Full', visual: <div className="w- كامل h-8 bg-current/10" /> },
+              { value: 'full', label: 'Full', visual: <div className="w-full h-8 bg-current/10 rounded-sm" /> },
             ]}
           />
         </div>
@@ -249,3 +280,4 @@ export default function LayoutPanel({ theme, onChange }: LayoutPanelProps) {
     </div>
   );
 }
+

@@ -39,6 +39,7 @@ import DynamicNav from "@/app/ui/store/nav-renderers";
 import { StoreAvailabilityBanner } from "@/app/ui/store/store-availability-badge";
 import StoreIcon from "@/app/ui/store/storefront-icons";
 import { CldImage } from "next-cloudinary";
+import { generateCSSCustomProperties } from "@/app/lib/customization-helpers";
 
 /** Safely parse JSON with a fallback. */
 function safeParse<T>(json: string | null | undefined, fallback: T): T {
@@ -290,12 +291,17 @@ export default function Storefront({
           ? "shadow-[4px_4px_0px_rgba(0,0,0,0.1)]"
           : "shadow-sm";
 
+  const resolvedContainerWidth = activeTheme.container_width || activeTheme.layout_width;
   const layoutWidthClass =
-    activeTheme.layout_width === "wide"
-      ? "max-w-6xl"
-      : activeTheme.layout_width === "full"
-        ? "max-w-none"
-        : "max-w-2xl";
+    resolvedContainerWidth === "narrow"
+      ? "max-w-2xl"
+      : resolvedContainerWidth === "wide"
+        ? "max-w-6xl"
+        : resolvedContainerWidth === "full"
+          ? "max-w-none"
+          : resolvedContainerWidth === "standard"
+            ? "max-w-4xl"
+            : "max-w-2xl";
 
   const logoPos = activeTheme.logo_position ?? "left";
   const logoFrame = (activeTheme.logo_frame ?? "profile") as string;
@@ -1405,6 +1411,14 @@ export default function Storefront({
 
   return (
     <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: generateCSSCustomProperties(
+            activeTheme,
+            activeTheme.design_tokens ? safeParse(activeTheme.design_tokens, null) : null
+          ),
+        }}
+      />
       {activeTheme.custom_css && (
         <style
           dangerouslySetInnerHTML={{

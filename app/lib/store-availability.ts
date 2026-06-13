@@ -65,16 +65,24 @@ function hasConfiguredSchedule(hours: StoreHoursJson | null): boolean {
   return false;
 }
 
-function normalizeHours(raw: unknown): StoreHoursJson | null {
-  if (raw == null) return null;
+export function normalizeHours(raw: unknown): StoreHoursJson | null {
+  if (raw == null || raw === undefined) return null;
+  
   let obj = raw;
   if (typeof raw === 'string') {
     try {
       obj = JSON.parse(raw);
-    } catch {
+    } catch (err) {
+      // Log error with truncated raw value for debugging
+      const rawPreview = String(raw).substring(0, 100);
+      console.error('Failed to parse store_hours JSON:', {
+        error: err,
+        rawPreview: rawPreview + (raw.length > 100 ? '...' : '')
+      });
       return null;
     }
   }
+  
   if (typeof obj !== 'object' || obj === null) return null;
   const out: StoreHoursJson = {};
   for (const key of STORE_DAY_KEYS) {

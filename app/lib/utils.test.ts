@@ -26,22 +26,22 @@ describe('Theme Styling Helper Functions', () => {
 
     it('should return classic style', () => {
       const result = getCardStyleClasses('classic', 'rounded');
-      expect(result).toBe('rounded-xl border border-slate-200');
+      expect(result).toBe('rounded-2xl border border-slate-200');
     });
 
     it('should return minimal style', () => {
       const result = getCardStyleClasses('minimal', 'rounded');
-      expect(result).toBe('rounded-lg border border-transparent');
+      expect(result).toBe('rounded-2xl border border-transparent');
     });
 
     it('should return bold style with rounded border', () => {
       const result = getCardStyleClasses('bold', 'rounded');
-      expect(result).toBe('rounded-2xl border-4');
+      expect(result).toBe('rounded-2xl border-4 shadow-[4px_4px_0px_rgba(0,0,0,0.1)]');
     });
 
     it('should return bold style with pill border', () => {
       const result = getCardStyleClasses('bold', 'pill');
-      expect(result).toBe('rounded-3xl border-4');
+      expect(result).toBe('rounded-3xl border-4 shadow-[4px_4px_0px_rgba(0,0,0,0.1)]');
     });
   });
 
@@ -93,7 +93,7 @@ describe('Theme Styling Helper Functions', () => {
   describe('getSectionSpacing', () => {
     it('should return compact spacing', () => {
       const result = getSectionSpacing('compact');
-      expect(result).toEqual({ section: '3rem', internal: '1.5rem' });
+      expect(result).toEqual({ section: '2.5rem', internal: '1.25rem' });
     });
 
     it('should return comfortable spacing', () => {

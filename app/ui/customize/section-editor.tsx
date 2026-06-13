@@ -390,6 +390,11 @@ export default function SectionEditor({
                         onChange={(key, val) => updateContent(section.id, key, val)}
                       />
                     </div>
+                    {/* Section Style Overrides */}
+                    <SectionStyleOverrides
+                      content={sectionContent[section.id] || {}}
+                      onChange={(key, val) => updateContent(section.id, key, val)}
+                    />
                   </div>
                 )}
               </div>
@@ -636,6 +641,201 @@ function CategoryGridEditor({ categories, onChange }: { categories: any[]; onCha
         </div>
       ))}
       <button type="button" onClick={() => onChange([...categories, { id: Math.random().toString(), name: '', image_url: '', link: '#item-list' }])} className="text-[10px] font-semibold text-emerald-600 hover:text-emerald-500">+ Add Category Card</button>
+    </div>
+  );
+}
+
+// ─── Section Style Overrides ──────────────────────────────────
+
+const SHAPE_DIVIDERS = [
+  { value: 'none', label: 'None' },
+  { value: 'wave', label: 'Wave' },
+  { value: 'angle', label: 'Angle' },
+  { value: 'curve', label: 'Curve' },
+  { value: 'triangle', label: 'Triangle' },
+  { value: 'arrow', label: 'Arrow' },
+  { value: 'split', label: 'Split' },
+];
+
+const SCROLL_ANIMATIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'fade-in', label: 'Fade In' },
+  { value: 'slide-up', label: 'Slide Up' },
+  { value: 'slide-left', label: 'Slide Left' },
+  { value: 'scale-up', label: 'Scale Up' },
+];
+
+const PATTERN_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'dots', label: 'Dots' },
+  { value: 'diagonal-stripes', label: 'Diag. Stripes' },
+  { value: 'horizontal-stripes', label: 'Horiz. Stripes' },
+  { value: 'grid', label: 'Grid' },
+  { value: 'triangles', label: 'Triangles' },
+  { value: 'hexagons', label: 'Hexagons' },
+  { value: 'waves', label: 'Waves' },
+  { value: 'circuits', label: 'Circuits' },
+];
+
+const TEXTURE_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'paper', label: 'Paper' },
+  { value: 'fabric', label: 'Fabric' },
+  { value: 'concrete', label: 'Concrete' },
+  { value: 'wood', label: 'Wood' },
+  { value: 'dots', label: 'Dots' },
+  { value: 'stripes', label: 'Stripes' },
+  { value: 'grid', label: 'Grid' },
+  { value: 'noise', label: 'Noise' },
+];
+
+function SectionStyleOverrides({ content, onChange }: { content: Record<string, any>; onChange: (key: string, val: any) => void }) {
+  const [showOverrides, setShowOverrides] = useState(false);
+  const hasOverrides = content.style_bg_color || content.style_bg_image || content.pattern || content.texture || content.divider_top || content.divider_bottom || content.scroll_animation;
+
+  return (
+    <div className="pt-3 mt-3 border-t border-slate-100">
+      <button
+        type="button"
+        onClick={() => setShowOverrides(!showOverrides)}
+        className="flex w-full items-center justify-between py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-emerald-600 outline-none transition-colors"
+      >
+        <span className="flex items-center gap-1.5">
+          Customize Section Style
+          {hasOverrides && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+        </span>
+        <svg className={`h-3 w-3 transform transition-transform ${showOverrides ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+        </svg>
+      </button>
+
+      {showOverrides && (
+        <div className="mt-2 space-y-3 animate-in slide-in-from-top-2 duration-200">
+          {/* Background Color */}
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-semibold text-slate-400 w-16">BG Color</label>
+            <input
+              type="color"
+              value={content.style_bg_color || '#ffffff'}
+              onChange={(e) => onChange('style_bg_color', e.target.value)}
+              className="h-6 w-8 rounded border border-slate-200 cursor-pointer"
+            />
+            {content.style_bg_color && (
+              <button type="button" onClick={() => onChange('style_bg_color', '')} className="text-[9px] text-slate-300 hover:text-red-500">Clear</button>
+            )}
+          </div>
+
+          {/* Background Image */}
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 mb-1">BG Image URL</label>
+            <input
+              type="text"
+              value={content.style_bg_image || ''}
+              onChange={(e) => onChange('style_bg_image', e.target.value)}
+              placeholder="https://..."
+              className="w-full rounded-lg border border-slate-100 px-2 py-1.5 text-[10px] outline-none focus:border-emerald-500 transition"
+            />
+          </div>
+
+          {/* Pattern Overlay */}
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 mb-1">Pattern Overlay</label>
+            <div className="flex flex-wrap gap-1">
+              {PATTERN_OPTIONS.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => onChange('pattern', p.value)}
+                  className={`px-2 py-1 rounded-md text-[9px] font-bold transition-all ${
+                    (content.pattern || 'none') === p.value
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-50 border border-slate-100 text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {content.pattern && content.pattern !== 'none' && (
+              <div className="mt-2 flex items-center gap-2">
+                <label className="text-[9px] font-semibold text-slate-400">Opacity</label>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  value={content.pattern_opacity ?? 30}
+                  onChange={(e) => onChange('pattern_opacity', parseInt(e.target.value))}
+                  className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+                <span className="text-[9px] font-mono text-slate-400">{content.pattern_opacity ?? 30}%</span>
+              </div>
+            )}
+          </div>
+
+          {/* Texture */}
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 mb-1">Texture</label>
+            <select
+              value={content.texture || 'none'}
+              onChange={(e) => onChange('texture', e.target.value)}
+              className="w-full rounded-lg border border-slate-100 px-2 py-1.5 text-[10px] bg-white outline-none focus:border-emerald-500"
+            >
+              {TEXTURE_OPTIONS.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Shape Dividers */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Divider Top</label>
+              <select
+                value={content.divider_top || 'none'}
+                onChange={(e) => onChange('divider_top', e.target.value)}
+                className="w-full rounded-lg border border-slate-100 px-2 py-1.5 text-[10px] bg-white outline-none focus:border-emerald-500"
+              >
+                {SHAPE_DIVIDERS.map((d) => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Divider Bottom</label>
+              <select
+                value={content.divider_bottom || 'none'}
+                onChange={(e) => onChange('divider_bottom', e.target.value)}
+                className="w-full rounded-lg border border-slate-100 px-2 py-1.5 text-[10px] bg-white outline-none focus:border-emerald-500"
+              >
+                {SHAPE_DIVIDERS.map((d) => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Scroll Animation */}
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-400 mb-1">Scroll Animation</label>
+            <div className="flex flex-wrap gap-1">
+              {SCROLL_ANIMATIONS.map((a) => (
+                <button
+                  key={a.value}
+                  type="button"
+                  onClick={() => onChange('scroll_animation', a.value)}
+                  className={`px-2 py-1 rounded-md text-[9px] font-bold transition-all ${
+                    (content.scroll_animation || 'none') === a.value
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-50 border border-slate-100 text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

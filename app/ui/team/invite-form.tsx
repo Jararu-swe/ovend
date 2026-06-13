@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { EnvelopeIcon } from '@heroicons/react/24/outline';
 import { inviteTeamMemberAction, State } from '@/app/lib/actions';
@@ -8,7 +8,8 @@ import { inviteTeamMemberAction, State } from '@/app/lib/actions';
 export default function InviteTeamForm({ vendorId }: { vendorId: string }) {
   const initialState: State = { message: '', errors: {} };
   const inviteWithVendor = inviteTeamMemberAction.bind(null, vendorId);
-  const [state, formAction] = useActionState(inviteWithVendor, initialState as any);
+  const [state, formAction, isPending] = useActionState(inviteWithVendor, initialState as any);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<'admin' | 'assistant'>('assistant');
   const [permissions, setPermissions] = useState({
     products: true,
@@ -16,8 +17,20 @@ export default function InviteTeamForm({ vendorId }: { vendorId: string }) {
     settings: false,
   });
 
+  // Reset submitting state when action completes (either success or error)
+  useEffect(() => {
+    if (!isPending) {
+      setIsSubmitting(false);
+    }
+  }, [isPending]);
+
+  const handleSubmit = (formData: FormData) => {
+    setIsSubmitting(true);
+    formAction(formData);
+  };
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={handleSubmit} className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="space-y-4">
           <div>
@@ -133,14 +146,76 @@ export default function InviteTeamForm({ vendorId }: { vendorId: string }) {
         </Link>
         <button
           type="submit"
-          className="rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400"
+          disabled={isSubmitting}
+          className="rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Send Invite
+          {isSubmitting ? (
+            <>
+              <svg
+                className="animate-spin h-4 w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Sending...
+            </>
+          ) : (
+            'Send Invite'
+          )}
         </button>
       </div>
 
-      {state.message && (
-        <p className="mt-2 text-sm text-red-500 font-medium text-center">{state.message}</p>
+      {/* Success Message */}
+      {(state as any)?.success && (state as any)?.successMessage && (
+        <div className="rounded-lg bg-green-50 border border-green-200 p-4">
+          <div className="flex items-start gap-3">
+            <svg
+              className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-green-900">
+                {(state as any).successMessage}
+              </p>
+              <Link
+                href="/dashboard/team"
+                className="inline-block mt-3 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Back to Team
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {state.message && !(state as any)?.success && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+          <p className="text-sm font-medium text-red-900">{state.message}</p>
+        </div>
       )}
     </form>
   );

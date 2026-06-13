@@ -206,6 +206,14 @@ const ThemeSchema = z.object({
   add_icon: z.enum(["plus", "bag", "cart", "arrow"]).optional().default("plus"),
   sections: z.string().optional(), // JSON string
   section_content: z.string().optional(), // JSON string
+  line_height: z.preprocess((v) => (!v ? null : Number(v)), z.number().min(1.0).max(2.5).optional().nullable()),
+  letter_spacing: z.preprocess((v) => (!v ? null : Number(v)), z.number().min(-0.1).max(0.5).optional().nullable()),
+  text_transform: z.preprocess((v) => (!v ? null : v), z.enum(["none", "uppercase", "lowercase", "capitalize"]).optional().nullable()),
+  body_font_weight: z.preprocess((v) => (!v ? null : Number(v)), z.number().optional().nullable()),
+  heading_font_weight: z.preprocess((v) => (!v ? null : Number(v)), z.number().optional().nullable()),
+  container_width: z.preprocess((v) => (!v ? null : v), z.enum(["narrow", "standard", "wide", "full"]).optional().nullable()),
+  design_tokens: z.string().optional().nullable(),
+  secondary_gradient: z.string().optional().nullable(),
   is_publish: z
     .preprocess((v) => v === "true" || v === true, z.boolean())
     .optional()
@@ -1146,21 +1154,27 @@ export async function inviteTeamMemberAction(
 
   const emailValue = formData.get("email") as string;
   const role = formData.get("role") as "admin" | "assistant";
-  const permissions = JSON.parse(formData.get("permissions") as string);
+  const permissionsStr = formData.get("permissions") as string;
 
   if (!emailValue || !role) {
     return { message: "Email and role are required." };
   }
 
+  let permissions;
   try {
-    const [user] = await sql`
-      SELECT id FROM users WHERE email = ${emailValue}
+    permissions = permissionsStr ? JSON.parse(permissionsStr) : { products: true, orders: true, settings: false };
+  } catch (err) {
+    console.error('Failed to parse permissions:', err, 'Raw value:', permissionsStr);
+    permissions = { products: true, orders: true, settings: false };
+  }
+
+  try {
+    // Check if user already exists
+    const [existingUser] = await sql`
+      SELECT id, name FROM users WHERE email = ${emailValue}
     `;
 
-    if (!user) {
-      return { message: "User not found. They need to sign up first." };
-    }
-
+    // Check if already a team member
     const [existing] = await sql`
       SELECT id FROM team_members 
       WHERE vendor_id = ${vendorId} AND email = ${emailValue}
@@ -1170,19 +1184,69 @@ export async function inviteTeamMemberAction(
       return { message: "This user is already on your team." };
     }
 
-    await sql`
-      INSERT INTO team_members (vendor_id, user_id, email, role, permissions, invited_by, status)
-      VALUES (${vendorId}, ${user.id}, ${emailValue}, ${role}, ${JSON.stringify(permissions)}, ${session.user.id}, 'active')
+    // Get vendor info for email
+    const [vendor] = await sql<{ name: string; store_name: string }[]>`
+      SELECT name, store_name FROM users WHERE id = ${vendorId}
     `;
 
+    const storeName = vendor?.store_name || vendor?.name || 'Store';
+
+    if (existingUser) {
+      // User exists - add them directly as active
+      await sql`
+        INSERT INTO team_members (vendor_id, user_id, email, role, permissions, invited_by, status)
+        VALUES (${vendorId}, ${existingUser.id}, ${emailValue}, ${role}, ${JSON.stringify(permissions)}, ${session.user.id}, 'active')
+      `;
+
+      // Send notification email (fire-and-forget, don't block on email)
+      const { sendEmail } = await import('@/app/lib/notifications');
+      const roleDisplay = role === 'admin' ? 'Administrator' : 'Assistant';
+      const subject = `You've been added to ${storeName}`;
+      const text = `Hi ${existingUser.name || 'there'},\n\nYou've been added as a ${roleDisplay} to ${storeName} on Vendle.\n\nYou can now access the dashboard at ${process.env.NEXT_PUBLIC_BASE_URL || 'https://vendle.app'}/dashboard\n\nBest regards,\nThe Vendle Team`;
+      
+      // Fire and forget in background - truly non-blocking
+      Promise.resolve().then(() => {
+        sendEmail(emailValue, subject, text).catch(err => {
+          console.error('Failed to send team invitation email:', err);
+        });
+      });
+    } else {
+      // User doesn't exist - create pending invitation
+      await sql`
+        INSERT INTO team_members (vendor_id, email, role, permissions, invited_by, status)
+        VALUES (${vendorId}, ${emailValue}, ${role}, ${JSON.stringify(permissions)}, ${session.user.id}, 'pending')
+      `;
+
+      // Send invitation email (fire-and-forget, don't block on email)
+      const { sendEmail } = await import('@/app/lib/notifications');
+      const roleDisplay = role === 'admin' ? 'Administrator' : 'Assistant';
+      const signupUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://vendle.app'}/signup?email=${encodeURIComponent(emailValue)}`;
+      const subject = `You've been invited to join ${storeName}`;
+      const text = `Hi,\n\nYou've been invited to join ${storeName} as a ${roleDisplay} on Vendle.\n\nTo accept this invitation:\n1. Sign up at: ${signupUrl}\n2. Use this email address: ${emailValue}\n3. Once signed up, you'll automatically have access to the store dashboard\n\nBest regards,\nThe Vendle Team`;
+      
+      // Fire and forget in background - truly non-blocking
+      Promise.resolve().then(() => {
+        sendEmail(emailValue, subject, text).catch(err => {
+          console.error('Failed to send team invitation email:', err);
+        });
+      });
+    }
+
     await triggerGuideForEvent(vendorId, "team-member-invited");
+    
+    // Success!
+    revalidatePath("/dashboard/team");
+    return { 
+      message: "", 
+      success: true,
+      successMessage: existingUser 
+        ? `${emailValue} has been added to your team and notified via email.`
+        : `Invitation sent to ${emailValue}. They'll receive an email with signup instructions.`
+    };
   } catch (error) {
     console.error("Database Error:", error);
     return { message: "Database Error: Failed to invite team member." };
   }
-
-  revalidatePath("/dashboard/team");
-  redirect("/dashboard/team");
 }
 
 export async function removeTeamMemberAction(
@@ -1364,6 +1428,14 @@ export async function updateThemeAction(
       custom_css: getV("custom_css"),
       sections: getV("sections"),
       section_content: getV("section_content"),
+      line_height: getV("line_height"),
+      letter_spacing: getV("letter_spacing"),
+      text_transform: getV("text_transform"),
+      body_font_weight: getV("body_font_weight"),
+      heading_font_weight: getV("heading_font_weight"),
+      container_width: getV("container_width"),
+      design_tokens: getV("design_tokens"),
+      secondary_gradient: getV("secondary_gradient"),
       is_publish: getBool("is_publish"),
     });
 
@@ -1444,6 +1516,14 @@ export async function updateThemeAction(
           show_mobile_checkout_bar = ${themeData.show_mobile_checkout_bar ?? false},
           sections = ${themeData.sections ?? "[]"},
           section_content = ${themeData.section_content ?? "{}"},
+          line_height = ${themeData.line_height ?? null},
+          letter_spacing = ${themeData.letter_spacing ?? null},
+          text_transform = ${themeData.text_transform ?? null},
+          body_font_weight = ${themeData.body_font_weight ?? null},
+          heading_font_weight = ${themeData.heading_font_weight ?? null},
+          container_width = ${themeData.container_width ?? null},
+          design_tokens = ${themeData.design_tokens ?? null},
+          secondary_gradient = ${themeData.secondary_gradient ?? null},
           draft_config = NULL,
           updated_at = CURRENT_TIMESTAMP
         WHERE vendor_id = ${session.user.id}

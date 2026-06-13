@@ -1,24 +1,23 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useRef } from 'react';
 
 /**
  * Client component wrapper for Paystack script loading.
- * Loads the Paystack inline script once without causing re-renders.
+ * Loads the Paystack inline script with proper error handling.
  */
 export default function PaystackScript() {
-  const loadedRef = useRef(false);
-
-  useEffect(() => {
-    loadedRef.current = true;
-  }, []);
-
   return (
     <Script
       src="https://js.paystack.co/v1/inline.js"
-      strategy="lazyOnload"
+      strategy="afterInteractive"
       id="paystack-inline-js"
+      onLoad={() => {
+        console.log('Paystack script loaded successfully');
+      }}
+      onError={(e) => {
+        console.error('Failed to load Paystack script:', e);
+      }}
     />
   );
 }

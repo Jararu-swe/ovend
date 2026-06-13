@@ -5,6 +5,7 @@ import {
   getBankCodeFromName,
   initiatePaystackTransfer,
 } from "@/app/lib/paystack";
+import { fetchVendorAvailableBalance } from "@/app/lib/payouts";
 
 export async function POST(request: Request) {
   try {
@@ -27,14 +28,8 @@ export async function POST(request: Request) {
       });
     }
 
-    // Fetch vendor's current balance
-    const vendorStats = await sql`
-      SELECT COALESCE(SUM(total_amount), 0) as balance
-      FROM orders
-      WHERE vendor_id = ${vendorId} AND status = 'fulfilled'
-    `;
-
-    const balance = Number(vendorStats[0]?.balance || 0);
+    // Fetch vendor's actual available balance (net of transaction fees and previous payouts)
+    const balance = await fetchVendorAvailableBalance(vendorId);
 
     // Check if vendor has sufficient balance
     if (amount > balance) {
@@ -125,9 +120,9 @@ export async function POST(request: Request) {
     const netAmount = amount - serviceFee;
     const reference = `PAYOUT-${vendorId}-${Date.now()}`;
 
-    // Initiate the Paystack transfer immediately
+    // Initiate the Paystack transfer immediately using the net amount (requested minus service fee)
     const transferResult = await initiatePaystackTransfer(
-      amount,
+      netAmount,
       recipientResult.recipientCode,
       `Vendor payout for ${vendorId}`,
       reference,

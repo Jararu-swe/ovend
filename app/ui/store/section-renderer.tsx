@@ -1,14 +1,19 @@
 'use client';
 
-import { User, Product, StoreTheme } from '@/app/lib/definitions';
+import { User, Product, StoreTheme, ShapeDivider } from '@/app/lib/definitions';
 import { TemplateSection, TemplateSectionContent, FONT_MAP } from '@/app/lib/template-presets';
 import { formatCurrency, getSectionSpacing, getButtonStyles, getBorderRadiusClass, getCustomPadding } from '@/app/lib/utils';
 import { ShoppingBagIcon, PlusIcon, ChevronUpIcon, CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import StoreIcon from './storefront-icons';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import Image from 'next/image';
-import { JSX, useEffect, useState } from 'react';
+import { JSX, useEffect, useState, useRef } from 'react';
 import DynamicHero from './hero-renderers';
+import { 
+  composeSectionBackground, 
+  getSectionSpacing as getCustomSectionSpacing, 
+  DIVIDER_PATHS
+} from '@/app/lib/customization-helpers';
 
 // ─── Shared style helpers ─────────────────────────────────────
 
@@ -54,7 +59,212 @@ const KEYFRAMES_CSS = `
 .ovd-slide-up { animation: ovdSlideUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }
 .ovd-zoom-in { animation: ovdZoomIn 0.5s ease-out both; }
 .ovd-bounce-in { animation: ovdBounceIn 0.8s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+/* Force direct child margins to zero inside wrappers */
+.ovd-section-wrapper > div,
+.ovd-section-wrapper > section {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Shape Dividers */
+.ovd-divider-top {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+.ovd-divider-top svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 40px;
+}
+.ovd-divider-bottom {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+.ovd-divider-bottom svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 40px;
+}
+
+/* Scroll Animations */
+.scroll-anim-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.scroll-anim-slide-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scroll-anim-slide-left {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scroll-anim-scale-up {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-anim-fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-anim-slide-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-anim-slide-left.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.scroll-anim-scale-up.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
 `;
+
+function SectionWrapper({
+  section,
+  content,
+  theme,
+  children,
+}: {
+  section: TemplateSection;
+  content: Record<string, any>;
+  theme: StoreTheme;
+  children: React.ReactNode;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const elementRef = useRef<HTMLDivElement>(null);
+
+  // 1. Spacing overrides
+  const spacing = getSectionSpacing(theme.spacing || 'comfortable');
+  const customSpacing = getCustomSectionSpacing(content);
+  
+  // margin bottom is: custom override if present, else global theme spacing
+  const marginBottom = content.margin_bottom ? customSpacing.marginBottom : spacing.section;
+  const marginTop = content.margin_top ? customSpacing.marginTop : '0px';
+
+  // 2. Background styling
+  const bgStyles = composeSectionBackground(content, theme);
+
+  // 3. Scroll Animation Setup
+  const animation = content.scroll_animation || 'none';
+
+  useEffect(() => {
+    if (animation === 'none') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    const currentEl = elementRef.current;
+    if (currentEl) {
+      observer.observe(currentEl);
+    }
+
+    return () => {
+      if (currentEl) {
+        observer.unobserve(currentEl);
+      }
+    };
+  }, [animation]);
+
+  // Render top and bottom shape dividers if present
+  const renderDivider = (dividerType: string, isTop: boolean) => {
+    if (!dividerType || dividerType === 'none') return null;
+    const divider = DIVIDER_PATHS[dividerType as ShapeDivider];
+    if (!divider || !divider.path) return null;
+
+    const fillColor = theme.background_color || '#ffffff';
+    const className = isTop ? 'ovd-divider-top' : 'ovd-divider-bottom';
+    
+    return (
+      <div className={className} style={{ zIndex: 10 }}>
+        <svg
+          viewBox={divider.viewBox}
+          preserveAspectRatio={divider.preserveAspectRatio}
+          fill={fillColor}
+        >
+          <path d={divider.path} />
+        </svg>
+      </div>
+    );
+  };
+
+  // Resolve layout wrapper styles
+  const wrapperStyle: React.CSSProperties = {
+    ...bgStyles,
+    marginTop,
+    marginBottom,
+    paddingTop: customSpacing.paddingTop,
+    paddingBottom: customSpacing.paddingBottom,
+    paddingLeft: customSpacing.paddingX,
+    paddingRight: customSpacing.paddingX,
+    position: 'relative',
+  };
+
+  const animClass = animation !== 'none' ? `scroll-anim-${animation} ${isVisible ? 'is-visible' : ''}` : '';
+
+  return (
+    <div
+      ref={elementRef}
+      className={`relative overflow-hidden w-full ovd-section-wrapper ${animClass}`}
+      style={wrapperStyle}
+    >
+      {/* Autoplay Background Video */}
+      {content.background_video && (
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+          <video
+            src={content.background_video}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      {/* Top Divider */}
+      {renderDivider(content.divider_top, true)}
+
+      {/* Content wrapper to put children above video/dividers */}
+      <div className="relative z-10 w-full">
+        {children}
+      </div>
+
+      {/* Bottom Divider */}
+      {renderDivider(content.divider_bottom, false)}
+    </div>
+  );
+}
 
 // ─── Section Renderer ─────────────────────────────────────────
 interface SectionRendererProps {
@@ -86,43 +296,53 @@ export default function SectionRenderer({
       {sorted.map((section, idx) => {
         const c = content[section.id] || {};
         const e = entranceClass(theme.animation_style, idx * 120);
-        const wrapStyle = e.style ? { style: e.style } : {};
-        switch (section.id) {
-          case 'hero-banner':
-            return <DynamicHero key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'announcement-bar':
-            return <AnnouncementBar key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'featured-products':
-            return <FeaturedProducts key={section.id} content={c} products={products} theme={theme} onAddToCart={onAddToCart} entrance={e} />;
-          case 'product-grid':
-            return renderProductGrid ? <div key={section.id} className={e.className} style={e.style ? { animationDelay: `${idx * 120}ms` } : undefined}>{renderProductGrid()}</div> : null;
-          case 'testimonials':
-            return <Testimonials key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'about-section':
-            return <AboutSection key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'trust-badges':
-            return <TrustBadges key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'image-gallery':
-            return <ImageGallery key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'faqs':
-            return <FaqsSection key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'contact-cta':
-            return <ContactCta key={section.id} content={c} vendor={vendor} theme={theme} entrance={e} />;
-          case 'newsletter':
-            return <Newsletter key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'video-promo':
-            return <VideoPromo key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'logo-cloud':
-            return <LogoCloud key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'rich-text':
-            return <RichText key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'split-feature':
-            return <SplitFeature key={section.id} content={c} theme={theme} entrance={e} />;
-          case 'category-grid':
-            return <CategoryGrid key={section.id} content={c} theme={theme} entrance={e} />;
-          default:
-            return null;
-        }
+        
+        const childElement = (() => {
+          switch (section.id) {
+            case 'hero-banner':
+              return <DynamicHero content={c} theme={theme} entrance={e} />;
+            case 'announcement-bar':
+              return <AnnouncementBar content={c} theme={theme} entrance={e} />;
+            case 'featured-products':
+              return <FeaturedProducts content={c} products={products} theme={theme} onAddToCart={onAddToCart} entrance={e} />;
+            case 'product-grid':
+              return renderProductGrid ? <div className={e.className} style={e.style ? { animationDelay: `${idx * 120}ms` } : undefined}>{renderProductGrid()}</div> : null;
+            case 'testimonials':
+              return <Testimonials content={c} theme={theme} entrance={e} />;
+            case 'about-section':
+              return <AboutSection content={c} theme={theme} entrance={e} />;
+            case 'trust-badges':
+              return <TrustBadges content={c} theme={theme} entrance={e} />;
+            case 'image-gallery':
+              return <ImageGallery content={c} theme={theme} entrance={e} />;
+            case 'faqs':
+              return <FaqsSection content={c} theme={theme} entrance={e} />;
+            case 'contact-cta':
+              return <ContactCta content={c} vendor={vendor} theme={theme} entrance={e} />;
+            case 'newsletter':
+              return <Newsletter content={c} theme={theme} entrance={e} />;
+            case 'video-promo':
+              return <VideoPromo content={c} theme={theme} entrance={e} />;
+            case 'logo-cloud':
+              return <LogoCloud content={c} theme={theme} entrance={e} />;
+            case 'rich-text':
+              return <RichText content={c} theme={theme} entrance={e} />;
+            case 'split-feature':
+              return <SplitFeature content={c} theme={theme} entrance={e} />;
+            case 'category-grid':
+              return <CategoryGrid content={c} theme={theme} entrance={e} />;
+            default:
+              return null;
+          }
+        })();
+
+        if (!childElement) return null;
+
+        return (
+          <SectionWrapper key={section.id} section={section} content={c} theme={theme}>
+            {childElement}
+          </SectionWrapper>
+        );
       })}
       <BackToTop theme={theme} />
     </>

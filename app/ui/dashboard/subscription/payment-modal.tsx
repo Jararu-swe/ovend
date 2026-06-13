@@ -88,23 +88,21 @@ export default function PaymentModal({
     setError(null);
 
     try {
-      // Wait a bit for Paystack script to load if needed
+      // Check if Paystack is loaded
       if (typeof window.PaystackPop === 'undefined') {
-        // Wait up to 3 seconds for script to load
-        let attempts = 0;
-        while (typeof window.PaystackPop === 'undefined' && attempts < 30) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          attempts++;
-        }
-        
-        if (typeof window.PaystackPop === 'undefined') {
-          throw new Error(
-            'Paystack payment system is not available. Please refresh the page and try again.'
-          );
-        }
+        throw new Error(
+          'Payment system is loading. Please wait a moment and try again.'
+        );
       }
 
-      // Initialize payment
+      // Get public key from environment variable
+      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+
+      if (!publicKey) {
+        throw new Error('Payment configuration error. Please contact support.');
+      }
+
+      // Initialize payment on backend first
       const callbackUrl = `${window.location.origin}/dashboard/billing`;
       const result = await upgradeSubscription(tier, callbackUrl);
 
@@ -118,38 +116,38 @@ export default function PaymentModal({
         throw new Error('Invalid payment initialization response');
       }
 
-      // Get public key from environment variable (available on client with NEXT_PUBLIC_ prefix)
-      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-
-      if (!publicKey) {
-        throw new Error('Paystack configuration error. Please contact support.');
-      }
-
-      // Initialize Paystack popup
+      // Initialize Paystack popup with all required fields
       const handler = window.PaystackPop!.setup({
         key: publicKey,
         email: userEmail,
-        amount: amount, // Amount is already in kobo from plan.price_kobo
+        amount: amount, // Amount in kobo
         ref: reference,
+        currency: 'NGN',
         onClose: () => {
           setIsProcessing(false);
         },
         callback: (response: any) => {
           void (async () => {
-            // Verify payment
-            const verifyResult = await verifyPayment(response.reference);
+            try {
+              // Verify payment
+              const verifyResult = await verifyPayment(response.reference);
 
-            if (!verifyResult.ok) {
-              setError(
-                verifyResult.error || 'Payment verification failed. Please contact support.'
-              );
+              if (!verifyResult.ok) {
+                setError(
+                  verifyResult.error || 'Payment verification failed. Please contact support.'
+                );
+                setIsProcessing(false);
+                return;
+              }
+
+              // Success - refresh the page
+              router.refresh();
+              onClose();
+            } catch (err) {
+              console.error('Verification error:', err);
+              setError('Payment verification failed. Please contact support.');
               setIsProcessing(false);
-              return;
             }
-
-            // Success - refresh the page
-            router.refresh();
-            onClose();
           })();
         },
       });
@@ -235,52 +233,53 @@ export default function PaymentModal({
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isProcessing}
-            className="flex-1 px-4 py-3 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handlePayment}
-            disabled={isProcessing}
-            className="flex-1 px-4 py-3 text-white bg-emerald-500 hover:bg-emerald-400 rounded-xl font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isProcessing ? (
-              <>
-                <svg
-                  className="animate-spin h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Processing...
-              </>
-            ) : (
-              'Pay Now'
-            )}
-          </button>
-        </div>
+        {/* Actions - Wrapped in form for Paystack */}
+        <form onSubmit={(e) => { e.preventDefault(); handlePayment(); }}>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isProcessing}
+              className="flex-1 px-4 py-3 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isProcessing}
+              className="flex-1 px-4 py-3 text-white bg-emerald-500 hover:bg-emerald-400 rounded-xl font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isProcessing ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                'Pay Now'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

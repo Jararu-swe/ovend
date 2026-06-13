@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         source: "balance", // Transfer from your Paystack balance
         type: "nuban", // Bank account transfer
-        amount: Math.floor(payout.net_amount * 100), // Convert to kobo
+        amount: Math.floor(Number(payout.net_amount) * 100), // Convert to kobo
         recipient: payout.paystack_recipient_code, // Recipient code from validation
         reason: `Payout - Payout ID: ${payout.id}`,
         reference: `PAYOUT-${payout.id}-${Date.now()}`, // Unique reference

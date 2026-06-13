@@ -800,6 +800,9 @@ export async function fetchAllPublicStores(
   location?: string,
   limit = 50,
 ): Promise<PublicStore[]> {
+  // Start performance timer
+  console.time('fetchAllPublicStores');
+  
   try {
     await ensureStoreColumns();
     const searchFilter = search ? `%${search}%` : "%";
@@ -807,6 +810,7 @@ export async function fetchAllPublicStores(
     const locationFilter = location && location !== "All" ? location : null;
     const fetchLimit = Number(limit) || 50;
 
+    // Optimized single query with JOINs to eliminate N+1 pattern
     const stores = await sql<
       {
         id: string;
@@ -820,6 +824,8 @@ export async function fetchAllPublicStores(
         store_hours: unknown;
         accepting_orders: boolean | null;
         store_closed_note: string | null;
+        logo_url: string | null;
+        top_products: any;
       }[]
     >`
       SELECT 
@@ -833,9 +839,25 @@ export async function fetchAllPublicStores(
         u.store_hours,
         u.accepting_orders,
         u.store_closed_note,
-        COUNT(DISTINCT p.id)::text AS product_count
+        st.logo_url,
+        COUNT(DISTINCT p_count.id)::text AS product_count,
+        (
+          SELECT json_agg(json_build_object(
+            'name', p.name,
+            'image_url', p.image_url,
+            'price', p.price
+          ))
+          FROM (
+            SELECT name, image_url, price
+            FROM products
+            WHERE vendor_id = u.id AND status = 'active'
+            ORDER BY created_at DESC
+            LIMIT 3
+          ) p
+        ) as top_products
       FROM users u
-      LEFT JOIN products p ON p.vendor_id = u.id AND p.status = 'active'
+      LEFT JOIN store_theme st ON st.vendor_id = u.id
+      LEFT JOIN products p_count ON p_count.vendor_id = u.id AND p_count.status = 'active'
       WHERE u.store_name IS NOT NULL
         AND u.store_name != ''
         -- Inclusive Search: Name, Category, Owner, or Products
@@ -869,63 +891,45 @@ export async function fetchAllPublicStores(
         }
         -- Location Filter
         ${locationFilter ? sql`AND u.location_state = ${locationFilter}` : sql``}
-      GROUP BY u.id, u.store_name, u.store_slug, u.store_description, u.category, u.location_state, u.store_timezone, u.store_hours, u.accepting_orders, u.store_closed_note
-      HAVING COUNT(p.id) > 0
+      GROUP BY u.id, u.store_name, u.store_slug, u.store_description, u.category, u.location_state, u.store_timezone, u.store_hours, u.accepting_orders, u.store_closed_note, st.logo_url
+      HAVING COUNT(p_count.id) > 0
       ${
         sort === "location"
           ? sql`ORDER BY u.location_state ASC NULLS LAST, u.store_name ASC`
           : sort === "name"
             ? sql`ORDER BY u.store_name ASC`
-            : sql`ORDER BY COUNT(p.id) DESC, u.store_name ASC`
+            : sql`ORDER BY COUNT(p_count.id) DESC, u.store_name ASC`
       }
       LIMIT ${fetchLimit}
     `;
 
-    // Fetch logo + top 3 products for each store with error handling
-    const results: PublicStore[] = [];
-    
-    for (const store of stores) {
-      try {
-        const [logoRow] = await sql<{ logo_url: string | null }[]>`
-          SELECT logo_url FROM store_theme WHERE vendor_id = ${store.id} LIMIT 1
-        `.catch(() => [{ logo_url: null }]); // Fallback on error
+    // Process results and call getStoreAvailability for each store
+    const results: PublicStore[] = stores.map((store) => ({
+      id: store.id,
+      store_name: store.store_name,
+      store_slug: store.store_slug,
+      store_description: store.store_description,
+      logo_url: store.logo_url || null,
+      product_count: Number(store.product_count),
+      category: store.category,
+      location_state: store.location_state,
+      top_products: store.top_products || [],
+      availability: getStoreAvailability({
+        timeZone: store.store_timezone,
+        store_hours: store.store_hours,
+        accepting_orders: store.accepting_orders,
+        store_closed_note: store.store_closed_note,
+      }),
+    }));
 
-        const topProducts = await sql<
-          { name: string; image_url: string | null; price: number }[]
-        >`
-          SELECT name, image_url, price FROM products
-          WHERE vendor_id = ${store.id} AND status = 'active'
-          ORDER BY created_at DESC
-          LIMIT 3
-        `.catch(() => []); // Fallback on error
-
-        results.push({
-          id: store.id,
-          store_name: store.store_name,
-          store_slug: store.store_slug,
-          store_description: store.store_description,
-          logo_url: logoRow?.logo_url || null,
-          product_count: Number(store.product_count),
-          category: store.category,
-          location_state: store.location_state,
-          top_products: topProducts,
-          availability: getStoreAvailability({
-            timeZone: store.store_timezone,
-            store_hours: store.store_hours,
-            accepting_orders: store.accepting_orders,
-            store_closed_note: store.store_closed_note,
-          }),
-        });
-      } catch (error) {
-        console.error(`Error fetching details for store ${store.id}:`, error);
-        // Skip this store if there's an error
-        continue;
-      }
-    }
+    // End performance timer and log results
+    console.timeEnd('fetchAllPublicStores');
+    console.log(`📊 fetchAllPublicStores: Returned ${results.length} stores`);
 
     return results;
   } catch (error) {
     console.error("Database Error (fetchAllPublicStores):", error);
+    console.timeEnd('fetchAllPublicStores');
     return [];
   }
 }

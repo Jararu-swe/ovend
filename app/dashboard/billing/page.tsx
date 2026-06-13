@@ -4,7 +4,7 @@ import { getVendorSubscription, getSubscriptionPlans } from '@/app/lib/subscript
 import { sql } from '@/app/lib/db';
 import PayoutCard from '@/app/ui/dashboard/payout-card';
 import PayoutHistory from '@/app/ui/dashboard/payout-history';
-import { fetchVendorPayouts } from '@/app/lib/payouts';
+import { fetchVendorPayouts, fetchVendorAvailableBalance } from '@/app/lib/payouts';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
@@ -65,7 +65,7 @@ export default async function BillingPage() {
 
   try {
     // Fetch subscription data
-    const [subscription, plans, stats, payouts, subscriptionPayments, productCount] =
+    const [subscription, plans, stats, payouts, subscriptionPayments, productCount, availableBalance] =
       await Promise.all([
         getVendorSubscription(session.user.id),
         getSubscriptionPlans(),
@@ -80,6 +80,7 @@ export default async function BillingPage() {
         sql`SELECT COUNT(*) as count FROM products WHERE vendor_id = ${session.user.id} AND status = 'active'`.then(
           (result) => Number(result[0]?.count || 0)
         ),
+        fetchVendorAvailableBalance(session.user.id).catch(() => 0),
       ]);
 
     if (!subscription) {
@@ -147,7 +148,7 @@ export default async function BillingPage() {
           )}
 
           {/* Payouts Section - Keep existing payout components */}
-          <PayoutCard user={user} balance={stats.totalRevenue} />
+          <PayoutCard user={user} balance={availableBalance} />
 
           {payouts.length > 0 && <PayoutHistory payouts={payouts} />}
 

@@ -92,6 +92,18 @@ export function getDefaultTheme(): Omit<StoreTheme, 'id' | 'vendor_id' | 'create
     draft_config: null,
     sections: JSON.stringify(getDefaultSections()),
     section_content: JSON.stringify(getDefaultSectionContent()),
+    // NEW: Enhanced Typography fields with defaults
+    line_height: 1.5,
+    letter_spacing: 0,
+    text_transform: 'none',
+    body_font_weight: 400,
+    heading_font_weight: 700,
+    // NEW: Container Width with default
+    container_width: 'standard',
+    // NEW: Design Tokens (null by default)
+    design_tokens: null,
+    // NEW: Secondary Gradient (null by default)
+    secondary_gradient: null,
   };
 }
 
@@ -142,6 +154,18 @@ function normalizeTheme(row: any): StoreTheme {
       ? (typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent))
       : JSON.stringify(getDefaultSectionContent()),
     draft_config: row.draft_config ?? null,
+    // NEW: Enhanced Typography fields
+    line_height: row.line_height ?? 1.5,
+    letter_spacing: row.letter_spacing ?? 0,
+    text_transform: row.text_transform ?? 'none',
+    body_font_weight: row.body_font_weight ?? 400,
+    heading_font_weight: row.heading_font_weight ?? 700,
+    // NEW: Container Width
+    container_width: row.container_width ?? 'standard',
+    // NEW: Design Tokens
+    design_tokens: row.design_tokens ?? null,
+    // NEW: Secondary Gradient
+    secondary_gradient: row.secondary_gradient ?? null,
   };
 }
 

@@ -19,10 +19,15 @@ export default function ProductDetail({ vendor, product, theme }: ProductDetailP
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const galleryImages = product.gallery_images
-    ? JSON.parse(product.gallery_images)
-    : [];
-  const allImages = [product.image_url, ...galleryImages].filter(Boolean);
+  let galleryImages: string[] = [];
+  try {
+    galleryImages = product.gallery_images
+      ? JSON.parse(product.gallery_images)
+      : [];
+  } catch {
+    galleryImages = [];
+  }
+  const allImages = [product.image_url, ...galleryImages].filter((img): img is string => !!img);
 
   const btn = getButtonStyles(theme);
   const productUrl = typeof window !== 'undefined' ? window.location.href : '';

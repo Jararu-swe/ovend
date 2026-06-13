@@ -50,15 +50,26 @@ export async function sendEmail(
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
+        connectionTimeout: 30000, // 30 second timeout
+        greetingTimeout: 30000,
+        socketTimeout: 30000,
       });
 
-      const info = await transporter.sendMail({
+      // Add timeout to the send operation
+      const sendPromise = transporter.sendMail({
         from: from || process.env.SMTP_USER,
         to,
         subject,
         text,
         html,
       });
+
+      // Race against timeout (45 seconds total)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email send timeout after 45 seconds')), 45000)
+      );
+
+      const info = await Promise.race([sendPromise, timeoutPromise]);
 
       return { success: true, info };
     } catch (err) {

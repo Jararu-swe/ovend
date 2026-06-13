@@ -8,6 +8,7 @@ import {
   UsersIcon,
   PaintBrushIcon,
   CreditCardIcon,
+  BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -26,7 +27,7 @@ const links: {
   { name: 'Orders', href: '/dashboard/orders', icon: ClipboardDocumentListIcon, teamPermission: 'orders' },
   { name: 'Discounts', href: '/dashboard/discounts', icon: TicketIcon, teamPermission: 'orders' },
   { name: 'Team', href: '/dashboard/team', icon: UsersIcon },
-  { name: 'Customize', href: '/dashboard/customize', icon: PaintBrushIcon },
+  { name: 'Storefront', href: '/dashboard/customize', icon: BuildingStorefrontIcon },
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCardIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon, teamPermission: 'settings' },
 ];
