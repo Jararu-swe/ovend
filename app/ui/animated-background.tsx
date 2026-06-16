@@ -57,7 +57,7 @@ export function AnimatedBackground() {
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((current) => (current + 1) % PATTERNS.length);
-    }, 5000); // Change every 5 seconds
+    }, 7000);
     return () => clearInterval(interval);
   }, []);
 
@@ -65,36 +65,35 @@ export function AnimatedBackground() {
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
       {PATTERNS.map((Pattern, index) => {
         const isActive = index === activeIndex;
-        // Using ease-in-out and a slow duration for a soft, premium transition
         return (
           <div 
             key={index}
-            className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 transition-opacity duration-[3000ms] ease-in-out ${isActive ? 'opacity-30' : 'opacity-0'}`}
           >
-            {/* Multiple clones of the same pattern spread across the background, scaled down */}
-            <div className="absolute top-[5%] left-[5%] opacity-10">
-               <Pattern className="w-16 h-16 md:w-24 md:h-24 text-emerald-600" />
-            </div>
-            <div className="absolute top-[15%] right-[10%] opacity-10">
-               <Pattern className="w-12 h-12 md:w-20 md:h-20 text-emerald-600" />
-            </div>
-            <div className="absolute top-[40%] left-[20%] opacity-5 md:opacity-10">
-               <Pattern className="w-20 h-20 md:w-32 md:h-32 text-emerald-600" />
-            </div>
-            <div className="absolute top-[60%] right-[5%] opacity-[0.07]">
-               <Pattern className="w-24 h-24 md:w-36 md:h-36 text-emerald-600" />
-            </div>
-            <div className="absolute bottom-[10%] left-[10%] opacity-10">
-               <Pattern className="w-16 h-16 md:w-28 md:h-28 text-emerald-600" />
-            </div>
-            <div className="absolute bottom-[20%] right-[25%] opacity-5 md:opacity-10">
-               <Pattern className="w-12 h-12 md:w-16 md:h-16 text-emerald-600" />
-            </div>
-            <div className="absolute top-[30%] right-[30%] opacity-[0.05]">
+            {/* Super visible organized pattern layout */}
+            <div className="absolute top-10 left-10 opacity-0.5">
                <Pattern className="w-10 h-10 md:w-20 md:h-20 text-emerald-600" />
             </div>
-            <div className="absolute bottom-[5%] right-[40%] opacity-[0.06]">
-               <Pattern className="w-14 h-14 md:w-24 md:h-24 text-emerald-600" />
+            <div className="absolute top-10 right-10 opacity-0.5">
+               <Pattern className="w-20 h-20 md:w-32 md:h-32 text-emerald-400" />
+            </div>
+            <div className="absolute top-1/2 left-10 transform -translate-y-1/2 opacity-0.45">
+               <Pattern className="w-24 h-24 md:w-36 md:h-36 text-emerald-600" />
+            </div>
+            <div className="absolute top-1/2 right-10 transform -translate-y-1/2 opacity-0.45">
+               <Pattern className="w-24 h-24 md:w-36 md:h-36 text-emerald-500" />
+            </div>
+            <div className="absolute bottom-10 left-10 opacity-0.5">
+               <Pattern className="w-20 h-20 md:w-32 md:h-32 text-emerald-600" />
+            </div>
+            <div className="absolute bottom-10 right-10 opacity-0.5">
+               <Pattern className="w-20 h-20 md:w-32 md:h-32 text-emerald-500" />
+            </div>
+            <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 opacity-0.48">
+               <Pattern className="w-28 h-28 md:w-40 md:h-40 text-emerald-600" />
+            </div>
+            <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2 opacity-0.48">
+               <Pattern className="w-28 h-28 md:w-40 md:h-40 text-emerald-500" />
             </div>
           </div>
         );

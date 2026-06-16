@@ -132,10 +132,10 @@ export default function Storefront({
   const searchParams = useSearchParams();
   
   // Make sound functionality optional - no longer requires SoundProvider
-  const playSound = (soundType: string) => {
+  const playSound = useCallback((soundType: string) => {
     // Sound disabled for now - can be re-enabled when SoundProvider is added back
     console.log(`Sound would play: ${soundType}`);
-  };
+  }, []);
   
   const isPreview = searchParams.get("preview") === "true";
   const [previewTheme, setPreviewTheme] = useState<StoreTheme | null>(null);
@@ -575,16 +575,28 @@ export default function Storefront({
     if (!isPreview) return;
 
     function handlePreviewMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== "VENDLE_PREVIEW_THEME_UPDATE") return;
-      const payload = event.data.payload as StoreTheme;
-      const serialized = JSON.stringify(payload);
-      if (serialized === lastPreviewPayloadRef.current) return;
-      lastPreviewPayloadRef.current = serialized;
-      setPreviewTheme(payload);
+      try {
+        // Ignore messages not from our own origin
+        if (event.origin !== window.location.origin) return;
+        
+        // Ignore messages that don't match our expected format
+        if (!event.data || typeof event.data !== 'object') return;
+        if (event.data?.type !== "VENDLE_PREVIEW_THEME_UPDATE") return;
+        
+        const payload = event.data.payload as StoreTheme;
+        const serialized = JSON.stringify(payload);
+        
+        if (serialized === lastPreviewPayloadRef.current) return;
+        
+        lastPreviewPayloadRef.current = serialized;
+        setPreviewTheme(payload);
+      } catch (error) {
+        // Silently ignore any errors processing messages
+        console.debug("Error processing preview message:", error);
+      }
     }
 
-    window.addEventListener("message", handlePreviewMessage);
+    window.addEventListener("message", handlePreviewMessage, { passive: true });
     return () => window.removeEventListener("message", handlePreviewMessage);
   }, [isPreview]);
 

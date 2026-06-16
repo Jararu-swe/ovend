@@ -2,7 +2,7 @@
 
 import { User } from "@/app/lib/definitions";
 import { updateProfile, State } from "@/app/lib/actions";
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useState, useEffect, useCallback } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -102,12 +102,34 @@ export default function SettingsForm({ user }: { user: User }) {
     updateProfile as any,
     initialState,
   );
+
+  // Banks state
+  const [banks, setBanks] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [isLoadingBanks, setIsLoadingBanks] = useState(true);
+
+  // Fetch banks on component mount
+  useEffect(() => {
+    async function fetchBanks() {
+      try {
+        const res = await fetch("/api/banks");
+        if (res.ok) {
+          const data = await res.json();
+          setBanks(data.banks || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch banks:", err);
+      } finally {
+        setIsLoadingBanks(false);
+      }
+    }
+    fetchBanks();
+  }, []);
   
   // Make sound functionality optional - no longer requires SoundProvider
-  const playSound = (soundType: string) => {
+  const playSound = useCallback((soundType: string) => {
     // Sound disabled for now - can be re-enabled when SoundProvider is added back
     console.log(`Sound would play: ${soundType}`);
-  };
+  }, []);
   
   const preferences = { soundEnabled: false, volume: 50 };
   const updatePreferences = (prefs?: any) => {
@@ -924,15 +946,26 @@ export default function SettingsForm({ user }: { user: User }) {
             >
               Bank Name
             </label>
-            <input
-              id="bank_name"
-              name="bank_name"
-              type="text"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder="e.g. GTBank, Access Bank, First Bank"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
-            />
+            {isLoadingBanks ? (
+              <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
+                Loading banks...
+              </div>
+            ) : (
+              <select
+                id="bank_name"
+                name="bank_name"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                className={selectCls("bank_name")}
+              >
+                <option value="">Select your bank</option>
+                {banks.map((bank) => (
+                  <option key={bank.id} value={bank.name}>
+                    {bank.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div>
             <label

@@ -2,7 +2,7 @@
 
 import { User } from "@/app/lib/definitions";
 import { updateProfile, State } from "@/app/lib/actions";
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useState, useEffect, useCallback } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -100,10 +100,10 @@ export default function StoreAvailabilityForm({ user }: { user: User }) {
   );
   
   // Make sound functionality optional - no longer requires SoundProvider
-  const playSound = (soundType: string) => {
+  const playSound = useCallback((soundType: string) => {
     // Sound disabled for now - can be re-enabled when SoundProvider is added back
     console.log(`Sound would play: ${soundType}`);
-  };
+  }, []);
 
   // Initialize state
   const [acceptingOrders, setAcceptingOrders] = useState(

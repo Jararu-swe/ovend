@@ -4,7 +4,7 @@ import path from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'happy-dom', // Changed to happy-dom for React component testing
     pool: 'forks', // Use forks pool instead of threads to avoid rolldown
     poolOptions: {
       forks: {

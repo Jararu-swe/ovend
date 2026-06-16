@@ -17,6 +17,7 @@ import {
   validateDiscountCode,
   incrementDiscountUse,
 } from "@/app/lib/discounts";
+import { getTransactionFeePercentage } from "@/app/lib/subscriptions";
 import { deleteCloudinaryImage, deleteCloudinaryImages } from "./cloudinary";
 import { signOut } from "@/auth";
 import bcrypt from "bcryptjs";
@@ -772,6 +773,9 @@ export async function createOrder(
     const paymentStatus =
       paymentMethod === "card" && paymentReference ? "paid" : "pending";
 
+    const feePercentage = await getTransactionFeePercentage(vendorId);
+    const transactionFeeKobo = Math.round(totalAmount * (feePercentage / 100));
+
     const result = await sql`
       INSERT INTO orders (
         vendor_id, 
@@ -780,6 +784,7 @@ export async function createOrder(
         customer_address, 
         delivery_type, 
         total_amount, 
+        transaction_fee_kobo,
         items, 
         status,
         payment_method,
@@ -802,6 +807,7 @@ export async function createOrder(
         ${customer_address || null}, 
         ${delivery_type}, 
         ${totalAmount}, 
+        ${transactionFeeKobo},
         ${JSON.stringify(items)}, 
         'new',
         ${paymentMethod},
@@ -821,13 +827,15 @@ export async function createOrder(
     `;
 
     // Update analytics (non-blocking)
+    const netRevenueKobo = totalAmount - transactionFeeKobo;
     sql`
-      INSERT INTO store_analytics (vendor_id, date, orders_count, revenue)
-      VALUES (${vendorId}, CURRENT_DATE, 1, ${totalAmount})
+      INSERT INTO store_analytics (vendor_id, date, orders_count, revenue, net_revenue)
+      VALUES (${vendorId}, CURRENT_DATE, 1, ${totalAmount}, ${netRevenueKobo})
       ON CONFLICT (vendor_id, date)
       DO UPDATE SET 
         orders_count = store_analytics.orders_count + 1,
-        revenue = store_analytics.revenue + ${totalAmount}
+        revenue = store_analytics.revenue + ${totalAmount},
+        net_revenue = COALESCE(store_analytics.net_revenue, 0) + ${netRevenueKobo}
     `.catch(() => {});
 
     // Auto-decrement Stock
@@ -878,11 +886,20 @@ export async function updateOrderStatus(id: string, status: string) {
   await requireActiveVendorSubscription();
 
   try {
-    await sql`
-      UPDATE orders
-      SET status = ${status}
-      WHERE id = ${id} AND vendor_id = ${session.user.id}
-    `;
+    // If marking order as fulfilled, set the fulfilled_at timestamp
+    if (status === 'fulfilled') {
+      await sql`
+        UPDATE orders
+        SET status = ${status}, fulfilled_at = NOW()
+        WHERE id = ${id} AND vendor_id = ${session.user.id}
+      `;
+    } else {
+      await sql`
+        UPDATE orders
+        SET status = ${status}
+        WHERE id = ${id} AND vendor_id = ${session.user.id}
+      `;
+    }
     revalidatePath("/dashboard/orders");
   } catch (error) {
     console.error("Database Error:", error);

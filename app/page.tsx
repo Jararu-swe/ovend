@@ -38,6 +38,7 @@ import FAQ from "@/app/ui/faq";
 import ScrollToTop from "@/app/ui/scroll-to-top";
 
 export default async function Page() {
+  // Hot reload trigger once more
   // Fetch featured stores for the showcase section
   const allStores = await fetchAllPublicStores();
   const featuredStores = allStores.slice(0, 4);
@@ -75,19 +76,19 @@ export default async function Page() {
       </header>
 
       {/* Hero section */}
-      <section className="relative overflow-hidden px-6 pt-16 pb-24 md:px-12 md:pt-24 md:pb-32 lg:pt-32 lg:pb-40">
+      <section className="relative overflow-hidden px-5 pt-4 pb-16 sm:px-6 md:px-12 md:pt-8 md:pb-32 lg:pt-12 lg:pb-40 bg-slate-100">
         {/* Background Patterns with Parallax */}
-        <ParallaxScroll offset={80} className="absolute inset-0 z-0">
-          <MudclothPattern className="text-slate-900" opacity={0.03} />
+        <ParallaxScroll offset={60} className="absolute inset-0 z-0">
+          <MudclothPattern opacity={0.5} />
           <AnimatedBackground />
         </ParallaxScroll>
 
-        <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-16 md:flex-row md:items-center z-10">
-          <div className="flex flex-1 flex-col gap-8">
+        <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-10 sm:gap-12 md:gap-16 md:flex-row md:items-center z-10">
+          <div className="flex flex-1 flex-col gap-5 sm:gap-6 md:gap-8">
             <FadeInUp delay={0.1}>
-              <div className="inline-flex items-center gap-3">
-                <span className="h-[2px] w-8 bg-emerald-500 rounded-full"></span>
-                <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-700">
+              <div className="inline-flex items-center gap-2">
+                <span className="h-[1.5px] w-5 sm:w-6 md:w-8 bg-emerald-500 rounded-full"></span>
+                <p className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.25em] text-emerald-700">
                   Built for African Commerce
                 </p>
               </div>
@@ -95,22 +96,21 @@ export default async function Page() {
 
             <FadeInUp delay={0.2}>
               <h1
-                className={`${lusitana.className} text-4xl font-bold leading-[1.15] text-slate-900 md:text-5xl lg:text-6xl xl:text-7xl tracking-tight`}
+                className={`${lusitana.className} text-[2rem] leading-[1.15] sm:text-[2.5rem] sm:leading-[1.1] font-bold text-slate-900 md:text-5xl lg:text-6xl xl:text-7xl tracking-tight`}
               >
-                Turn your <br className="hidden md:block" />
-                <span className="relative whitespace-nowrap">
+                Turn your{" "}
+                <span className="relative inline-block whitespace-nowrap">
                   <span className="relative z-10 text-emerald-600">
                     social media
                   </span>
-                  <span className="absolute bottom-1 left-0 -z-10 h-3 w-full bg-emerald-200/60 skew-x-[-15deg]"></span>
+                  <span className="absolute bottom-0 sm:bottom-0.5 md:bottom-1 left-0 -z-10 h-[6px] sm:h-2 md:h-3 w-full bg-emerald-200/60 skew-x-[-15deg]"></span>
                 </span>{" "}
-                <br className="hidden md:block" />
                 into a global storefront.
               </h1>
             </FadeInUp>
 
             <FadeInUp delay={0.3}>
-              <p className="max-w-xl text-base leading-relaxed text-slate-600 md:text-lg">
+              <p className="max-w-xl text-[15px] sm:text-base leading-[1.6] sm:leading-relaxed text-slate-600 md:text-lg">
                 Vendle helps online vendors instantly create beautiful online
                 stores, process secure payments, and manage orders from a single
                 mobile dashboard. Setup takes less than 3 minutes.
@@ -118,57 +118,38 @@ export default async function Page() {
             </FadeInUp>
 
             <FadeInUp delay={0.4}>
-              <div className="flex flex-wrap items-center gap-4 mt-2">
+              <div className="flex flex-col gap-3 mt-1 sm:mt-2">
                 <Link
                   href="/signup"
-                  className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-emerald-600 px-8 py-4 text-sm font-bold tracking-wide text-white shadow-xl shadow-emerald-500/30 transition-all hover:-translate-y-1 hover:bg-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/40 md:text-base"
+                  className="pointer-events-auto inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3.5 sm:px-8 sm:py-4 text-[15px] sm:text-sm font-bold tracking-wide text-white shadow-lg shadow-emerald-500/25 transition-all active:scale-[0.98] sm:hover:-translate-y-1 sm:hover:bg-emerald-500 sm:hover:shadow-xl sm:hover:shadow-emerald-500/40 md:text-base"
                 >
                   <span>Launch Your Store</span>
-                  <ArrowRightIcon className="h-5 w-5 stroke-2" />
+                  <ArrowRightIcon className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5]" />
                 </Link>
                 <Link
                   href="/explore"
-                  className="pointer-events-auto inline-flex items-center gap-2 rounded-full border-2 border-slate-900 bg-transparent px-8 py-4 text-sm font-bold tracking-wide text-slate-900 transition-all hover:bg-slate-900 hover:text-white md:text-base"
+                  className="pointer-events-auto inline-flex items-center justify-center gap-2 rounded-full border-2 border-slate-900 bg-transparent px-6 py-3.5 sm:px-8 sm:py-4 text-[15px] sm:text-sm font-bold tracking-wide text-slate-900 transition-all active:scale-[0.98] sm:hover:bg-slate-900 sm:hover:text-white md:text-base"
                 >
-                  <MagnifyingGlassIcon className="h-5 w-5 stroke-2" />
+                  <MagnifyingGlassIcon className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5]" />
                   <span>Explore Vendors</span>
                 </Link>
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-medium text-slate-500 mt-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 text-[11px] sm:text-xs md:text-[13px] font-medium text-slate-500 mt-4 sm:mt-5">
                 <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-500">✦</span> Zero coding
-                  required
+                  <span className="text-emerald-500 text-sm">✓</span> 
+                  <span>Zero coding required</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-500">✦</span> Mobile-first
-                  design
+                  <span className="text-emerald-500 text-sm">✓</span> 
+                  <span>Mobile-first design</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-500">✦</span> Unified social
-                  links
+                  <span className="text-emerald-500 text-sm">✓</span> 
+                  <span>Unified social links</span>
                 </span>
               </div>
 
-              {/* Scroll indicator */}
-              <div className="mt-12 flex flex-col items-center gap-2 animate-bounce">
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                  Scroll to explore
-                </span>
-                <svg
-                  className="h-5 w-5 text-slate-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                  />
-                </svg>
-              </div>
             </FadeInUp>
           </div>
 
@@ -189,6 +170,7 @@ export default async function Page() {
                   height={510}
                   className="w-full h-auto"
                   priority
+                  unoptimized
                 />
               </div>
             </div>
@@ -238,7 +220,10 @@ export default async function Page() {
                   src="/images/story/artisan-1.jpg"
                   alt="Artisan making products"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
                   className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                  unoptimized
+                  loading="eager"
                 />
               </ParallaxScroll>
               <div className="absolute inset-0 bg-gradient-to-t from-[#0A1110]/80 via-transparent to-transparent"></div>
@@ -261,7 +246,10 @@ export default async function Page() {
                     src="/images/story/artisan-2.jpg"
                     alt="Knowledge and heritage"
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 40vw, 500px"
                     className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                    unoptimized
+                    loading="eager"
                   />
                 </ParallaxScroll>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A1110]/80 via-transparent to-transparent"></div>
@@ -281,7 +269,10 @@ export default async function Page() {
                     src="/images/story/artisan-3.jpg"
                     alt="Local cuisine and treats"
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 40vw, 500px"
                     className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                    unoptimized
+                    loading="eager"
                   />
                 </ParallaxScroll>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A1110]/80 via-transparent to-transparent"></div>
@@ -327,6 +318,8 @@ export default async function Page() {
                       width={340}
                       height={510}
                       className="w-full h-auto"
+                      unoptimized
+                      loading="eager"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
@@ -349,6 +342,8 @@ export default async function Page() {
                       width={340}
                       height={510}
                       className="w-full h-auto"
+                      unoptimized
+                      loading="eager"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
@@ -367,11 +362,13 @@ export default async function Page() {
 
                   <div className="relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 md:border-[6px] border-white shadow-2xl ring-1 ring-amber-900/10 transition-all duration-500 group hover:rotate-0 hover:shadow-3xl cursor-pointer hover:-translate-y-8">
                     <Image
-                      src="/images/story/platform-mockup-3.png"
+                      src="/images/platform-mockup-3.png"
                       alt="Vendle Store - Food Example"
                       width={340}
                       height={510}
                       className="w-full h-auto"
+                      unoptimized
+                      loading="eager"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-amber-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
@@ -569,6 +566,8 @@ export default async function Page() {
                     src="/images/dashboard.png"
                     alt="Vendle Dashboard - Desktop View"
                     width={1920}
+                    unoptimized
+                    loading="eager"
                     height={1080}
                     className="w-full h-full object-cover object-top"
                     priority

@@ -10,15 +10,20 @@ import {
 interface PayoutCardProps {
   user: any;
   balance: number;
+  transactionFeePercentage: number;
 }
 
-export default function PayoutCard({ user, balance }: PayoutCardProps) {
+export default function PayoutCard({ user, balance, transactionFeePercentage }: PayoutCardProps) {
   const [isRequesting, setIsRequesting] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
     type: "success" | "error";
   } | null>(null);
   const [amount, setAmount] = useState("");
+  
+  const numericAmount = parseFloat(amount) || 0;
+  const estimatedFee = numericAmount * (transactionFeePercentage / 100);
+  const estimatedNetAmount = numericAmount - estimatedFee;
 
   const minimumPayout = 5000;
   const canRequest = balance >= minimumPayout;
@@ -219,6 +224,35 @@ export default function PayoutCard({ user, balance }: PayoutCardProps) {
               {!canRequest &&
                 `You need ₦${minimumPayout.toLocaleString()} minimum to request a payout`}
             </p>
+            
+            {/* Fee Estimate */}
+            {numericAmount > 0 && (
+              <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <h4 className="text-sm font-semibold text-slate-900 mb-3">Estimated Breakdown</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Gross Amount:</span>
+                    <span className="font-medium text-slate-900">
+                      ₦{numericAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">
+                      Transaction Fee ({transactionFeePercentage}%):
+                    </span>
+                    <span className="font-medium text-slate-900">
+                      ₦{estimatedFee.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-200 flex justify-between">
+                    <span className="font-semibold text-slate-900">Net to Receive:</span>
+                    <span className="font-bold text-emerald-600">
+                      ₦{estimatedNetAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Message */}
@@ -275,7 +309,7 @@ export default function PayoutCard({ user, balance }: PayoutCardProps) {
           </button>
 
           <p className="text-xs text-slate-500 text-center">
-            Payouts are processed within 24-48 hours. A service fee of 2%
+            Payouts are processed within 24-48 hours. A service fee of {transactionFeePercentage}%
             applies to all withdrawals.
           </p>
         </form>
@@ -288,7 +322,7 @@ export default function PayoutCard({ user, balance }: PayoutCardProps) {
         </h3>
         <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
           <li>Minimum payout is ₦5,000</li>
-          <li>A 2% service fee is deducted from your payout</li>
+          <li>A {transactionFeePercentage}% service fee is deducted from your payout</li>
           <li>Payouts are processed Monday-Friday</li>
           <li>Funds arrive in 24-48 hours to your bank account</li>
           <li>You can request multiple payouts</li>

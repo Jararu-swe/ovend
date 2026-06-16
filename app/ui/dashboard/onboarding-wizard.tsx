@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -37,10 +37,32 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
   const router = useRouter();
   
   // Make sound functionality optional - no longer requires SoundProvider
-  const playSound = (soundType: string) => {
+  const playSound = useCallback((soundType: string) => {
     // Sound disabled for now - can be re-enabled when SoundProvider is added back
     console.log(`Sound would play: ${soundType}`);
-  };
+  }, []);
+
+  // Banks state
+  const [banks, setBanks] = useState<{ id: number; name: string; code: string }[]>([]);
+  const [isLoadingBanks, setIsLoadingBanks] = useState(true);
+
+  // Fetch banks on component mount
+  useEffect(() => {
+    async function fetchBanks() {
+      try {
+        const res = await fetch("/api/banks");
+        if (res.ok) {
+          const data = await res.json();
+          setBanks(data.banks || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch banks:", err);
+      } finally {
+        setIsLoadingBanks(false);
+      }
+    }
+    fetchBanks();
+  }, []);
   
   const [step, setStep] = useState(1);
   const [copied, setCopied] = useState(false);
@@ -436,12 +458,26 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
                 <label className="block text-xs font-bold text-slate-600 mb-1">
                   Bank Name <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
-                <input
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder="e.g. GTBank, Access Bank, First Bank"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
-                />
+                {isLoadingBanks ? (
+                  <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
+                    Loading banks...
+                  </div>
+                ) : (
+                  <select
+                    id="bank_name"
+                    name="bank_name"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
+                  >
+                    <option value="">Select your bank</option>
+                    {banks.map((bank) => (
+                      <option key={bank.id} value={bank.name}>
+                        {bank.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div>

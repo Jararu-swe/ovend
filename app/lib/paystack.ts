@@ -18,49 +18,58 @@ export interface PaymentData {
   };
 }
 
-const bankCodeMap: Record<string, string> = {
-  "guaranty trust bank": "058",
-  gtbank: "058",
-  "access bank": "044",
-  firstbank: "011",
-  "first bank": "011",
-  zenithbank: "057",
-  "zenith bank": "057",
-  uba: "033",
-  "united bank for africa": "033",
-  "united bank for africa (uba)": "033",
-  "heritage bank": "030",
-  "stanbic ibtc bank": "039",
-  stanbic: "039",
-  "fidelity bank": "070",
-  fidelity: "070",
-  "union bank": "032",
-  "union bank of nigeria": "032",
-  ecobank: "050",
-  "polaris bank": "076",
-  polaris: "076",
-  "wema bank": "035",
-  wema: "035",
-  "diamond bank": "063",
-  "keystone bank": "082",
-  "alumni bank": "023",
-  "standard chartered bank": "068",
-  "citi bank": "023",
-  citi: "023",
-};
+// Cache for Paystack banks to avoid repeated API calls
+let banksCache: PaystackBank[] | null = null;
+let banksCacheTime: number = 0;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 export function normalizeBankName(bankName: string) {
   return bankName
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ")
-    .replace(/bank$/g, "")
+    .replace(/[^\w\s]/g, "")
     .trim();
 }
 
-export function getBankCodeFromName(bankName: string): string | undefined {
-  const normalized = normalizeBankName(bankName);
-  return bankCodeMap[normalized] || bankCodeMap[normalized.replace(/ /g, "")];
+export async function getBankCodeFromName(bankName: string): Promise<string | undefined> {
+  const normalizedInput = normalizeBankName(bankName);
+  
+  // Refresh cache if needed
+  if (!banksCache || Date.now() - banksCacheTime > CACHE_DURATION) {
+    banksCache = await getPaystackBanks();
+    banksCacheTime = Date.now();
+  }
+  
+  if (!banksCache) {
+    return undefined;
+  }
+  
+  // Try exact match first
+  let match = banksCache.find(bank => 
+    normalizeBankName(bank.name) === normalizedInput
+  );
+  
+  if (match) {
+    return match.code;
+  }
+  
+  // Try partial match
+  match = banksCache.find(bank => 
+    normalizeBankName(bank.name).includes(normalizedInput) || 
+    normalizedInput.includes(normalizeBankName(bank.name))
+  );
+  
+  if (match) {
+    return match.code;
+  }
+  
+  // Try matching by slug
+  match = banksCache.find(bank => 
+    bank.slug.toLowerCase() === normalizedInput.replace(/ /g, "-")
+  );
+  
+  return match?.code;
 }
 
 export async function initializePayment(data: PaymentData) {
@@ -181,6 +190,14 @@ export async function createPaystackRecipient(
     return { ok: false, error: "Paystack secret key not configured" };
   }
 
+  // Test mode mock
+  if (secretKey.startsWith("sk_test_")) {
+    return {
+      ok: true,
+      recipientCode: "RCP_test_" + Date.now(),
+    };
+  }
+
   const response = await fetch("https://api.paystack.co/transferrecipient", {
     method: "POST",
     headers: {
@@ -223,6 +240,15 @@ export async function initiatePaystackTransfer(
   const secretKey = process.env.PAYSTACK_SECRET_KEY;
   if (!secretKey) {
     return { ok: false, error: "Paystack secret key not configured" };
+  }
+
+  // Test mode mock
+  if (secretKey.startsWith("sk_test_")) {
+    return {
+      ok: true,
+      transferCode: "TRF_test_" + Date.now(),
+      reference: reference,
+    };
   }
 
   // Retry logic for transient failures (3 attempts, exponential backoff)
@@ -282,6 +308,49 @@ export async function initiatePaystackTransfer(
     ok: false,
     error: lastError || "Failed to initiate Paystack transfer",
   };
+}
+
+export interface PaystackBank {
+  id: number;
+  name: string;
+  code: string;
+  slug: string;
+  longcode: string;
+  gateway: string | null;
+  pay_with_bank: boolean;
+  active: boolean;
+  is_deleted: boolean;
+  country: string;
+  currency: string;
+  type: string;
+}
+
+export async function getPaystackBanks(): Promise<PaystackBank[]> {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY;
+  if (!secretKey) {
+    return [];
+  }
+
+  try {
+    const response = await fetch("https://api.paystack.co/bank?country=nigeria", {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+      },
+    });
+    
+    const data = await response.json();
+    if (!data?.status || !data?.data) {
+      return [];
+    }
+    
+    // Only return active Nigerian banks
+    return data.data.filter((bank: PaystackBank) => 
+      bank.active && bank.country === "Nigeria" && bank.currency === "NGN"
+    );
+  } catch (error) {
+    console.error("Failed to fetch Paystack banks:", error);
+    return [];
+  }
 }
 
 export function generatePaymentReference(orderId: string): string {

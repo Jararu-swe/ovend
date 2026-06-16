@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 // Authentic Arewa Knot Symbol
@@ -240,19 +242,24 @@ export function NumberedTribalPattern({ index, className = '' }: { index: number
 }
 
 // Background pattern for hero
-export function MudclothPattern({ className = '', opacity = 0.05 }: { className?: string, opacity?: number }) {
+export function MudclothPattern({ className = '', opacity = 0.3 }: { className?: string, opacity?: number }) {
+  // Generate unique ID for pattern to avoid duplicates
+  const patternId = React.useId();
+  
   return (
     <div className={`absolute inset-0 pointer-events-none ${className}`} style={{ opacity }}>
-      <svg className="w-full h-full" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <svg className={`w-full h-full text-slate-300`} width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <pattern id="mudcloth" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M0,15 L15,0 L30,15 L45,0 L60,15 M0,45 L15,30 L30,45 L45,30 L60,45" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="15" cy="15" r="2" fill="currentColor" />
-            <circle cx="45" cy="15" r="2" fill="currentColor" />
-            <circle cx="30" cy="30" r="2" fill="currentColor" />
+          <pattern id={patternId} x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+            <path d="M0,20 L20,0 L40,20 L60,0 L80,20 M0,60 L20,40 L40,60 L60,40 L80,60" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="20" cy="20" r="5" fill="currentColor" />
+            <circle cx="60" cy="20" r="5" fill="currentColor" />
+            <circle cx="40" cy="40" r="5" fill="currentColor" />
+            <circle cx="20" cy="60" r="5" fill="currentColor" />
+            <circle cx="60" cy="60" r="5" fill="currentColor" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#mudcloth)" />
+        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
       </svg>
     </div>
   );

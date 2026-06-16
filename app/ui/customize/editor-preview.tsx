@@ -6,9 +6,10 @@ interface EditorPreviewProps {
   vendorSlug: string;
   viewport: Viewport;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  onIframeLoad?: () => void;
 }
 
-export default function EditorPreview({ vendorSlug, viewport, iframeRef }: EditorPreviewProps) {
+export default function EditorPreview({ vendorSlug, viewport, iframeRef, onIframeLoad }: EditorPreviewProps) {
   const viewportWidths: Record<Viewport, string> = {
     desktop: '100%',
     tablet: '768px',
@@ -65,6 +66,7 @@ export default function EditorPreview({ vendorSlug, viewport, iframeRef }: Edito
             className="h-full w-full"
             title="Store Preview"
             style={viewport === 'phone' ? { height: 'calc(100% - 1.5rem)' } : undefined}
+            onLoad={onIframeLoad}
           />
         </div>
       </div>

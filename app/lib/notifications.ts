@@ -6,9 +6,7 @@ import { sql } from "../lib/db";
 type SendResult = { success: boolean; info?: any };
 
 let nodemailerAvailable = false;
-let twilioAvailable = false;
 let nodemailer: any = null;
-let twilio: any = null;
 
 try {
   // dynamic require to avoid hard crash if packages not installed
@@ -17,14 +15,6 @@ try {
   nodemailerAvailable = true;
 } catch (err) {
   nodemailerAvailable = false;
-}
-
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  twilio = require("twilio");
-  twilioAvailable = true;
-} catch (err) {
-  twilioAvailable = false;
 }
 
 export async function sendEmail(
@@ -90,22 +80,44 @@ export async function sendEmail(
 
 export async function sendSMS(to: string, body: string): Promise<SendResult> {
   if (
-    twilioAvailable &&
-    process.env.TWILIO_ACCOUNT_SID &&
-    process.env.TWILIO_AUTH_TOKEN &&
-    process.env.TWILIO_FROM
+    process.env.SENDCHAMP_PUBLIC_KEY &&
+    process.env.SENDCHAMP_SENDER_NAME
   ) {
     try {
-      const client = twilio(
-        process.env.TWILIO_ACCOUNT_SID,
-        process.env.TWILIO_AUTH_TOKEN,
-      );
-      const msg = await client.messages.create({
-        body,
-        from: process.env.TWILIO_FROM,
-        to,
+      // Ensure phone number is in international format (E.164)
+      let formattedTo = to;
+      if (!formattedTo.startsWith('+')) {
+        // If it starts with 0, replace with +234 (Nigeria) by default
+        if (formattedTo.startsWith('0')) {
+          formattedTo = '+234' + formattedTo.slice(1);
+        } else {
+          // Otherwise, assume it's already international without +
+          formattedTo = '+' + formattedTo;
+        }
+      }
+
+      const response = await fetch('https://api.sendchamp.com/api/v1/sms/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${process.env.SENDCHAMP_PUBLIC_KEY}`
+        },
+        body: JSON.stringify({
+          to: [formattedTo],
+          message: body,
+          sender_name: process.env.SENDCHAMP_SENDER_NAME,
+          route: 'dnd'
+        })
       });
-      return { success: true, info: msg };
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'success') {
+        return { success: true, info: result };
+      } else {
+        return { success: false, info: result };
+      }
     } catch (err) {
       console.error("sendSMS error:", err);
       return { success: false, info: err };

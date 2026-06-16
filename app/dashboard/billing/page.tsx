@@ -148,7 +148,11 @@ export default async function BillingPage() {
           )}
 
           {/* Payouts Section - Keep existing payout components */}
-          <PayoutCard user={user} balance={availableBalance} />
+          <PayoutCard 
+            user={user} 
+            balance={availableBalance}
+            transactionFeePercentage={subscription.plan.transaction_fee_percentage}
+          />
 
           {payouts.length > 0 && <PayoutHistory payouts={payouts} />}
 

@@ -25,8 +25,43 @@ export default function PaymentModal({
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paystackReady, setPaystackReady] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Check if Paystack is loaded
+  useEffect(() => {
+    const checkPaystack = () => {
+      if (typeof window !== 'undefined' && typeof window.PaystackPop !== 'undefined') {
+        setPaystackReady(true);
+      }
+    };
+
+    // Check immediately
+    checkPaystack();
+
+    // Listen for Paystack load event
+    const handlePaystackLoaded = () => {
+      setPaystackReady(true);
+    };
+
+    window.addEventListener('paystack-loaded', handlePaystackLoaded);
+
+    // Fallback: Check periodically for 10 seconds
+    const interval = setInterval(checkPaystack, 500);
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (!paystackReady) {
+        console.warn('Paystack script did not load within timeout');
+      }
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('paystack-loaded', handlePaystackLoaded);
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [paystackReady]);
 
   // Trap focus within modal
   useEffect(() => {
@@ -89,9 +124,9 @@ export default function PaymentModal({
 
     try {
       // Check if Paystack is loaded
-      if (typeof window.PaystackPop === 'undefined') {
+      if (!paystackReady || typeof window.PaystackPop === 'undefined') {
         throw new Error(
-          'Payment system is loading. Please wait a moment and try again.'
+          'Payment system is still loading. Please wait a moment and try again.'
         );
       }
 
@@ -233,6 +268,39 @@ export default function PaymentModal({
           </div>
         )}
 
+        {/* Paystack Loading Indicator */}
+        {!paystackReady && (
+          <div
+            className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+            role="status"
+          >
+            <div className="flex items-center gap-2">
+              <svg
+                className="animate-spin h-4 w-4 text-blue-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              <p className="text-sm text-blue-800">Loading payment system...</p>
+            </div>
+          </div>
+        )}
+
         {/* Actions - Wrapped in form for Paystack */}
         <form onSubmit={(e) => { e.preventDefault(); handlePayment(); }}>
           <div className="flex gap-3">
@@ -246,7 +314,7 @@ export default function PaymentModal({
             </button>
             <button
               type="submit"
-              disabled={isProcessing}
+              disabled={isProcessing || !paystackReady}
               className="flex-1 px-4 py-3 text-white bg-emerald-500 hover:bg-emerald-400 rounded-xl font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isProcessing ? (

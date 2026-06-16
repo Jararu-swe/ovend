@@ -2,7 +2,6 @@
 
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import Image from "next/image";
 import { lusitana } from "@/app/ui/fonts";
 
 const storyItems = [
@@ -104,70 +103,32 @@ export function HorizontalScrollStory() {
                 </h2>
               </motion.div>
 
-              {/* MOBILE layout (horizontal with overlay) */}
-              <div className="flex md:hidden h-full w-full relative z-10">
-                {/* Full image background */}
-                <div className="absolute inset-0 w-full h-full">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                </div>
-
-                {/* Text overlay - bottom */}
-                <div className="absolute bottom-0 left-0 right-0 px-5 py-8 flex flex-col justify-end h-full">
-                  {/* Index */}
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="w-6 h-[1px] bg-emerald-400" />
-                    <span className="text-emerald-400 text-[10px] font-bold tracking-[0.2em] uppercase">
-                      0{index + 1}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3
-                    className={`${lusitana.className} text-xl sm:text-2xl text-white font-bold mb-2 leading-tight`}
-                  >
-                    {item.subtitle}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-slate-300 text-xs sm:text-sm font-light leading-relaxed max-w-xs">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* DESKTOP layout (side-by-side) */}
-              <div className="hidden md:flex w-full max-w-7xl flex-row items-center justify-between gap-24 px-12 lg:px-24 relative z-10">
+              {/* Unified layout - optimized for mobile and desktop */}
+              <div className="flex w-full max-w-7xl h-full flex-col md:flex-row items-center justify-center md:justify-between gap-6 md:gap-20 px-5 sm:px-6 md:px-12 lg:px-24 py-8 md:py-0 relative z-10">
                 {/* Left: text */}
-                <div className="w-5/12 flex flex-col items-start">
-                  <span className="text-emerald-500 font-medium tracking-[0.2em] text-sm uppercase mb-6 flex items-center gap-4">
-                    <span className="w-8 h-[1px] bg-emerald-500" />0{index + 1}
+                <div className="w-full md:w-5/12 flex flex-col items-start justify-center space-y-3 md:space-y-6">
+                  <span className="text-emerald-400 md:text-emerald-500 font-medium tracking-[0.15em] md:tracking-[0.2em] text-[0.65rem] sm:text-xs md:text-sm uppercase flex items-center gap-2 md:gap-4">
+                    <span className="w-4 md:w-8 h-[1px] bg-emerald-400 md:bg-emerald-500" />0{index + 1}
                   </span>
                   <h3
-                    className={`${lusitana.className} text-5xl lg:text-6xl text-white font-bold mb-8 leading-[1.1] tracking-tight`}
+                    className={`${lusitana.className} text-[1.75rem] leading-[1.15] sm:text-4xl md:text-5xl lg:text-6xl text-white font-bold tracking-tight`}
                   >
                     {item.subtitle}
                   </h3>
-                  <p className="text-slate-400 text-xl font-light leading-relaxed max-w-md">
+                  <p className="text-slate-300 md:text-slate-400 text-sm sm:text-base md:text-lg lg:text-xl font-light leading-relaxed max-w-md">
                     {item.description}
                   </p>
                 </div>
 
                 {/* Right: image */}
-                <div className="w-6/12 relative">
-                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-white/10 group bg-slate-900">
-                    <Image
+                <div className="w-full md:w-6/12 relative flex-shrink-0">
+                  <div className="relative aspect-[4/5] w-full max-w-[280px] sm:max-w-sm mx-auto md:max-w-full overflow-hidden rounded-2xl md:rounded-[2rem] shadow-2xl ring-1 ring-white/10 group bg-slate-900">
+                    <img
                       src={item.image}
                       alt={item.title}
-                      fill
-                      className="object-cover scale-110 transition-transform duration-[2s] ease-out group-hover:scale-100"
+                      className="object-cover scale-105 md:scale-110 transition-transform duration-[2s] ease-out group-hover:scale-100 absolute inset-0 w-full h-full"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-60 transition-opacity duration-700 group-hover:opacity-20" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/0 to-black/0 opacity-50 md:opacity-60 transition-opacity duration-700 group-hover:opacity-20" />
                   </div>
                 </div>
               </div>

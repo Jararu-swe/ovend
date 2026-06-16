@@ -308,22 +308,33 @@ export default function ThemeEditor({
     setSectionContent(getDefaultSectionContent());
   }, [pushHistory, theme]);
 
+  // Track iframe load status
+  const iframeLoaded = useRef(false);
+
   // Send live preview updates to the iframe
   useEffect(() => {
     if (!vendorSlug) return;
     const timeout = window.setTimeout(() => {
-      if (!previewFrameRef.current?.contentWindow) return;
-      previewFrameRef.current.contentWindow.postMessage(
-        {
-          type: "VENDLE_PREVIEW_THEME_UPDATE",
-          payload: {
-            ...localTheme,
-            sections: JSON.stringify(sections),
-            section_content: JSON.stringify(sectionContent),
+      // Only send message if iframe is loaded and ready
+      const iframe = previewFrameRef.current;
+      if (!iframe || !iframe.contentWindow || !iframeLoaded.current) return;
+      
+      try {
+        iframe.contentWindow.postMessage(
+          {
+            type: "VENDLE_PREVIEW_THEME_UPDATE",
+            payload: {
+              ...localTheme,
+              sections: JSON.stringify(sections),
+              sectionContent: JSON.stringify(sectionContent),
+            },
           },
-        },
-        window.location.origin,
-      );
+          window.location.origin,
+        );
+      } catch (error) {
+        // Silently ignore any errors sending the message
+        console.debug("Error sending preview message:", error);
+      }
     }, 100);
 
     return () => window.clearTimeout(timeout);
@@ -560,6 +571,7 @@ export default function ThemeEditor({
             vendorSlug={vendorSlug}
             viewport={viewport}
             iframeRef={previewFrameRef}
+            onIframeLoad={() => { iframeLoaded.current = true; }}
           />
         </div>
       </div>
