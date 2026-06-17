@@ -164,7 +164,7 @@ export default function TimeRangeSelector({
                 <label className="text-sm font-medium text-slate-700 mb-2">Start Date</label>
                 <DatePicker
                   selected={startDate}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setStartDate(date || new Date());
                     setValidationError('');
                   }}
@@ -180,7 +180,7 @@ export default function TimeRangeSelector({
                 <label className="text-sm font-medium text-slate-700 mb-2">End Date</label>
                 <DatePicker
                   selected={endDate}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setEndDate(date || new Date());
                     setValidationError('');
                   }}
