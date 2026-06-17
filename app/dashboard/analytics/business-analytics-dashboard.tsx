@@ -160,12 +160,7 @@ export default function BusinessAnalyticsDashboard({
       {/* Analytics Summary Cards */}
       {analyticsSummary && (
         <AnalyticsSummaryCards
-          totalVisits={analyticsSummary.totalVisits}
-          totalOrders={analyticsSummary.totalOrders}
-          totalRevenue={analyticsSummary.totalRevenue}
-          conversionRate={analyticsSummary.conversionRate}
-          avgOrderValue={analyticsSummary.avgOrderValue}
-          periodChange={analyticsSummary.periodChange}
+          summary={analyticsSummary}
         />
       )}
 
