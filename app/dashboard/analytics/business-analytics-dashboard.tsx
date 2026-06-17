@@ -210,7 +210,6 @@ export default function BusinessAnalyticsDashboard({
       {customerMetrics && (
         <CustomerMetricsSection
           metrics={customerMetrics}
-          dateRange={dateRange}
         />
       )}
 
