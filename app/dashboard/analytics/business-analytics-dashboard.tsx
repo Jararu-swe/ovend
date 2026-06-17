@@ -153,7 +153,7 @@ export default function BusinessAnalyticsDashboard({
             customRange={customDateRange}
             onChange={handleTimeRangeChange}
           />
-          <ExportMenu vendorId={vendorId} dateRange={dateRange} />
+          <ExportMenu dateRange={dateRange} />
         </div>
       </div>
 
