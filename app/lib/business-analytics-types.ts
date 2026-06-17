@@ -113,6 +113,12 @@ export interface InsufficientForecastDataError {
   historicalDays: number;
 }
 
+export interface InsufficientGeographicDataError {
+  type: 'insufficient_geographic_data';
+  message: string;
+  suggestion: string;
+}
+
 // Daily analytics data
 export interface DailyAnalytics {
   date: string;

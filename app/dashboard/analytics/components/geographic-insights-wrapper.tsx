@@ -1,17 +1,28 @@
 import { 
   fetchGeographicInsights, 
   extractLocationFromAddress,
-  type DateRange,
-  type GeographicInsight,
-  type InsufficientGeographicDataError,
 } from '@/app/lib/business-analytics';
 import { sql } from '@/app/lib/db';
 import GeographicInsights from './geographic-insights';
+import type { 
+  DateRange,
+  GeographicInsight,
+  InsufficientGeographicDataError 
+} from '@/app/lib/business-analytics-types';
 
 interface GeographicInsightsWrapperProps {
   vendorId: string;
   dateRange: DateRange;
   onFilterChange?: (filter: { city?: string; state?: string } | null) => void;
+}
+
+/**
+ * Type guard to check if the result is insufficient geographic data
+ */
+function isInsufficientGeographicData(
+  result: GeographicInsight[] | InsufficientGeographicDataError
+): result is InsufficientGeographicDataError {
+  return 'type' in result && result.type === 'insufficient_geographic_data';
 }
 
 /**
@@ -31,10 +42,9 @@ export default async function GeographicInsightsWrapper({
   const insightsResult = await fetchGeographicInsights(vendorId, dateRange);
   
   // Check if we have insufficient data
-  const insights: GeographicInsight[] = 
-    'type' in insightsResult && insightsResult.type === 'insufficient_geographic_data'
-      ? [] // Pass empty array to trigger insufficient data UI
-      : insightsResult;
+  const insights: GeographicInsight[] = isInsufficientGeographicData(insightsResult)
+    ? []
+    : insightsResult;
 
   // Fetch vendor's pickup address to extract primary state (Requirement 9.10)
   const vendorResult = await sql`
