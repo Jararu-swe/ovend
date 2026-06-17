@@ -12,6 +12,8 @@ import type {
   RevenueForecast,
   InsufficientForecastDataError,
   DailyAnalytics,
+  PeriodChange,
+  PeriodComparison,
 } from './business-analytics-types';
 
 /**
