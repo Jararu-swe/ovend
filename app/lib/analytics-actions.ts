@@ -180,9 +180,12 @@ export async function fetchConversionFunnel(
 
   const result: ConversionFunnel = {
     visits: 0,
-    addToCart: 0,
-    initiatedCheckout: 0,
-    completedCheckout: 0,
+    ordersInitiated: 0,
+    ordersCompleted: 0,
+    visitToOrderRate: 0,
+    orderCompletionRate: 0,
+    abandonmentRate: 0,
+    avgTimeToFulfillment: 0,
   };
 
   setCache(cacheKey, result, 300);

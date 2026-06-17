@@ -93,22 +93,14 @@ export default function ConversionFunnelChart({
     return <SkeletonFunnelChart />;
   }
 
-  // Fallback values
-  const ordersInitiated = funnel.ordersInitiated ?? funnel.initiatedCheckout ?? 0;
-  const ordersCompleted = funnel.ordersCompleted ?? funnel.completedCheckout ?? 0;
-  const visitToOrderRate = funnel.visitToOrderRate ?? (ordersInitiated > 0 ? (ordersCompleted / ordersInitiated) * 100 : 0);
-  const orderCompletionRate = funnel.orderCompletionRate ?? (ordersInitiated > 0 ? (ordersCompleted / ordersInitiated) * 100 : 0);
-  const abandonmentRate = funnel.abandonmentRate ?? (ordersInitiated > 0 ? 100 - orderCompletionRate : 0);
-  const avgTimeToFulfillment = funnel.avgTimeToFulfillment ?? 0;
-
   // Calculate percentages relative to visits (top of funnel)
   const maxValue = funnel.visits || 1; // Prevent division by zero
   const visitsPercentage = 100;
-  const ordersInitiatedPercentage = (ordersInitiated / maxValue) * 100;
-  const ordersCompletedPercentage = (ordersCompleted / maxValue) * 100;
+  const ordersInitiatedPercentage = (funnel.ordersInitiated / maxValue) * 100;
+  const ordersCompletedPercentage = (funnel.ordersCompleted / maxValue) * 100;
 
   // Check if conversion rate is below 2% threshold for optimization suggestion
-  const showOptimizationSuggestion = visitToOrderRate < 2 && visitToOrderRate > 0;
+  const showOptimizationSuggestion = funnel.visitToOrderRate < 2 && funnel.visitToOrderRate > 0;
 
   // Format average fulfillment time
   const formatFulfillmentTime = (hours: number): string => {
@@ -140,22 +132,22 @@ export default function ConversionFunnelChart({
           value={funnel.visits}
           percentage={visitsPercentage}
           color="bg-blue-500"
-          conversionRate={visitToOrderRate}
+          conversionRate={funnel.visitToOrderRate}
           conversionLabel="Visit → Order Conversion"
         />
         
         <FunnelStage
           label="Orders Initiated"
-          value={ordersInitiated}
+          value={funnel.ordersInitiated}
           percentage={ordersInitiatedPercentage}
           color="bg-purple-500"
-          conversionRate={orderCompletionRate}
+          conversionRate={funnel.orderCompletionRate}
           conversionLabel="Order Completion Rate"
         />
         
         <FunnelStage
           label="Orders Completed"
-          value={ordersCompleted}
+          value={funnel.ordersCompleted}
           percentage={ordersCompletedPercentage}
           color="bg-emerald-500"
         />
@@ -171,24 +163,24 @@ export default function ConversionFunnelChart({
                 Abandonment Rate
               </p>
               <p className={`text-2xl font-bold ${
-                abandonmentRate > 50 ? 'text-red-600' :
-                abandonmentRate > 30 ? 'text-amber-600' :
+                funnel.abandonmentRate > 50 ? 'text-red-600' :
+                funnel.abandonmentRate > 30 ? 'text-amber-600' :
                 'text-emerald-600'
               }`}>
-                {abandonmentRate.toFixed(1)}%
+                {funnel.abandonmentRate.toFixed(1)}%
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                {ordersInitiated - ordersCompleted} orders not completed
+                {funnel.ordersInitiated - funnel.ordersCompleted} orders not completed
               </p>
             </div>
             <div className={`p-2 rounded-lg ${
-              abandonmentRate > 50 ? 'bg-red-100' :
-              abandonmentRate > 30 ? 'bg-amber-100' :
+              funnel.abandonmentRate > 50 ? 'bg-red-100' :
+              funnel.abandonmentRate > 30 ? 'bg-amber-100' :
               'bg-emerald-100'
             }`}>
               <svg className={`h-5 w-5 ${
-                abandonmentRate > 50 ? 'text-red-600' :
-                abandonmentRate > 30 ? 'text-amber-600' :
+                funnel.abandonmentRate > 50 ? 'text-red-600' :
+                funnel.abandonmentRate > 30 ? 'text-amber-600' :
                 'text-emerald-600'
               }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -205,7 +197,7 @@ export default function ConversionFunnelChart({
                 Avg. Fulfillment Time
               </p>
               <p className="text-2xl font-bold text-slate-900">
-                {formatFulfillmentTime(avgTimeToFulfillment)}
+                {formatFulfillmentTime(funnel.avgTimeToFulfillment)}
               </p>
               <p className="text-xs text-slate-500 mt-1">
                 Time to complete orders

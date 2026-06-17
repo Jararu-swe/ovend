@@ -73,15 +73,12 @@ export interface ProductPerformanceResponse {
 // Conversion funnel data
 export interface ConversionFunnel {
   visits: number;
-  addToCart?: number;
-  initiatedCheckout?: number;
-  ordersInitiated?: number;
-  completedCheckout: number;
-  ordersCompleted?: number;
-  visitToOrderRate?: number;
-  orderCompletionRate?: number;
-  abandonmentRate?: number;
-  avgTimeToFulfillment?: number;
+  ordersInitiated: number;
+  ordersCompleted: number;
+  visitToOrderRate: number;
+  orderCompletionRate: number;
+  abandonmentRate: number;
+  avgTimeToFulfillment: number;
 }
 
 // Geographic insight
