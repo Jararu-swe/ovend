@@ -22,7 +22,7 @@ export async function fetchAnalyticsSummary(
   dateRange: DateRange
 ): Promise<AnalyticsSummary> {
   const cacheKey = `analytics:summary:${vendorId}:${dateRange.startDate}:${dateRange.endDate}`;
-  const cached = getFromCache<AnalyticsSummary>(cacheKey);
+  const cached = await getFromCache(cacheKey) as AnalyticsSummary | undefined;
   if (cached) return cached;
 
   const { startDate, endDate } = dateRange;
@@ -121,7 +121,7 @@ export async function fetchCustomerMetrics(
   dateRange: DateRange
 ): Promise<CustomerMetrics> {
   const cacheKey = `analytics:customers:${vendorId}:${dateRange.startDate}:${dateRange.endDate}`;
-  const cached = getFromCache<CustomerMetrics>(cacheKey);
+  const cached = await getFromCache(cacheKey) as CustomerMetrics | undefined;
   if (cached) return cached;
 
   const { startDate, endDate } = dateRange;
@@ -153,7 +153,7 @@ export async function fetchProductPerformance(
 ): Promise<ProductPerformanceResponse> {
   const { page = 1, sortBy = 'revenue', category } = options || {};
   const cacheKey = `analytics:products:${vendorId}:${dateRange.startDate}:${dateRange.endDate}:${page}:${sortBy}:${category || ''}`;
-  const cached = getFromCache<ProductPerformanceResponse>(cacheKey);
+  const cached = await getFromCache(cacheKey) as ProductPerformanceResponse | undefined;
   if (cached) return cached;
 
   const result: ProductPerformanceResponse = {
@@ -173,7 +173,7 @@ export async function fetchConversionFunnel(
   dateRange: DateRange
 ): Promise<ConversionFunnel> {
   const cacheKey = `analytics:funnel:${vendorId}:${dateRange.startDate}:${dateRange.endDate}`;
-  const cached = getFromCache<ConversionFunnel>(cacheKey);
+  const cached = await getFromCache(cacheKey) as ConversionFunnel | undefined;
   if (cached) return cached;
 
   const result: ConversionFunnel = {
@@ -195,7 +195,7 @@ export async function fetchGeographicInsights(
   dateRange: DateRange
 ): Promise<GeographicInsight[]> {
   const cacheKey = `analytics:geo:${vendorId}:${dateRange.startDate}:${dateRange.endDate}`;
-  const cached = getFromCache<GeographicInsight[]>(cacheKey);
+  const cached = await getFromCache(cacheKey) as GeographicInsight[] | undefined;
   if (cached) return cached;
 
   const result: GeographicInsight[] = [];
@@ -211,7 +211,7 @@ export async function calculateRevenueForecast(
   vendorId: string
 ): Promise<RevenueForecast | InsufficientForecastDataError> {
   const cacheKey = `analytics:forecast:${vendorId}`;
-  const cached = getFromCache<RevenueForecast | InsufficientForecastDataError>(cacheKey);
+  const cached = await getFromCache(cacheKey) as RevenueForecast | InsufficientForecastDataError | undefined;
   if (cached) return cached;
 
   const result: InsufficientForecastDataError = {
@@ -233,7 +233,7 @@ export async function fetchDailyAnalytics(
   dateRange: DateRange
 ): Promise<DailyAnalytics[]> {
   const cacheKey = `analytics:daily:${vendorId}:${dateRange.startDate}:${dateRange.endDate}`;
-  const cached = getFromCache<DailyAnalytics[]>(cacheKey);
+  const cached = await getFromCache(cacheKey) as DailyAnalytics[] | undefined;
   if (cached) return cached;
 
   const result: DailyAnalytics[] = [];
