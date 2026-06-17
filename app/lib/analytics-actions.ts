@@ -6,7 +6,7 @@ import type {
   DateRange,
   AnalyticsSummary,
   CustomerMetrics,
-  ProductPerformance,
+  ProductPerformanceResponse,
   ConversionFunnel,
   GeographicInsight,
   RevenueForecast,
@@ -130,9 +130,9 @@ export async function fetchCustomerMetrics(
   const result: CustomerMetrics = {
     newCustomers: 0,
     returningCustomers: 0,
-    repeatPurchaseRate: 0,
-    avgOrderFrequency: 0,
-    topCustomers: [],
+    repeatCustomerRate: 0,
+    averageLifetimeValue: 0,
+    totalUniqueCustomers: 0,
   };
 
   setCache(cacheKey, result, 300);
@@ -150,13 +150,13 @@ export async function fetchProductPerformance(
     sortBy?: 'revenue' | 'units' | 'velocity' | 'name';
     category?: string;
   }
-): Promise<ProductPerformance> {
+): Promise<ProductPerformanceResponse> {
   const { page = 1, sortBy = 'revenue', category } = options || {};
   const cacheKey = `analytics:products:${vendorId}:${dateRange.startDate}:${dateRange.endDate}:${page}:${sortBy}:${category || ''}`;
-  const cached = getFromCache<ProductPerformance>(cacheKey);
+  const cached = getFromCache<ProductPerformanceResponse>(cacheKey);
   if (cached) return cached;
 
-  const result: ProductPerformance = {
+  const result: ProductPerformanceResponse = {
     products: [],
     totalCount: 0,
   };
@@ -193,14 +193,12 @@ export async function fetchConversionFunnel(
 export async function fetchGeographicInsights(
   vendorId: string,
   dateRange: DateRange
-): Promise<GeographicInsights> {
+): Promise<GeographicInsight[]> {
   const cacheKey = `analytics:geo:${vendorId}:${dateRange.startDate}:${dateRange.endDate}`;
-  const cached = getFromCache<GeographicInsights>(cacheKey);
+  const cached = getFromCache<GeographicInsight[]>(cacheKey);
   if (cached) return cached;
 
-  const result: GeographicInsights = {
-    locations: [],
-  };
+  const result: GeographicInsight[] = [];
 
   setCache(cacheKey, result, 300);
   return result;

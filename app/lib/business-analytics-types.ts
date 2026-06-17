@@ -51,9 +51,8 @@ export interface CustomerMetrics {
   totalUniqueCustomers: number;
 }
 
-
-// Product performance data
-export interface ProductPerformance {
+// Product performance data (single product)
+export interface ProductPerformanceItem {
   productId: string;
   productName: string;
   category?: string;
@@ -64,16 +63,25 @@ export interface ProductPerformance {
   discountPercentage?: number;
 }
 
+// Product performance response (with pagination)
+export interface ProductPerformanceResponse {
+  products: ProductPerformanceItem[];
+  totalCount: number;
+}
+
 
 // Conversion funnel data
 export interface ConversionFunnel {
   visits: number;
-  ordersInitiated: number;
-  ordersCompleted: number;
-  visitToOrderRate: number;
-  orderCompletionRate: number;
-  abandonmentRate: number;
-  avgTimeToFulfillment: number;
+  addToCart?: number;
+  initiatedCheckout?: number;
+  ordersInitiated?: number;
+  completedCheckout: number;
+  ordersCompleted?: number;
+  visitToOrderRate?: number;
+  orderCompletionRate?: number;
+  abandonmentRate?: number;
+  avgTimeToFulfillment?: number;
 }
 
 // Geographic insight

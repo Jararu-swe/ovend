@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { ProductPerformance } from '@/app/lib/business-analytics-types';
+import type { ProductPerformanceItem } from '@/app/lib/business-analytics-types';
 
 interface ProductPerformanceTableProps {
-  products: ProductPerformance[];
+  products: ProductPerformanceItem[];
   totalCount: number;
   currentPage: number;
   pageSize: number;
