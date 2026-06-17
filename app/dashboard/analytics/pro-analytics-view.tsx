@@ -17,7 +17,7 @@ import type {
 
 interface ProAnalyticsViewProps {
   vendorId: string;
-  tier: string;
+  tier?: 'starter' | 'pro' | 'business';
 }
 
 export default function ProAnalyticsView({ 
