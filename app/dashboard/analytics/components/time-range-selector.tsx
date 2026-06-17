@@ -217,7 +217,7 @@ export default function TimeRangeSelector({
                 </label>
                 <DatePicker
                   selected={startDate}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setStartDate(date || new Date());
                     setError(null);
                   }}
@@ -235,7 +235,7 @@ export default function TimeRangeSelector({
                 </label>
                 <DatePicker
                   selected={endDate}
-                  onChange={(date) => {
+                  onChange={(date: Date | null) => {
                     setEndDate(date || new Date());
                     setError(null);
                   }}
