@@ -15,7 +15,7 @@ import { ProductForm } from '@/app/lib/definitions';
 import ImageUpload from './image-upload';
 import MultiImageUpload from './multi-image-upload';
 
-// Safe parse for JSON
+// Safe parse for JSON (options)
 function safeParseOptions(optsStr: string | null | undefined) {
   if (!optsStr) return [];
   try {
@@ -30,6 +30,17 @@ function safeParseOptions(optsStr: string | null | undefined) {
   }
 }
 
+// Safe parse for JSON array of strings (gallery images)
+function safeParseStringArray(arrStr: string | null | undefined): string[] {
+  if (!arrStr) return [];
+  try {
+    const arr = JSON.parse(arrStr);
+    return Array.isArray(arr) ? arr.filter((s: any) => typeof s === "string") : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 export default function EditProductForm({ product }: { product: ProductForm }) {
   const initialState: State = { message: '', errors: {} };
   const updateProductWithId = updateProduct.bind(null, product.id);
@@ -39,7 +50,7 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
   
   const [mainImage, setMainImage] = useState(product.image_url || '');
   const [galleryImages, setGalleryImages] = useState<string[]>(
-    safeParseOptions(product.gallery_images) as string[]
+    safeParseStringArray(product.gallery_images)
   );
   const [trackQuantity, setTrackQuantity] = useState(product.stock_quantity !== null);
   const [options, setOptions] = useState<{ id: string; name: string; price: string }[]>(
@@ -182,6 +193,13 @@ export default function EditProductForm({ product }: { product: ProductForm }) {
              </div>
            )}
            
+          <div className="mt-6 border-t border-slate-100 pt-6">
+             <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="is_digital" defaultChecked={product.is_digital} className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
+                <span className="text-sm font-medium text-slate-700">This is a digital product (no delivery required)</span>
+             </label>
+           </div>
+
            <div className="mt-6 border-t border-slate-100 pt-6">
              <legend className="mb-3 block text-sm font-medium text-slate-700">Visibility Status</legend>
              <div className="flex gap-4">

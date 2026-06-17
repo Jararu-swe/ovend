@@ -2,7 +2,7 @@
 
 import { User } from "@/app/lib/definitions";
 import { updateProfile, State } from "@/app/lib/actions";
-import { useActionState, useState, useEffect, useCallback } from "react";
+import { useActionState, useState, useEffect, useCallback, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -103,6 +103,9 @@ export default function SettingsForm({ user }: { user: User }) {
     initialState,
   );
 
+  // Track whether we've already processed this success message
+  const processedSuccessRef = useRef<string | null>(null);
+
   // Banks state
   const [banks, setBanks] = useState<{ id: number; name: string; code: string }[]>([]);
   const [isLoadingBanks, setIsLoadingBanks] = useState(true);
@@ -198,37 +201,42 @@ export default function SettingsForm({ user }: { user: User }) {
     user.pickup_address_details || "",
   );
 
-  // ── Sync form state when user data changes ────────────────
+  // ── Sync form state when user data changes (only if values actually differ) ────────────────
   useEffect(() => {
-    setStoreName(user.store_name || "");
-    setStoreDescription(user.store_description || "");
-    setWhatsappNumber(user.whatsapp_number || "");
-    setCategory(user.category || "");
-    setLocationState(user.location_state || "");
-    setStoreSlug(user.store_slug || "");
-    setBankName(user.bank_name || "");
-    setAccountNumber(user.account_number || "");
-    setAccountName(user.account_name || "");
-    setDescriptionLength(user.store_description?.length || 0);
-    setSoundEnabled(user.sound_enabled !== false);
-    setSoundVolume(user.sound_volume ?? 50);
-    setAcceptingOrders(user.accepting_orders !== false);
-    setStoreClosedNote(user.store_closed_note || "");
-    setStoreHours(parseStoreHours(user.store_hours));
-    setOffersPickup(!!user.offers_pickup);
-    setPickupAddress(user.pickup_address || "");
-    setPickupLatitude(user.pickup_latitude || null);
-    setPickupLongitude(user.pickup_longitude || null);
-    setPickupAddressDetails(user.pickup_address_details || "");
+    if (storeName !== (user.store_name || "")) setStoreName(user.store_name || "");
+    if (storeDescription !== (user.store_description || "")) setStoreDescription(user.store_description || "");
+    if (whatsappNumber !== (user.whatsapp_number || "")) setWhatsappNumber(user.whatsapp_number || "");
+    if (category !== (user.category || "")) setCategory(user.category || "");
+    if (locationState !== (user.location_state || "")) setLocationState(user.location_state || "");
+    if (storeSlug !== (user.store_slug || "")) setStoreSlug(user.store_slug || "");
+    if (bankName !== (user.bank_name || "")) setBankName(user.bank_name || "");
+    if (accountNumber !== (user.account_number || "")) setAccountNumber(user.account_number || "");
+    if (accountName !== (user.account_name || "")) setAccountName(user.account_name || "");
+    if (descriptionLength !== (user.store_description?.length || 0)) setDescriptionLength(user.store_description?.length || 0);
+    if (soundEnabled !== (user.sound_enabled !== false)) setSoundEnabled(user.sound_enabled !== false);
+    if (soundVolume !== (user.sound_volume ?? 50)) setSoundVolume(user.sound_volume ?? 50);
+    if (acceptingOrders !== (user.accepting_orders !== false)) setAcceptingOrders(user.accepting_orders !== false);
+    if (storeClosedNote !== (user.store_closed_note || "")) setStoreClosedNote(user.store_closed_note || "");
+    if (JSON.stringify(storeHours) !== JSON.stringify(parseStoreHours(user.store_hours))) setStoreHours(parseStoreHours(user.store_hours));
+    if (offersPickup !== !!user.offers_pickup) setOffersPickup(!!user.offers_pickup);
+    if (pickupAddress !== (user.pickup_address || "")) setPickupAddress(user.pickup_address || "");
+    if (pickupLatitude !== (user.pickup_latitude || null)) setPickupLatitude(user.pickup_latitude || null);
+    if (pickupLongitude !== (user.pickup_longitude || null)) setPickupLongitude(user.pickup_longitude || null);
+    if (pickupAddressDetails !== (user.pickup_address_details || "")) setPickupAddressDetails(user.pickup_address_details || "");
   }, [user]);
 
   // ── Success feedback + refresh ───────────────────────────
   useEffect(() => {
     if (state.message?.includes("Success")) {
-      playSound("success");
-      setTimeout(() => {
-        router.refresh();
-      }, 500);
+      if (processedSuccessRef.current !== state.message) {
+        processedSuccessRef.current = state.message;
+        playSound("success");
+        setTimeout(() => {
+          router.refresh();
+        }, 500);
+      }
+    } else {
+      processedSuccessRef.current = null; // Reset when message changes
     }
   }, [state.message, playSound, router]);
 

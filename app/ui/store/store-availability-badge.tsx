@@ -1,7 +1,10 @@
+'use client';
+
 import clsx from 'clsx';
+import { memo } from 'react';
 import type { StoreAvailability } from '@/app/lib/store-availability';
 
-export function StoreAvailabilityPill({
+export const StoreAvailabilityPill = memo(function StoreAvailabilityPill({
   availability,
   className,
 }: {
@@ -22,9 +25,9 @@ export function StoreAvailabilityPill({
       {open ? 'Open' : 'Closed'}
     </span>
   );
-}
+});
 
-export function StoreAvailabilityBanner({
+export const StoreAvailabilityBanner = memo(function StoreAvailabilityBanner({
   availability,
   borderColor,
   textColor,
@@ -37,17 +40,17 @@ export function StoreAvailabilityBanner({
   const open = availability.state === 'open';
   return (
     <div
-      className="border-b px-4 py-2.5 text-center text-sm"
+      className={`border-b px-4 py-3 text-center text-sm z-[101] ${!open ? 'sticky top-0 animate-pulse' : 'relative'}`}
       style={{
         borderColor: borderColor || '#e2e8f0',
-        backgroundColor: open ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.14)',
-        color: textColor || '#0f172a',
+        backgroundColor: open ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.15)',
+        color: textColor || (open ? '#0f172a' : '#dc2626'),
       }}
     >
-      <span className="font-semibold">{open ? 'Open now' : 'Closed for customers'}</span>
+      <span className="font-bold text-base">{open ? 'Open now' : 'Store is Closed'}</span>
       {availability.label ? (
-        <span className="mt-0.5 block text-xs font-normal opacity-80">{availability.label}</span>
+        <span className="mt-1 block text-sm font-normal opacity-90">{availability.label}</span>
       ) : null}
     </div>
   );
-}
+});

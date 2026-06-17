@@ -122,8 +122,24 @@ export type StoreAvailabilityInput = {
   store_closed_note?: string | null;
 };
 
+// Cache the current date to avoid recomputing every millisecond
+let cachedNow: Date | null = null;
+let cacheTimeout: NodeJS.Timeout | null = null;
+
+function getCachedNow(): Date {
+  if (!cachedNow) {
+    cachedNow = new Date();
+    // Refresh the cache every minute
+    if (cacheTimeout) clearTimeout(cacheTimeout);
+    cacheTimeout = setTimeout(() => {
+      cachedNow = null;
+    }, 60000);
+  }
+  return cachedNow;
+}
+
 export function getStoreAvailability(input: StoreAvailabilityInput): StoreAvailability {
-  const now = input.now ?? new Date();
+  const now = input.now ?? getCachedNow();
   const accepting = input.accepting_orders !== false;
 
   if (!accepting) {

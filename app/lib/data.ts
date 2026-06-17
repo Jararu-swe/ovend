@@ -28,6 +28,7 @@ export async function ensureProductColumns() {
         `ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT NULL`,
         `ALTER TABLE products ADD COLUMN IF NOT EXISTS gallery_images JSONB DEFAULT '[]'`,
         `ALTER TABLE products ADD COLUMN IF NOT EXISTS options JSONB DEFAULT '[]'`,
+        `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_digital BOOLEAN DEFAULT FALSE`,
       ];
       try {
         for (const stmt of alters) {
@@ -800,9 +801,6 @@ export async function fetchAllPublicStores(
   location?: string,
   limit = 50,
 ): Promise<PublicStore[]> {
-  // Start performance timer
-  console.time('fetchAllPublicStores');
-  
   try {
     await ensureStoreColumns();
     const searchFilter = search ? `%${search}%` : "%";
@@ -922,14 +920,9 @@ export async function fetchAllPublicStores(
       }),
     }));
 
-    // End performance timer and log results
-    console.timeEnd('fetchAllPublicStores');
-    console.log(`📊 fetchAllPublicStores: Returned ${results.length} stores`);
-
     return results;
   } catch (error) {
     console.error("Database Error (fetchAllPublicStores):", error);
-    console.timeEnd('fetchAllPublicStores');
     return [];
   }
 }

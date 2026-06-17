@@ -159,7 +159,12 @@ export default async function ExplorePage({
               {location !== 'All' && <span> in <span className="text-emerald-600 italic">{location}</span></span>}
             </p>
             <div className="flex items-center gap-3">
-              <ExploreLocation currentLocation={location} availableLocations={availableLocations} />
+              <ExploreLocation 
+                currentLocation={location} 
+                availableLocations={availableLocations}
+                currentSearch={search}
+                currentCategory={category}
+              />
             </div>
           </div>
         </FadeInUp>

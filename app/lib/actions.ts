@@ -686,7 +686,16 @@ export async function deleteProduct(id: string) {
         await deleteCloudinaryImage(product.image_url);
       }
       // Delete gallery images
-      const gallery: string[] = JSON.parse(product.gallery_images || "[]");
+      let gallery: string[] = [];
+      try {
+        gallery = JSON.parse(product.gallery_images || "[]");
+        if (!Array.isArray(gallery)) {
+          gallery = [];
+        }
+      } catch (e) {
+        console.error("Error parsing gallery images:", e);
+        gallery = [];
+      }
       if (gallery.length > 0) {
         await deleteCloudinaryImages(gallery);
       }
@@ -714,9 +723,34 @@ export async function createOrder(
   // Check store availability before allowing order and fetch pickup location
   const [vendor] = await sql`
     SELECT accepting_orders, store_hours, store_timezone, store_closed_note,
-           pickup_latitude, pickup_longitude, pickup_address_details, offers_pickup
+           pickup_latitude, pickup_longitude, pickup_address_details, offers_pickup,
+           location_state
     FROM users WHERE id = ${vendorId} LIMIT 1
   `;
+
+  const productIds = items
+    .map((item: any) => item.productId)
+    .filter(Boolean);
+
+  // Fetch all product details in one query
+  let hasPhysicalProducts = false;
+  let products: any[] = [];
+  if (productIds.length > 0) {
+    products = await sql<{ id: string, is_digital: boolean, stock_quantity: number | null, name: string }[]>`
+      SELECT id, is_digital, stock_quantity, name FROM products WHERE id IN ${sql(productIds)}
+    `;
+    hasPhysicalProducts = products.some(p => !p.is_digital);
+    
+    // Check stock for each product
+    for (const item of items) {
+      const product = products.find(p => p.id === item.productId);
+      if (product && product.stock_quantity !== null) {
+        if (product.stock_quantity < item.quantity) {
+          throw new Error(`Not enough stock for "${product.name}". Only ${product.stock_quantity} left.`);
+        }
+      }
+    }
+  }
 
   if (vendor) {
     const availability = getStoreAvailability({
@@ -726,10 +760,10 @@ export async function createOrder(
       store_closed_note: vendor.store_closed_note,
     });
 
-    if (availability.state === "closed") {
+    if (availability.state === "closed" && hasPhysicalProducts) {
       throw new Error(
         availability.label ||
-          "This store is currently closed and not accepting orders.",
+          "This store is currently closed and not accepting orders for physical products.",
       );
     }
   }
@@ -738,6 +772,7 @@ export async function createOrder(
   const customer_phone = formData.get("customer_phone") as string;
   const customer_address = formData.get("customer_address") as string;
   const delivery_type = formData.get("delivery_type") as string;
+  const customer_state = formData.get("customer_state") as string;
   const delivery_latitude = formData.get("delivery_latitude")
     ? parseFloat(formData.get("delivery_latitude") as string)
     : null;
@@ -765,8 +800,20 @@ export async function createOrder(
       ? session.user.id
       : null;
 
-  if (!customer_name || !customer_phone || !delivery_type) {
+  if (!customer_name || !delivery_type) {
     throw new Error("Missing required customer information.");
+  }
+
+  if (hasPhysicalProducts) {
+    if (!customer_state) {
+      throw new Error("Please select your state to complete the order.");
+    }
+    if (!vendor?.location_state) {
+      throw new Error("This store has not set their location yet. Please contact them directly.");
+    }
+    if (customer_state !== vendor.location_state) {
+      throw new Error(`This store only delivers to ${vendor.location_state}. You selected ${customer_state}.`);
+    }
   }
 
   try {

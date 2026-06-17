@@ -1,6 +1,7 @@
 'use client';
 
 import { Product, StoreTheme } from '@/app/lib/definitions';
+import { StoreAvailability } from '@/app/lib/store-availability';
 import { FONT_MAP } from '@/app/lib/template-presets';
 import { formatCurrency } from '@/app/lib/utils';
 import StoreIcon from '@/app/ui/store/storefront-icons';
@@ -12,6 +13,7 @@ interface ProductQuickViewProps {
   theme: StoreTheme;
   onClose: () => void;
   onAddToCart: (product: Product, quantity: number) => void;
+  availability: StoreAvailability;
 }
 
 export default function ProductQuickView({
@@ -19,6 +21,7 @@ export default function ProductQuickView({
   theme,
   onClose,
   onAddToCart,
+  availability,
 }: ProductQuickViewProps) {
   const [quantity, setQuantity] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
@@ -91,6 +94,7 @@ export default function ProductQuickView({
 
   const handleAddToCart = () => {
     if (!product || isOutOfStock) return;
+    if (availability.state === "closed" && !product.is_digital) return;
     
     // Create a modified product payload for the cart
     const cartProduct = {
@@ -438,18 +442,20 @@ export default function ProductQuickView({
           >
             <button
               onClick={handleAddToCart}
-              disabled={addedFeedback || isOutOfStock}
+              disabled={addedFeedback || isOutOfStock || (availability.state === "closed" && product && !product.is_digital)}
               className={`flex w-full items-center justify-center gap-2 p-4 text-sm font-bold shadow-lg transition-all duration-300 ${buttonRadiusClass} ${
                 addedFeedback ? 'scale-95' : 'hover:scale-[1.02] active:scale-95'
               } disabled:opacity-60 disabled:cursor-not-allowed`}
               style={{
                 ...btnStyle,
                 ...(addedFeedback ? { backgroundColor: '#22c55e', color: '#fff', border: 'none' } : {}),
-                ...(isOutOfStock ? { backgroundColor: '#e2e8f0', color: '#64748b', border: 'none', boxShadow: 'none' } : {}),
+                ...(isOutOfStock || (availability.state === "closed" && product && !product.is_digital) ? { backgroundColor: '#e2e8f0', color: '#64748b', border: 'none', boxShadow: 'none' } : {}),
               }}
             >
               {isOutOfStock ? (
                 'Out of Stock'
+              ) : availability.state === "closed" && product && !product.is_digital ? (
+                'Store Closed'
               ) : addedFeedback ? (
                 <>
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">

@@ -150,8 +150,9 @@ export default function Storefront({
     items: OrderItem[];
     deliveryType: "delivery" | "pickup";
   } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"card"> ("card");
   const [customerEmail, setCustomerEmail] = useState(customer?.email || "");
+  const [customerState, setCustomerState] = useState("");
   const [deliveryType, setDeliveryType] = useState<"delivery" | "pickup">(
     "delivery",
   );
@@ -201,6 +202,7 @@ export default function Storefront({
     0,
   );
   const grandTotal = Math.max(0, cartTotal - (appliedDiscount?.amount || 0));
+  const hasPhysicalProducts = cart.some(item => !item.is_digital);
 
   // Memoized callback to prevent infinite loop in LocationPicker
   const handleLocationSelect = useCallback(
@@ -601,6 +603,10 @@ export default function Storefront({
   }, [isPreview]);
 
   const addToCart = (product: Product, qty = 1) => {
+    if (availability.state === "closed" && !product.is_digital) {
+      alert(availability.label || "This store is closed and not accepting orders for physical products.");
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
@@ -617,6 +623,7 @@ export default function Storefront({
           name: product.name,
           price: product.price,
           quantity: qty,
+          is_digital: product.is_digital,
         },
       ];
     });
@@ -642,114 +649,120 @@ export default function Storefront({
     const formData = new FormData(e.currentTarget);
 
     try {
-      if (paymentMethod === "card" || paymentMethod === "cash") {
-        if (!customerEmail || !customerEmail.includes("@")) {
-          alert("Please enter a valid email address for payment.");
-          setIsSubmitting(false);
-          return;
-        }
-
-        const publicKey = "pk_test_8f134530cff345611052399d94a474253408ab3d";
-
-        if (typeof window === "undefined" || !(window as any).PaystackPop) {
-          alert(
-            "Payment system is still loading. Please wait a moment and try again.",
-          );
-          setIsSubmitting(false);
-          return;
-        }
-
-        const channels = ["card", "bank", "ussd", "qr", "bank_transfer"];
-
-        // @ts-ignore
-        const handler = window.PaystackPop.setup({
-          key: publicKey,
-          email: customerEmail,
-          amount: grandTotal * 100,
-          currency: "NGN",
-          ref: `OVD-${Date.now()}`,
-          channels,
-          metadata: {
-            delivery_latitude: deliveryLocation?.lat,
-            delivery_longitude: deliveryLocation?.lng,
-            delivery_address_details: deliveryLocation?.details,
-          },
-          onClose: function () {
-            setIsSubmitting(false);
-          },
-          callback: function (response: any) {
-            fetch("/api/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ reference: response.reference }),
-            })
-              .then((res) => res.json())
-              .then((data) => {
-                if (data.success) {
-                  if (deliveryLocation) {
-                    formData.append(
-                      "delivery_latitude",
-                      deliveryLocation.lat.toString(),
-                    );
-                    formData.append(
-                      "delivery_longitude",
-                      deliveryLocation.lng.toString(),
-                    );
-                    formData.append(
-                      "delivery_address_details",
-                      deliveryLocation.details || "",
-                    );
-                  }
-                  return createOrder(
-                    vendor.id,
-                    cart,
-                    grandTotal,
-                    formData,
-                    paymentMethod,
-                    response.reference,
-                    appliedDiscount?.code,
-                    appliedDiscount?.amount,
-                  );
-                } else {
-                  throw new Error("Payment verification failed");
-                }
-              })
-              .then((result) => {
-                if (result?.success) {
-                  playSound("success");
-                  setPlacedOrder({
-                    id: result.id,
-                    total: grandTotal,
-                    paymentMethod,
-                    items: [...cart],
-                    deliveryType,
-                  });
-                  setCart([]);
-                  setAppliedDiscount(null);
-                  setIsCheckingOut(false);
-                }
-                setIsSubmitting(false);
-              })
-              .catch((err) => {
-                console.error("Payment error:", err);
-                playSound("error");
-                alert("Payment verification failed. Please contact support.");
-                setIsSubmitting(false);
-              });
-          },
-        });
-
-        if (handler && typeof handler.openIframe === "function") {
-          handler.openIframe();
-        } else {
-          console.error("Paystack handler not initialized");
-          alert("Unable to initialize payment. Please try again.");
-          setIsSubmitting(false);
-        }
-      } else {
-        await handleCashCheckout(formData);
+      if (availability.state === "closed" && hasPhysicalProducts) {
+        alert(availability.label || "The store is currently closed and not accepting orders.");
         setIsSubmitting(false);
-        setIsCheckingOut(false);
+        return;
+      }
+      
+      if (deliveryType === "delivery" && hasPhysicalProducts && !deliveryLocation) {
+        alert("Please select a delivery location before checking out.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!customerEmail || !customerEmail.includes("@")) {
+        alert("Please enter a valid email address for payment.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const publicKey = "pk_test_8f134530cff345611052399d94a474253408ab3d";
+
+      if (typeof window === "undefined" || !(window as any).PaystackPop) {
+        alert(
+          "Payment system is still loading. Please wait a moment and try again.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      const channels = ["card", "bank", "ussd", "qr", "bank_transfer"];
+
+      // @ts-ignore
+      const handler = window.PaystackPop.setup({
+        key: publicKey,
+        email: customerEmail,
+        amount: grandTotal * 100,
+        currency: "NGN",
+        ref: `OVD-${Date.now()}`,
+        channels,
+        metadata: {
+          delivery_latitude: deliveryLocation?.lat,
+          delivery_longitude: deliveryLocation?.lng,
+          delivery_address_details: deliveryLocation?.details,
+        },
+        onClose: function () {
+          setIsSubmitting(false);
+        },
+        callback: function (response: any) {
+          fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reference: response.reference }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.success) {
+                if (deliveryLocation) {
+                  formData.append(
+                    "delivery_latitude",
+                    deliveryLocation.lat.toString(),
+                  );
+                  formData.append(
+                    "delivery_longitude",
+                    deliveryLocation.lng.toString(),
+                  );
+                  formData.append(
+                    "delivery_address_details",
+                    deliveryLocation.details || "",
+                  );
+                }
+                return createOrder(
+                  vendor.id,
+                  cart,
+                  grandTotal,
+                  formData,
+                  "card",
+                  response.reference,
+                  appliedDiscount?.code,
+                  appliedDiscount?.amount,
+                );
+              } else {
+                throw new Error("Payment verification failed");
+              }
+            })
+            .then((result) => {
+              if (result?.success) {
+                playSound("success");
+                setPlacedOrder({
+                  id: result.id,
+                  total: grandTotal,
+                  paymentMethod: "card",
+                  items: [...cart],
+                  deliveryType,
+                });
+                setCart([]);
+                setAppliedDiscount(null);
+                setIsCheckingOut(false);
+              }
+              setIsSubmitting(false);
+            })
+            .catch((err) => {
+              console.error("Order/Payment error:", err);
+              playSound("error");
+              alert(err.message || "Order failed. Please contact support.");
+              setIsSubmitting(false);
+            });
+        },
+      });
+
+      if (handler && typeof handler.openIframe === "function") {
+        handler.openIframe();
+      } else {
+        console.error("Paystack handler not initialized");
+        alert("Unable to initialize payment. Please try again.");
+        setIsSubmitting(false);
       }
     } catch (err) {
       console.error(err);
@@ -760,38 +773,6 @@ export default function Storefront({
     }
   };
 
-  const handleCashCheckout = async (formData: FormData) => {
-    if (deliveryLocation) {
-      formData.append("delivery_latitude", deliveryLocation.lat.toString());
-      formData.append("delivery_longitude", deliveryLocation.lng.toString());
-      formData.append(
-        "delivery_address_details",
-        deliveryLocation.details || "",
-      );
-    }
-    const result = await createOrder(
-      vendor.id,
-      cart,
-      grandTotal,
-      formData,
-      "cash",
-      undefined,
-      appliedDiscount?.code,
-      appliedDiscount?.amount,
-    );
-    if (result.success) {
-      playSound("success");
-      setPlacedOrder({
-        id: result.id,
-        total: grandTotal,
-        paymentMethod: "cash",
-        items: [...cart],
-        deliveryType,
-      });
-      setCart([]);
-      setIsCartOpen(true);
-    }
-  };
 
   // Inject keyframes for product grid animations (must be before any early returns)
   useEffect(() => {
@@ -1343,7 +1324,7 @@ export default function Storefront({
                       </div>
 
                       <button
-                        disabled={isOutOfStock}
+                        disabled={isOutOfStock || (availability.state === "closed" && !product.is_digital)}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (hasOptions || isOutOfStock) {
@@ -1353,7 +1334,9 @@ export default function Storefront({
                           }
                         }}
                         className={`flex shrink-0 items-center justify-center font-bold shadow-lg ${btn.className} ${
-                          isOutOfStock ? "opacity-50 cursor-not-allowed" : ""
+                          isOutOfStock || (availability.state === "closed" && !product.is_digital)
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
                         } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
                         style={{
                           ...btn.style,
@@ -1364,17 +1347,19 @@ export default function Storefront({
                           ["--tw-ring-color" as any]: activeTheme.primary_color,
                         }}
                       >
-                        {isOutOfStock ? (
-                          "Sold"
-                        ) : hasOptions ? (
-                          "Options"
-                        ) : (
-                          <StoreIcon
-                            name="add"
-                            theme={activeTheme}
-                            className="h-5 w-5"
-                          />
-                        )}
+                        {isOutOfStock
+                          ? "Sold"
+                          : availability.state === "closed" && !product.is_digital
+                          ? "Closed"
+                          : hasOptions
+                          ? "Options"
+                          : (
+                            <StoreIcon
+                              name="add"
+                              theme={activeTheme}
+                              className="h-5 w-5"
+                            />
+                          )}
                       </button>
                     </div>
                   </div>
@@ -1559,14 +1544,16 @@ export default function Storefront({
           } as React.CSSProperties
         }
       >
-        <DynamicNav
-          vendor={vendor}
-          theme={activeTheme}
-          cartCount={cartCount}
-          handleShare={handleShare}
-          setIsCartOpen={setIsCartOpen}
-          layoutWidthClass={layoutWidthClass}
-        />
+        <div className={availability.state === "closed" ? "pt-14" : ""}>
+          <DynamicNav
+            vendor={vendor}
+            theme={activeTheme}
+            cartCount={cartCount}
+            handleShare={handleShare}
+            setIsCartOpen={setIsCartOpen}
+            layoutWidthClass={layoutWidthClass}
+          />
+        </div>
 
         <div className={`mx-auto w-full px-4 ${layoutWidthClass}`}>
           <StoreAvailabilityBanner
@@ -1578,6 +1565,8 @@ export default function Storefront({
 
         <main
           className={`mx-auto px-4 pb-32 ${layoutWidthClass} ${
+            availability.state === "closed" ? "pt-14" : ""
+          } ${
             [
               "luxe-boutique",
               "beauty-glow",
@@ -1924,11 +1913,10 @@ export default function Storefront({
                                 </div>
                                 <div>
                                   <label className="block text-sm font-bold text-slate-700 mb-1 italic">
-                                    WhatsApp Number
+                                    WhatsApp Number (optional)
                                   </label>
                                   <input
                                     name="customer_phone"
-                                    required
                                     type="tel"
                                     defaultValue={
                                       customer?.whatsapp_number || ""
@@ -1938,45 +1926,66 @@ export default function Storefront({
                                   />
                                 </div>
 
-                                {/* Payment Method */}
                                 <div>
-                                  <label className="block text-sm font-bold text-slate-700 mb-2 italic">
-                                    Payment Method
+                                  <label className="block text-sm font-bold text-slate-700 mb-1 italic">
+                                    Your State
                                   </label>
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
-                                      <input
-                                        type="radio"
-                                        name="payment_method"
-                                        value="cash"
-                                        checked={paymentMethod === "cash"}
-                                        onChange={() =>
-                                          setPaymentMethod("cash")
-                                        }
-                                        className="hidden sr-only"
-                                      />
-                                      <span className="text-sm font-bold text-slate-700">
-                                        Cash/Transfer
-                                      </span>
-                                    </label>
-                                    <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
-                                      <input
-                                        type="radio"
-                                        name="payment_method"
-                                        value="card"
-                                        checked={paymentMethod === "card"}
-                                        onChange={() =>
-                                          setPaymentMethod("card")
-                                        }
-                                        className="hidden sr-only"
-                                      />
-                                      <span className="text-sm font-bold text-slate-700">
-                                        💳 Card
-                                      </span>
-                                    </label>
-                                  </div>
+                                  <select
+                                    name="customer_state"
+                                    required
+                                    value={customerState}
+                                    onChange={(e) => setCustomerState(e.target.value)}
+                                    className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500 transition bg-white"
+                                  >
+                                    <option value="">Select your state</option>
+                                    <option value="Abia">Abia</option>
+                                    <option value="Adamawa">Adamawa</option>
+                                    <option value="Akwa Ibom">Akwa Ibom</option>
+                                    <option value="Anambra">Anambra</option>
+                                    <option value="Bauchi">Bauchi</option>
+                                    <option value="Bayelsa">Bayelsa</option>
+                                    <option value="Benue">Benue</option>
+                                    <option value="Borno">Borno</option>
+                                    <option value="Cross River">Cross River</option>
+                                    <option value="Delta">Delta</option>
+                                    <option value="Ebonyi">Ebonyi</option>
+                                    <option value="Edo">Edo</option>
+                                    <option value="Ekiti">Ekiti</option>
+                                    <option value="Enugu">Enugu</option>
+                                    <option value="FCT">FCT (Abuja)</option>
+                                    <option value="Gombe">Gombe</option>
+                                    <option value="Imo">Imo</option>
+                                    <option value="Jigawa">Jigawa</option>
+                                    <option value="Kaduna">Kaduna</option>
+                                    <option value="Kano">Kano</option>
+                                    <option value="Katsina">Katsina</option>
+                                    <option value="Kebbi">Kebbi</option>
+                                    <option value="Kogi">Kogi</option>
+                                    <option value="Kwara">Kwara</option>
+                                    <option value="Lagos">Lagos</option>
+                                    <option value="Nasarawa">Nasarawa</option>
+                                    <option value="Niger">Niger</option>
+                                    <option value="Ogun">Ogun</option>
+                                    <option value="Ondo">Ondo</option>
+                                    <option value="Osun">Osun</option>
+                                    <option value="Oyo">Oyo</option>
+                                    <option value="Plateau">Plateau</option>
+                                    <option value="Rivers">Rivers</option>
+                                    <option value="Sokoto">Sokoto</option>
+                                    <option value="Taraba">Taraba</option>
+                                    <option value="Yobe">Yobe</option>
+                                    <option value="Zamfara">Zamfara</option>
+                                  </select>
                                 </div>
 
+                                {/* State validation message */}
+                                {hasPhysicalProducts && vendor.location_state && customerState && customerState !== vendor.location_state && (
+                                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                                    This store only delivers to {vendor.location_state}. Please select {vendor.location_state} or remove physical products from your cart.
+                                  </div>
+                                )}
+
+                                {/* Delivery Method */}
                                 <div className="grid grid-cols-2 gap-3">
                                   <label className="relative flex cursor-pointer items-center justify-center rounded-xl border border-slate-200 p-3 transition hover:bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
                                     <input
@@ -2181,21 +2190,34 @@ export default function Storefront({
                   {!isCheckingOut && cart.length > 0 && (
                     <div className="border-t border-slate-100 px-6 py-8">
                       <button
-                        onClick={() => setIsCheckingOut(true)}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                        onClick={() => {
+                          if (availability.state === "closed" && hasPhysicalProducts) {
+                            alert(availability.label || "The store is currently closed and not accepting orders.");
+                            return;
+                          }
+                          setIsCheckingOut(true);
+                        }}
+                        disabled={availability.state === "closed" && hasPhysicalProducts}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl p-4 font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         style={
                           {
-                            backgroundColor: activeTheme.primary_color,
+                            backgroundColor: (availability.state === "closed" && hasPhysicalProducts) ? "#e2e8f0" : activeTheme.primary_color,
                             "--tw-ring-color": activeTheme.primary_color,
                           } as React.CSSProperties
                         }
                       >
-                        Checkout Order{" "}
-                        <StoreIcon
-                          name="chevron-right"
-                          theme={activeTheme}
-                          className="h-5 w-5"
-                        />
+                        {availability.state === "closed" && hasPhysicalProducts
+                          ? "Store Closed"
+                          : (
+                            <>
+                              Checkout Order{" "}
+                              <StoreIcon
+                                name="chevron-right"
+                                theme={activeTheme}
+                                className="h-5 w-5"
+                              />
+                            </>
+                          )}
                       </button>
                     </div>
                   )}
@@ -2211,6 +2233,7 @@ export default function Storefront({
           theme={activeTheme}
           onClose={() => setQuickViewProduct(null)}
           onAddToCart={addToCart}
+          availability={availability}
         />
       </div>
     </>

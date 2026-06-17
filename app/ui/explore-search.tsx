@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 
 export default function ExploreSearch({ 
   defaultValue, 
@@ -15,6 +15,11 @@ export default function ExploreSearch({
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
+
+  // Sync query with defaultValue (when searchParams change)
+  useEffect(() => {
+    setQuery(defaultValue);
+  }, [defaultValue]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();

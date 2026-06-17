@@ -1,18 +1,21 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { MapPinIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useState, useRef, useEffect } from 'react';
 
 export default function ExploreLocation({ 
   currentLocation, 
-  availableLocations 
+  availableLocations,
+  currentSearch,
+  currentCategory
 }: { 
   currentLocation: string;
   availableLocations: string[];
+  currentSearch?: string;
+  currentCategory?: string;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -29,13 +32,12 @@ export default function ExploreLocation({
   }, []);
 
   function handleLocationChange(loc: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (loc === 'All') {
-      params.delete('location');
-    } else {
-      params.set('location', loc);
-    }
-    router.push(`/explore?${params.toString()}`, { scroll: false });
+    const params = new URLSearchParams();
+    if (currentSearch) params.set('q', currentSearch);
+    if (currentCategory && currentCategory !== 'All') params.set('category', currentCategory);
+    if (loc !== 'All') params.set('location', loc);
+    
+    router.push(`/explore${params.toString() ? '?' + params.toString() : ''}`, { scroll: false });
     setIsOpen(false);
   }
 

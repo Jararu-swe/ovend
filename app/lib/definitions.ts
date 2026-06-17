@@ -138,6 +138,7 @@ export type Product = {
   image_url: string | null;
   gallery_images: string; // JSON stringified array of URLs
   options: string; // JSON stringified array of variant options
+  is_digital: boolean;
   created_at: string;
 };
 
@@ -154,6 +155,7 @@ export type ProductForm = {
   image_url: string | null;
   gallery_images: string;
   options: string;
+  is_digital: boolean;
 };
 
 export type OrderItem = {
@@ -161,6 +163,7 @@ export type OrderItem = {
   name: string;
   price: number;
   quantity: number;
+  is_digital: boolean;
 };
 
 export type Order = {

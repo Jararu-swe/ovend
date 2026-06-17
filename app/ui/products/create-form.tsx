@@ -175,6 +175,13 @@ export default function CreateProductForm() {
              </div>
            )}
            
+          <div className="mt-6 border-t border-slate-100 pt-6">
+             <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="is_digital" className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600" />
+                <span className="text-sm font-medium text-slate-700">This is a digital product (no delivery required)</span>
+             </label>
+           </div>
+
            <div className="mt-6 border-t border-slate-100 pt-6">
              <legend className="mb-3 block text-sm font-medium text-slate-700">Visibility Status</legend>
              <div className="flex gap-4">

@@ -693,41 +693,49 @@ export default async function Page() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-5 gap-3 md:gap-4">
+              <div className="grid grid-cols-7 gap-3 md:gap-4">
                 {[
                   {
                     label: "Facebook",
-                    classes: "bg-blue-600 text-white",
-                    icon: <FacebookLogo />,
+                    src: "/images/socials/icons8-facebook-50.svg",
                   },
                   {
                     label: "Instagram",
-                    classes:
-                      "bg-gradient-to-br from-pink-500 via-orange-400 to-yellow-300 text-white",
-                    icon: <InstagramLogo />,
+                    src: "/images/socials/icons8-instagram-50.svg",
                   },
                   {
                     label: "TikTok",
-                    classes: "bg-slate-900 text-white",
-                    icon: <TikTokLogo />,
+                    src: "/images/socials/icons8-tiktok-50.svg",
                   },
                   {
                     label: "WhatsApp",
-                    classes: "bg-emerald-600 text-white",
-                    icon: <WhatsAppLogo />,
+                    src: "/images/socials/icons8-whatsapp-50.svg",
                   },
                   {
                     label: "YouTube",
-                    classes: "bg-red-600 text-white",
-                    icon: <YouTubeLogo />,
+                    src: "/images/socials/icons8-youtube-50.svg",
+                  },
+                  {
+                    label: "X",
+                    src: "/images/socials/icons8-x-50.svg",
+                  },
+                  {
+                    label: "Snapchat",
+                    src: "/images/socials/icons8-snapchat-circled-logo-50.svg",
                   },
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className={`flex h-14 w-14 items-center justify-center rounded-3xl ${item.classes} shadow-lg shadow-slate-900/10 transition duration-500 ease-out hover:-translate-y-1 hover:scale-105`}
+                    className="flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-50 shadow-lg shadow-slate-900/10 transition duration-500 ease-out hover:-translate-y-1 hover:scale-105"
                     aria-label={item.label}
                   >
-                    {item.icon}
+                    <Image
+                      src={item.src}
+                      alt={item.label}
+                      width={30}
+                      height={30}
+                      className="w-7 h-7 md:w-8 md:h-8"
+                    />
                   </div>
                 ))}
               </div>

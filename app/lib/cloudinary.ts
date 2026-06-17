@@ -58,8 +58,13 @@ export async function deleteCloudinaryImage(url: string) {
 /**
  * Deletes multiple images from Cloudinary.
  */
-export async function deleteCloudinaryImages(urls: string[]) {
-  const publicIds = urls.map(url => extractPublicId(url)).filter(Boolean) as string[];
+export async function deleteCloudinaryImages(urls: any) {
+  // Ensure urls is an array
+  const safeUrls = Array.isArray(urls) ? urls : [];
+  const publicIds = safeUrls
+    .filter(url => typeof url === 'string')
+    .map(url => extractPublicId(url))
+    .filter(Boolean) as string[];
   if (publicIds.length === 0) return;
 
   try {
