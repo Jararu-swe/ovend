@@ -11,8 +11,8 @@ import GeographicInsights from './components/geographic-insights';
 import RealTimeDashboard from './components/real-time-dashboard';
 import ExportMenu from './components/export-menu';
 import TrendChart from './components/trend-chart';
+import { calculateDateRange } from '@/app/lib/analytics-utils';
 import {
-  calculateDateRange,
   fetchAnalyticsSummary,
   fetchCustomerMetrics,
   fetchProductPerformance,

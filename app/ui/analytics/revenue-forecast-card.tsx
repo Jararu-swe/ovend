@@ -1,7 +1,7 @@
 'use client';
 
 import { 
-  TrendingUpIcon, 
+  ArrowTrendingUpIcon, 
   ChartBarIcon, 
   ExclamationCircleIcon,
   InformationCircleIcon 
@@ -314,8 +314,8 @@ export default function RevenueForecastCard({
             </p>
           </div>
           <div className="p-2 rounded-lg bg-emerald-100">
-            <TrendingUpIcon className="h-5 w-5 text-emerald-600" />
-          </div>
+          <ArrowTrendingUpIcon className="h-5 w-5 text-emerald-600" />
+        </div>
         </div>
       </div>
 

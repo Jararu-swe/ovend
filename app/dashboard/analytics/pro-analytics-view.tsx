@@ -5,8 +5,8 @@ import TimeRangeSelector from './components/time-range-selector';
 import AnalyticsSummaryCards from '@/app/ui/analytics/analytics-summary-cards';
 import BusinessTierGate from './components/business-tier-gate';
 import TrendChart from './components/trend-chart';
+import { calculateDateRange } from '@/app/lib/analytics-utils';
 import {
-  calculateDateRange,
   fetchAnalyticsSummary,
   fetchDailyAnalytics,
 } from '@/app/lib/analytics-actions';

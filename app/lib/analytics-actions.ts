@@ -1,54 +1,18 @@
 'use server';
 
 import { sql } from './db';
-import { getFromCache, setCache, CacheKeys } from './cache';
-import {
-  TimeRange,
+import { getFromCache, setCache } from './cache';
+import type {
   DateRange,
   AnalyticsSummary,
   CustomerMetrics,
   ProductPerformance,
   ConversionFunnel,
-  GeographicInsights,
+  GeographicInsight,
   RevenueForecast,
   InsufficientForecastDataError,
   DailyAnalytics,
 } from './business-analytics-types';
-
-/**
- * Calculate date range from time range option
- */
-export function calculateDateRange(timeRange: TimeRange): DateRange {
-  const endDate = new Date();
-  const startDate = new Date();
-
-  const daysToSubtract = (() => {
-    switch (timeRange) {
-      case '7d':
-        return 7;
-      case '30d':
-        return 30;
-      case '90d':
-        return 90;
-      default:
-        return 7;
-    }
-  })();
-
-  startDate.setDate(endDate.getDate() - daysToSubtract);
-
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  return {
-    startDate: formatDate(startDate),
-    endDate: formatDate(endDate),
-  };
-}
 
 /**
  * Fetch analytics summary
