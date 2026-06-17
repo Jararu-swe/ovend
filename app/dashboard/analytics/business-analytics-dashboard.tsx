@@ -220,9 +220,10 @@ export default function BusinessAnalyticsDashboard({
 
       {/* Geographic Insights */}
       {geographicInsights && (
-        <GeographicInsights
-          insights={geographicInsights}
-          onLocationSelect={(loc) => console.log('Selected location:', loc)}
+        <GeographicInsights 
+          insights={geographicInsights} 
+          vendorState={null} 
+          onFilterChange={(filter) => console.log('Filter changed:', filter)} 
         />
       )}
 

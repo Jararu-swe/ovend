@@ -55,7 +55,7 @@ export default function ProAnalyticsView({
     fetchData();
   }, [vendorId, dateRange]);
 
-  const handleTimeRangeChange = (range: TimeRange) => {
+  const handleTimeRangeChange = (range: TimeRange, customRange?: { startDate: Date; endDate: Date }) => {
     setTimeRange(range);
   };
 
