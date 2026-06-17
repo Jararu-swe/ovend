@@ -99,6 +99,13 @@ function SkeletonMetrics() {
  * 
  * Requirements: 2.1, 2.7, 2.8, 2.10
  */
+// Type guard to check if metrics is insufficient data
+function isInsufficientData(
+  metrics: CustomerMetrics | { type: 'insufficient_data'; message: string; suggestion: string }
+): metrics is { type: 'insufficient_data'; message: string; suggestion: string } {
+  return 'type' in metrics && metrics.type === 'insufficient_data';
+}
+
 export default function CustomerMetricsSection({
   metrics,
   aovTrendData = [],
@@ -106,7 +113,7 @@ export default function CustomerMetricsSection({
   const [showChart, setShowChart] = useState(true);
 
   // Handle insufficient data case (Requirement 2.10)
-  if ('type' in metrics && metrics.type === 'insufficient_data') {
+  if (isInsufficientData(metrics)) {
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
