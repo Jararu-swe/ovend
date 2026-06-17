@@ -1,7 +1,7 @@
 'use client';
 
 import { ExclamationTriangleIcon, ClockIcon } from '@heroicons/react/24/outline';
-import type { ConversionFunnel } from '@/app/lib/business-analytics';
+import type { ConversionFunnel } from '@/app/lib/business-analytics-types';
 
 interface ConversionFunnelChartProps {
   funnel: ConversionFunnel;

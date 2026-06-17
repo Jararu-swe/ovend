@@ -9,7 +9,7 @@ import {
   CurrencyDollarIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import type { GeographicInsight } from '@/app/lib/business-analytics';
+import type { GeographicInsight } from '@/app/lib/business-analytics-types';
 
 interface GeographicInsightsProps {
   insights: GeographicInsight[];

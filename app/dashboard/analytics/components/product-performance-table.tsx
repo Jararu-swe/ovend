@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ProductPerformance } from '@/app/lib/business-analytics';
+import type { ProductPerformance } from '@/app/lib/business-analytics-types';
 
 interface ProductPerformanceTableProps {
   products: ProductPerformance[];

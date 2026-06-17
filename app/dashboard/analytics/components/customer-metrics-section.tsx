@@ -8,7 +8,7 @@ import {
   UserPlusIcon,
   ChartBarIcon,
 } from '@heroicons/react/24/outline';
-import type { CustomerMetrics } from '@/app/lib/business-analytics';
+import type { CustomerMetrics } from '@/app/lib/business-analytics-types';
 import TrendChart, { type DataPoint } from './trend-chart';
 
 interface CustomerMetricsSectionProps {

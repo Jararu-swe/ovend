@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchTodayPerformance } from '@/app/lib/business-analytics';
+import { fetchTodayPerformance } from '@/app/lib/analytics-actions';
 import { auth } from '@/auth';
 
 /**

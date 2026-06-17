@@ -9,9 +9,11 @@ import {
   calculateDateRange,
   fetchAnalyticsSummary,
   fetchDailyAnalytics,
-  type TimeRange,
-  type DateRange,
-} from '@/app/lib/business-analytics';
+} from '@/app/lib/analytics-actions';
+import type {
+  TimeRange,
+  DateRange,
+} from '@/app/lib/business-analytics-types';
 
 interface ProAnalyticsViewProps {
   vendorId: string;
@@ -84,12 +86,7 @@ export default function ProAnalyticsView({
       {/* Analytics Summary Cards */}
       {analyticsSummary && (
         <AnalyticsSummaryCards
-          totalVisits={analyticsSummary.totalVisits}
-          totalOrders={analyticsSummary.totalOrders}
-          totalRevenue={analyticsSummary.totalRevenue}
-          conversionRate={analyticsSummary.conversionRate}
-          avgOrderValue={analyticsSummary.avgOrderValue}
-          periodChange={analyticsSummary.periodChange}
+          summary={analyticsSummary}
         />
       )}
 

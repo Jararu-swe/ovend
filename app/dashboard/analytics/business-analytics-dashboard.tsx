@@ -20,9 +20,11 @@ import {
   fetchGeographicInsights,
   calculateRevenueForecast,
   fetchDailyAnalytics,
-  type TimeRange,
-  type DateRange,
-} from '@/app/lib/business-analytics';
+} from '@/app/lib/analytics-actions';
+import type {
+  TimeRange,
+  DateRange,
+} from '@/app/lib/business-analytics-types';
 
 interface BusinessAnalyticsDashboardProps {
   vendorId: string;

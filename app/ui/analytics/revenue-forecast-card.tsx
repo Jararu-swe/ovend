@@ -6,7 +6,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon 
 } from '@heroicons/react/24/outline';
-import type { RevenueForecast, InsufficientForecastDataError } from '@/app/lib/business-analytics';
+import type { RevenueForecast, InsufficientForecastDataError } from '@/app/lib/business-analytics-types';
 
 interface RevenueForecastCardProps {
   forecast: RevenueForecast | InsufficientForecastDataError;

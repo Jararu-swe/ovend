@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, MinusIcon } from '@heroicons/react/24/outline';
-import type { AnalyticsSummary } from '@/app/lib/business-analytics';
+import type { AnalyticsSummary } from '@/app/lib/business-analytics-types';
 
 interface AnalyticsSummaryCardsProps {
   summary: AnalyticsSummary;
