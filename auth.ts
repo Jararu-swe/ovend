@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import postgres from 'postgres';
 import { z as zod } from 'zod';
 import GoogleProvider from 'next-auth/providers/google';
+import crypto from 'node:crypto';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
