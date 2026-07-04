@@ -667,7 +667,13 @@ export default function Storefront({
         return;
       }
 
-      const publicKey = "pk_test_8f134530cff345611052399d94a474253408ab3d";
+      const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+
+      if (!publicKey) {
+        alert("Payment gateway is not properly configured. Please contact the store owner.");
+        setIsSubmitting(false);
+        return;
+      }
 
       if (typeof window === "undefined" || !(window as any).PaystackPop) {
         alert(

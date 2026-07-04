@@ -8,6 +8,7 @@
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "test:payout": "node test-payout-setup.js",
     "setup": "node setup-database.js",
     "db:guides-migrate": "node scripts/migrations/create-vendor-guides.js",
     "db:guides-seed": "node scripts/seeds/vendor-guides.js",
