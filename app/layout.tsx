@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon.svg',
   },
-  metadataBase: new URL('https://vendle.store'),
+  metadataBase: new URL('https://vendle.com.ng'),
 };
 
 export default function RootLayout({
@@ -48,6 +48,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Vendle',
+              url: 'https://vendle.com.ng',
+              logo: 'https://vendle.com.ng/icon.svg',
+              description: 'Empowering African Craft & Commerce. Create beautiful online stores, process secure payments, and manage orders from a single mobile dashboard.',
+              sameAs: [],
+            }),
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
