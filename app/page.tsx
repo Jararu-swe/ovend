@@ -555,7 +555,7 @@ export default async function Page() {
                   <div className="flex-1 ml-4">
                     <div className="bg-slate-700/50 rounded-lg px-4 py-1.5 text-xs text-slate-400 max-w-md flex items-center gap-2">
                       <span className="text-slate-500">🔒</span>
-                      <span>vendle.store/dashboard</span>
+                      <span>vendle.com.ng/dashboard</span>
                     </div>
                   </div>
                 </div>

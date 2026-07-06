@@ -25,7 +25,7 @@ export default function PayoutCard({ user, balance, transactionFeePercentage }: 
   const estimatedFee = numericAmount * (transactionFeePercentage / 100);
   const estimatedNetAmount = numericAmount - estimatedFee;
 
-  const minimumPayout = 5000;
+  const minimumPayout = 25; // TEMPORARILY set to ₦25 for testing — revert to 5000 after
   const canRequest = balance >= minimumPayout;
   const hasCompleteDetails =
     user?.bank_name && user?.account_number && user?.account_name;
@@ -90,7 +90,7 @@ export default function PayoutCard({ user, balance, transactionFeePercentage }: 
       if (response.ok) {
         const infoText = data.idempotent
           ? "Payout request already submitted. We won't duplicate the transfer."
-          : "Payout request submitted successfully! You will receive the funds in 24-48 hours.";
+          : "Payout request submitted successfully! You will receive the funds instantly.";
 
         setMessage({ text: infoText, type: "success" });
         setAmount("");
@@ -309,7 +309,7 @@ export default function PayoutCard({ user, balance, transactionFeePercentage }: 
           </button>
 
           <p className="text-xs text-slate-500 text-center">
-            Payouts are processed within 24-48 hours. A service fee of {transactionFeePercentage}%
+            Payouts are processed instantly. A service fee of {transactionFeePercentage}%
             applies to all withdrawals.
           </p>
         </form>
@@ -321,10 +321,10 @@ export default function PayoutCard({ user, balance, transactionFeePercentage }: 
           How Payouts Work
         </h3>
         <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
-          <li>Minimum payout is ₦5,000</li>
+          <li>Minimum payout is ₦25</li>
           <li>A {transactionFeePercentage}% service fee is deducted from your payout</li>
-          <li>Payouts are processed Monday-Friday</li>
-          <li>Funds arrive in 24-48 hours to your bank account</li>
+          <li>Payouts are processed instantly</li>
+          <li>Funds arrive instantly to your bank account</li>
           <li>You can request multiple payouts</li>
         </ul>
       </div>

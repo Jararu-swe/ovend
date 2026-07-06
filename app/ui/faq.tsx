@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     question: "How do I share my store with customers?",
-    answer: "Once your store is ready, you'll receive a unique custom link (e.g., vendle.com/s/your-store-name). You can easily copy and paste this link into your Instagram bio, WhatsApp status, or Twitter profile."
+    answer: "Once your store is ready, you'll receive a unique custom link (e.g., vendle.com.ng/s/your-store-name). You can easily copy and paste this link into your Instagram bio, WhatsApp status, or Twitter profile."
   },
   {
     question: "Can I offer discounts to my customers?",
@@ -25,6 +25,10 @@ const faqs = [
   {
     question: "How do shoppers find my products?",
     answer: "Along with sharing your direct store link on your social media platforms, your shop can also be featured on the Vendle Explore page, allowing new customers to discover your products and shop directly."
+  },
+  {
+    question: "How do I track my orders?",
+    answer: "You can track all your orders in real time from your Vendle dashboard. Each order is updated with its current status—pending, confirmed, shipped, or delivered—so you always know where things stand. You'll also receive instant notifications for new orders and status changes."
   }
 ];
 

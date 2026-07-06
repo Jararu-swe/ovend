@@ -51,11 +51,11 @@ export async function POST(request: Request) {
       });
     }
 
-    // Check minimum payout amount
-    if (amount < 5000) {
+    // Check minimum payout amount (TEMPORARILY set to ₦25 for testing — revert to 5000 after)
+    if (amount < 25) {
       console.log("❌ Below minimum payout:", amount);
       return new Response(
-        JSON.stringify({ error: "Minimum payout is ₦5,000" }),
+        JSON.stringify({ error: "Minimum payout is ₦25" }),
         { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
