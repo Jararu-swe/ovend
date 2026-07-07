@@ -689,7 +689,7 @@ export default function Storefront({
       const handler = window.PaystackPop.setup({
         key: publicKey,
         email: customerEmail,
-        amount: grandTotal * 100,
+        amount: grandTotal,
         currency: "NGN",
         ref: `OVD-${Date.now()}`,
         channels,
