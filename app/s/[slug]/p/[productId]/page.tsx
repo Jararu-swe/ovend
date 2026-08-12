@@ -85,23 +85,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://vendle.app';
   const productUrl = `${baseUrl}/s/${slug}/p/${productId}`;
   const storeName = vendor.store_name || vendor.name;
+  const locationSuffix = vendor.location_state ? ` — ${vendor.location_state}` : '';
   
   // Truncation helper
   const truncate = (text: string, maxLength: number) => 
     text.length > maxLength ? text.slice(0, maxLength - 3) + '...' : text;
   
-  // Generate descriptions with fallbacks
+  // Generate geo-rich descriptions with fallbacks
+  const locationPhrase = vendor.location_state ? ` in ${vendor.location_state}, Nigeria` : '';
+  
   const ogDescription = product.description 
     ? truncate(product.description, 200)
-    : `View this product from ${storeName}`;
+    : `Buy ${product.name} from ${storeName}${locationPhrase}. Order online now!`;
   
   const metaDescription = product.description
-    ? truncate(product.description, 160)
-    : `View ${product.name} from ${storeName}. Shop now!`;
+    ? truncate(`${product.description}${locationPhrase ? ` Available${locationPhrase}.` : ''}`, 160)
+    : `Buy ${product.name} from ${storeName}${locationPhrase}. Order online for delivery or pickup on Vendle.`;
   
   const twitterDescription = product.description
     ? truncate(product.description, 200)
-    : `View this product from ${storeName}`;
+    : `Buy ${product.name} from ${storeName}${locationPhrase}.`;
 
   // Format price for metadata
   const priceAmount = (product.price / 100).toFixed(2);
@@ -110,7 +113,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : 'out of stock';
 
   return {
-    title: truncate(`${product.name} | ${storeName}`, 60),
+    title: truncate(`${product.name} | ${storeName}${locationSuffix}`, 60),
     description: metaDescription,
     
     robots: product.status === 'active' 
@@ -195,5 +198,62 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
 
-  return <ProductDetail vendor={vendor} product={product} theme={theme} />;
+  // Build Product JSON-LD with seller locality for geo-targeted search
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://vendle.app';
+  const productUrl = `${baseUrl}/s/${slug}/p/${productId}`;
+  const storeName = vendor.store_name || vendor.name;
+  const priceAmount = (product.price / 100).toFixed(2);
+
+  const productJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    url: productUrl,
+    ...(product.description && { description: product.description.slice(0, 500) }),
+    ...(product.image_url && { image: product.image_url }),
+    brand: { '@type': 'Brand', name: storeName },
+    offers: {
+      '@type': 'Offer',
+      price: priceAmount,
+      priceCurrency: 'NGN',
+      availability:
+        product.stock_quantity === null || product.stock_quantity > 0
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+      seller: {
+        '@type': 'LocalBusiness',
+        name: storeName,
+        url: `${baseUrl}/s/${slug}`,
+        ...(vendor.location_state && {
+          address: {
+            '@type': 'PostalAddress',
+            addressRegion: vendor.location_state,
+            addressCountry: 'NG',
+          },
+          areaServed: {
+            '@type': 'State',
+            name: vendor.location_state,
+          },
+        }),
+      },
+    },
+  };
+
+  // Add compare-at-price if product has one
+  if (product.compare_at_price && product.compare_at_price > product.price) {
+    (productJsonLd.offers as Record<string, unknown>).priceValidUntil = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString().split('T')[0]; // 30 days from now
+  }
+
+  return (
+    <>
+      {/* Product JSON-LD for rich search results with seller locality */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <ProductDetail vendor={vendor} product={product} theme={theme} />
+    </>
+  );
 }

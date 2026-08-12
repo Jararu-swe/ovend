@@ -811,7 +811,20 @@ export async function createOrder(
     if (!vendor?.location_state) {
       throw new Error("This store has not set their location yet. Please contact them directly.");
     }
-    if (customer_state !== vendor.location_state) {
+    
+    // Normalize state names for comparison (handle variations like "FCT - Abuja" vs "FCT")
+    const normalizeState = (state: string) => {
+      return state
+        .toLowerCase()
+        .replace(/\s*-\s*.*$/, '') // Remove " - City" suffix (e.g., "FCT - Abuja" -> "FCT")
+        .replace(/\s*\(.*?\)\s*/g, '') // Remove parentheses (e.g., "FCT (Abuja)" -> "FCT")
+        .trim();
+    };
+    
+    const normalizedCustomerState = normalizeState(customer_state);
+    const normalizedVendorState = normalizeState(vendor.location_state);
+    
+    if (normalizedCustomerState !== normalizedVendorState) {
       throw new Error(`This store only delivers to ${vendor.location_state}. You selected ${customer_state}.`);
     }
   }

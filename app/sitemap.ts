@@ -1,9 +1,11 @@
 import { MetadataRoute } from 'next';
+import { fetchAllPublicStoreSlugs } from '@/app/lib/data';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://vendle.com.ng';
 
-  return [
+  // Static pages
+  const staticPages: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}`,
       lastModified: new Date(),
@@ -47,4 +49,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
   ];
+
+  // Dynamic vendor store pages
+  let storePages: MetadataRoute.Sitemap = [];
+  try {
+    const stores = await fetchAllPublicStoreSlugs();
+    storePages = stores.map((store) => ({
+      url: `${baseUrl}/s/${store.slug}`,
+      lastModified: new Date(store.updated_at),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    // Gracefully degrade — static pages still get indexed
+    console.error('Sitemap: failed to fetch store slugs', error);
+  }
+
+  return [...staticPages, ...storePages];
 }
+

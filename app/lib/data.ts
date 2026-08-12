@@ -456,7 +456,8 @@ export async function fetchVendorBySlug(slug: string) {
         pickup_latitude,
         pickup_longitude,
         pickup_address_details,
-        location_state
+        location_state,
+        category
       FROM users
       WHERE store_slug = ${slug}
       LIMIT 1
@@ -923,6 +924,39 @@ export async function fetchAllPublicStores(
     return results;
   } catch (error) {
     console.error("Database Error (fetchAllPublicStores):", error);
+    return [];
+  }
+}
+
+// ─── Sitemap Helpers ─────────────────────────────────────────
+
+/** Lightweight query returning all public store slugs for the dynamic sitemap. */
+export async function fetchAllPublicStoreSlugs(): Promise<
+  { slug: string; updated_at: string; location_state: string | null }[]
+> {
+  try {
+    await ensureStoreColumns();
+    const rows = await sql<
+      { store_slug: string; updated_at: string; location_state: string | null }[]
+    >`
+      SELECT u.store_slug, COALESCE(st.updated_at, NOW()) AS updated_at, u.location_state
+      FROM users u
+      LEFT JOIN store_theme st ON st.vendor_id = u.id
+      WHERE u.store_name IS NOT NULL
+        AND u.store_name != ''
+        AND EXISTS (
+          SELECT 1 FROM products p
+          WHERE p.vendor_id = u.id AND p.status = 'active'
+        )
+      ORDER BY u.store_name ASC
+    `;
+    return rows.map((r) => ({
+      slug: r.store_slug,
+      updated_at: r.updated_at,
+      location_state: r.location_state,
+    }));
+  } catch (error) {
+    console.error('Database Error (fetchAllPublicStoreSlugs):', error);
     return [];
   }
 }
