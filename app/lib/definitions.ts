@@ -45,6 +45,14 @@ export type User = {
   store_closed_note?: string | null;
   /** Custom domain (e.g. mybrand.com) for Business tier */
   custom_domain?: string | null;
+  // KYC & Bank Verification
+  bank_code?: string | null;
+  bank_verified?: boolean | null;
+  bank_verified_at?: string | null;
+  bank_updated_at?: string | null;
+  bank_name_match_score?: number | null;
+  kyc_tier?: 'starter' | 'pro' | 'business' | string | null;
+  kyc_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | string | null;
 };
 
 export type Customer = {

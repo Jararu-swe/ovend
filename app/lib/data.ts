@@ -510,7 +510,14 @@ export async function fetchUserById(id: string) {
         pickup_longitude,
         pickup_address_details,
         sound_enabled,
-        sound_volume
+        sound_volume,
+        bank_code,
+        bank_verified,
+        bank_verified_at,
+        bank_updated_at,
+        bank_name_match_score,
+        kyc_tier,
+        kyc_status
       FROM users
       WHERE id = ${id}
     `;

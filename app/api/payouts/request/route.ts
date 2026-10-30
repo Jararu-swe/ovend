@@ -7,6 +7,7 @@ import {
 } from "@/app/lib/paystack";
 import { fetchVendorAvailableBalance } from "@/app/lib/payouts";
 import { getTransactionFeePercentage } from "@/app/lib/subscriptions";
+import { canRequestPayout } from "@/app/lib/kyc";
 
 export async function POST(request: Request) {
   try {
@@ -35,6 +36,17 @@ export async function POST(request: Request) {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // Enforce Nigerian KYC compliance, tier limits, and bank cooldown
+    console.log("Verifying KYC compliance and tier limits...");
+    const kycCheck = await canRequestPayout(vendorId, amount);
+    if (!kycCheck.allowed) {
+      console.log("❌ KYC check failed:", kycCheck.reason);
+      return new Response(
+        JSON.stringify({ error: kycCheck.reason }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
     }
 
     // Fetch vendor's actual available balance (net of transaction fees and previous payouts)
@@ -85,7 +97,7 @@ export async function POST(request: Request) {
     // Fetch vendor's bank details
     console.log("Fetching vendor bank details...");
     const vendorData = await sql`
-      SELECT bank_name, account_number, account_name
+      SELECT bank_name, bank_code, account_number, account_name, bank_verified
       FROM users
       WHERE id = ${vendorId}
     `;
@@ -101,14 +113,14 @@ export async function POST(request: Request) {
       console.log("❌ Incomplete bank details");
       return new Response(
         JSON.stringify({
-          error: "Please complete your bank account details in Settings",
+          error: "Please complete your bank account details in Settings or Verification",
         }),
         { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
     console.log("Getting bank code for:", vendor.bank_name);
-    const bankCode = await getBankCodeFromName(vendor.bank_name);
+    const bankCode = vendor.bank_code || (await getBankCodeFromName(vendor.bank_name));
     console.log("Bank code:", bankCode);
     
     if (!bankCode) {

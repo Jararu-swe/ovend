@@ -4,7 +4,7 @@ import { getVendorSubscription, getSubscriptionPlans } from '@/app/lib/subscript
 import { sql } from '@/app/lib/db';
 import PayoutCard from '@/app/ui/dashboard/payout-card';
 import PayoutHistory from '@/app/ui/dashboard/payout-history';
-import { fetchVendorPayouts, fetchVendorAvailableBalance } from '@/app/lib/payouts';
+import { fetchVendorPayouts, fetchVendorBalanceBreakdown } from '@/app/lib/payouts';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
@@ -65,7 +65,7 @@ export default async function BillingPage() {
 
   try {
     // Fetch subscription data
-    const [subscription, plans, stats, payouts, subscriptionPayments, productCount, availableBalance] =
+    const [subscription, plans, stats, payouts, subscriptionPayments, productCount, balanceBreakdown] =
       await Promise.all([
         getVendorSubscription(session.user.id),
         getSubscriptionPlans(),
@@ -80,7 +80,12 @@ export default async function BillingPage() {
         sql`SELECT COUNT(*) as count FROM products WHERE vendor_id = ${session.user.id} AND status = 'active'`.then(
           (result) => Number(result[0]?.count || 0)
         ),
-        fetchVendorAvailableBalance(session.user.id).catch(() => 0),
+        fetchVendorBalanceBreakdown(session.user.id).catch(() => ({
+          availableBalance: 0,
+          escrowPendingBalance: 0,
+          totalNetEarnings: 0,
+          settlementDays: 3,
+        })),
       ]);
 
     if (!subscription) {
@@ -150,7 +155,9 @@ export default async function BillingPage() {
           {/* Payouts Section - Keep existing payout components */}
           <PayoutCard 
             user={user} 
-            balance={availableBalance}
+            balance={balanceBreakdown.availableBalance}
+            escrowPendingBalance={balanceBreakdown.escrowPendingBalance}
+            settlementDays={balanceBreakdown.settlementDays}
             transactionFeePercentage={subscription.plan.transaction_fee_percentage}
           />
 

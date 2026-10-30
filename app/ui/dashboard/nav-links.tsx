@@ -9,6 +9,8 @@ import {
   PaintBrushIcon,
   CreditCardIcon,
   BuildingStorefrontIcon,
+  ShieldCheckIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -21,6 +23,7 @@ const links: {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   /** Permission required for team members to see this link. Omit for always-visible. */
   teamPermission?: keyof TeamMemberPermissions;
+  adminOnly?: boolean;
 }[] = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
   { name: 'Products', href: '/dashboard/products', icon: ShoppingBagIcon, teamPermission: 'products' },
@@ -29,20 +32,25 @@ const links: {
   { name: 'Team', href: '/dashboard/team', icon: UsersIcon },
   { name: 'Storefront', href: '/dashboard/customize', icon: BuildingStorefrontIcon },
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCardIcon },
+  { name: 'Verification', href: '/dashboard/kyc', icon: ShieldCheckIcon, teamPermission: 'settings' },
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon, teamPermission: 'settings' },
+  { name: 'Compliance', href: '/dashboard/admin/compliance', icon: ShieldExclamationIcon, adminOnly: true },
 ];
 
 export default function NavLinks({
   newOrdersCount = 0,
   teamPermissions,
+  isAdmin = false,
 }: {
   newOrdersCount?: number;
   teamPermissions?: TeamMemberPermissions | null;
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
 
-  // Filter links based on team member permissions
+  // Filter links based on team member permissions and admin status
   const visibleLinks = links.filter((link) => {
+    if (link.adminOnly && !isAdmin) return false;
     if (!teamPermissions) return true;
     if (!link.teamPermission) return true;
     return teamPermissions[link.teamPermission] === true;

@@ -78,6 +78,53 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
   const [bankName, setBankName] = useState(user.bank_name || '');
   const [accountNumber, setAccountNumber] = useState(user.account_number || '');
   const [accountName, setAccountName] = useState(user.account_name || '');
+  const [bankVerified, setBankVerified] = useState(Boolean(user.bank_verified));
+  const [isVerifyingBank, setIsVerifyingBank] = useState(false);
+  const [bankVerifySuccess, setBankVerifySuccess] = useState<string | null>(null);
+  const [bankVerifyError, setBankVerifyError] = useState<string | null>(null);
+
+  const verifyBankInOnboarding = async () => {
+    setBankVerifyError(null);
+    setBankVerifySuccess(null);
+
+    const selectedBank = banks.find((b) => b.name === bankName);
+    if (!selectedBank) {
+      setBankVerifyError('Please select a bank from the list.');
+      return;
+    }
+
+    if (accountNumber.trim().length !== 10) {
+      setBankVerifyError('Account number must be 10 digits.');
+      return;
+    }
+
+    setIsVerifyingBank(true);
+    try {
+      const res = await fetch('/api/kyc/verify-bank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountNumber: accountNumber.trim(),
+          bankCode: selectedBank.code,
+          bankName: selectedBank.name,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setBankVerifyError(data.error || 'Verification failed.');
+      } else {
+        setAccountName(data.accountName);
+        setBankVerified(true);
+        setBankVerifySuccess(`Verified with NIBSS: ${data.accountName} (${data.matchScore}% name match)`);
+      }
+    } catch (err: any) {
+      setBankVerifyError(err?.message || 'Failed to verify bank account.');
+    } finally {
+      setIsVerifyingBank(false);
+    }
+  };
+
   const [templateId, setTemplateId] = useState('fresh-market');
   const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [themeError, setThemeError] = useState<string | null>(null);
@@ -484,32 +531,72 @@ export default function OnboardingWizard({ user, hasProducts, hasWhatsApp }: Onb
                 <label className="block text-xs font-bold text-slate-600 mb-1">
                   Account Number <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
-                <input
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="0123456789"
-                  type="tel"
-                  maxLength={10}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
-                />
-                <p className="mt-1 text-[11px] text-slate-400">10-digit account number</p>
+                <div className="flex gap-2">
+                  <input
+                    value={accountNumber}
+                    onChange={(e) => {
+                      setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10));
+                      setBankVerified(false);
+                      setBankVerifySuccess(null);
+                      setBankVerifyError(null);
+                    }}
+                    placeholder="0123456789"
+                    type="tel"
+                    maxLength={10}
+                    className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 font-mono outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyBankInOnboarding}
+                    disabled={isVerifyingBank || !bankName || accountNumber.length !== 10}
+                    className="rounded-xl bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white px-4 py-2 text-xs font-semibold transition shrink-0"
+                  >
+                    {isVerifyingBank ? 'Checking…' : bankVerified ? 'Re-verify' : 'Verify Bank'}
+                  </button>
+                </div>
+                <p className="mt-1 text-[11px] text-slate-400">10-digit NUBAN account number</p>
               </div>
 
+              {bankVerifySuccess && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center gap-2">
+                  <CheckCircleIcon className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>{bankVerifySuccess}</span>
+                </div>
+              )}
+
+              {bankVerifyError && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                  {bankVerifyError}
+                </div>
+              )}
+
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Account Name <span className="text-slate-400 font-normal">(Optional)</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-600">
+                    Account Name
+                  </label>
+                  {bankVerified && (
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      ✓ Verified Account Holder
+                    </span>
+                  )}
+                </div>
                 <input
                   value={accountName}
+                  readOnly={bankVerified}
                   onChange={(e) => setAccountName(e.target.value)}
-                  placeholder="Name as it appears on your account"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 placeholder:text-slate-400"
+                  placeholder="Verified account holder name"
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${
+                    bankVerified
+                      ? 'border-emerald-300 bg-emerald-50/40 text-emerald-950 font-medium cursor-not-allowed'
+                      : 'border-slate-200 bg-white text-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20'
+                  }`}
                 />
               </div>
 
               <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
                 <p className="text-xs text-blue-700">
-                  💡 <strong>Why we need this:</strong> When customers pay via card or transfer, we&apos;ll settle the funds directly to this account.
+                  💡 <strong>Anti-Fraud Protection:</strong> To comply with Central Bank of Nigeria (CBN) rules, your bank account name must match your registered name ({user.name}).
                 </p>
               </div>
 

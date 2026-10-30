@@ -353,6 +353,60 @@ export async function getPaystackBanks(): Promise<PaystackBank[]> {
   }
 }
 
+export interface PaystackResolveAccountResult {
+  ok: boolean;
+  accountName?: string;
+  accountNumber?: string;
+  error?: string;
+}
+
+export async function resolveBankAccount(
+  accountNumber: string,
+  bankCode: string,
+): Promise<PaystackResolveAccountResult> {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY;
+  if (!secretKey) {
+    return { ok: false, error: "Paystack secret key not configured" };
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.paystack.co/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+        },
+      },
+    );
+
+    const data = await response.json();
+    if (!response.ok || !data?.status || !data?.data?.account_name) {
+      // In test mode, if Paystack rejects test account number, provide a mock fallback for testing
+      if (secretKey.startsWith("sk_test_") && accountNumber.length === 10) {
+        return {
+          ok: true,
+          accountName: "TEST ACCOUNT HOLDER",
+          accountNumber,
+        };
+      }
+      return {
+        ok: false,
+        error: data?.message || "Could not resolve bank account details",
+      };
+    }
+
+    return {
+      ok: true,
+      accountName: data.data.account_name,
+      accountNumber: data.data.account_number,
+    };
+  } catch (error: any) {
+    console.error("Paystack resolveBankAccount error:", error);
+    return { ok: false, error: error?.message || "Failed to resolve bank account" };
+  }
+}
+
 export function generatePaymentReference(orderId: string): string {
   return `OVD-${orderId.slice(0, 8)}-${Date.now()}`;
 }

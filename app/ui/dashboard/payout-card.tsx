@@ -10,10 +10,18 @@ import {
 interface PayoutCardProps {
   user: any;
   balance: number;
+  escrowPendingBalance?: number;
+  settlementDays?: number;
   transactionFeePercentage: number;
 }
 
-export default function PayoutCard({ user, balance, transactionFeePercentage }: PayoutCardProps) {
+export default function PayoutCard({
+  user,
+  balance,
+  escrowPendingBalance = 0,
+  settlementDays = 3,
+  transactionFeePercentage,
+}: PayoutCardProps) {
   const [isRequesting, setIsRequesting] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
@@ -56,7 +64,15 @@ export default function PayoutCard({ user, balance, transactionFeePercentage }: 
 
     if (!hasCompleteDetails) {
       setMessage({
-        text: "Please complete your bank account details in Settings first",
+        text: "Please complete your bank account details in Verification or Settings first",
+        type: "error",
+      });
+      return;
+    }
+
+    if (!user?.bank_verified) {
+      setMessage({
+        text: "Your bank account must be verified to prevent payout fraud. Please verify your bank in the Verification tab.",
         type: "error",
       });
       return;
@@ -143,18 +159,48 @@ export default function PayoutCard({ user, balance, transactionFeePercentage }: 
             </div>
           )}
         </div>
-        <p className="mt-3 text-xs text-emerald-700">
-          Minimum payout: ₦{minimumPayout.toLocaleString()} | You can withdraw
-          up to ₦{balance.toLocaleString("en-NG", { minimumFractionDigits: 0 })}
-        </p>
+        <div className="mt-3 pt-3 border-t border-emerald-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <p className="text-emerald-700">
+            Minimum payout: ₦{minimumPayout.toLocaleString()} | Available to withdraw:{" "}
+            <strong>₦{balance.toLocaleString("en-NG", { minimumFractionDigits: 0 })}</strong>
+          </p>
+          {escrowPendingBalance > 0 && (
+            <div className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-900 px-2.5 py-1 rounded-lg">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span>
+                <strong>₦{escrowPendingBalance.toLocaleString("en-NG", { minimumFractionDigits: 0 })}</strong> in settlement hold (T+{settlementDays}d)
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bank Account Info */}
       {hasCompleteDetails ? (
         <div className="rounded-xl bg-blue-50 border border-blue-200 p-4">
-          <p className="text-sm font-semibold text-blue-900 mb-2">
-            Bank Account on File
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-blue-900">
+              Bank Account on File
+            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-[11px] font-semibold capitalize">
+                {user.kyc_tier || "Starter"} Tier
+              </span>
+              {user.bank_verified ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[11px] font-semibold">
+                  <CheckCircleIcon className="h-3.5 w-3.5" />
+                  Verified
+                </span>
+              ) : (
+                <a
+                  href="/dashboard/kyc"
+                  className="rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 px-2 py-0.5 text-[11px] font-semibold transition"
+                >
+                  Verify Bank →
+                </a>
+              )}
+            </div>
+          </div>
           <div className="space-y-1 text-sm text-blue-800">
             <p>
               <span className="font-medium">Bank:</span> {user.bank_name}
@@ -174,17 +220,17 @@ export default function PayoutCard({ user, balance, transactionFeePercentage }: 
           <ExclamationCircleIcon className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-semibold text-amber-900">
-              Complete Your Bank Details
+              Verify Your Bank Details
             </p>
             <p className="text-amber-800 mt-1">
-              You need to add your bank account details in Settings before you
+              You need to verify your bank account details under Verification before you
               can request a payout.
             </p>
             <a
-              href="/dashboard/settings"
+              href="/dashboard/kyc"
               className="inline-block mt-2 text-amber-700 font-semibold hover:text-amber-800 underline"
             >
-              Go to Settings →
+              Go to Verification →
             </a>
           </div>
         </div>

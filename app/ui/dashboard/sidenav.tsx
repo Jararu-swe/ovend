@@ -5,6 +5,8 @@ import { SignOutButton } from '@/app/ui/dashboard/sign-out-button';
 import { auth } from '@/auth';
 import { sql } from '@/app/lib/db';
 
+import { isAdminUser } from '@/app/lib/kyc-admin';
+
 async function getNewOrdersCount(vendorId: string): Promise<number> {
   try {
     const result = await sql<{ count: string }[]>`
@@ -23,6 +25,7 @@ async function getNewOrdersCount(vendorId: string): Promise<number> {
 export default async function SideNav() {
   const session = await auth();
   const newOrdersCount = session?.user?.id ? await getNewOrdersCount(session.user.id) : 0;
+  const isAdmin = session?.user?.id ? await isAdminUser(session.user.id) : false;
 
   // Extract team member permissions from session (if any)
   const teamPermissions = (session?.user as any)?.teamPermissions as
@@ -46,7 +49,7 @@ export default async function SideNav() {
 
       {/* Navigation */}
       <div className="flex grow flex-row justify-between space-x-2 overflow-y-auto px-3 py-3 md:flex-col md:space-x-0 md:space-y-1">
-        <NavLinks newOrdersCount={newOrdersCount} teamPermissions={teamPermissions} />
+        <NavLinks newOrdersCount={newOrdersCount} teamPermissions={teamPermissions} isAdmin={isAdmin} />
         <div className="hidden h-auto w-full grow md:block" />
         <SignOutButton />
       </div>

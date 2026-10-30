@@ -939,12 +939,30 @@ export default function SettingsForm({ user }: { user: User }) {
 
       {/* ── Bank Account Details Section ────────────────────────── */}
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-        <h2 className="mb-2 text-base font-semibold text-slate-800">
-          Bank Account Details
-        </h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-base font-semibold text-slate-800">
+            Bank Account Details
+          </h2>
+          {user.bank_verified ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-xs font-semibold">
+              <CheckCircleIcon className="h-3.5 w-3.5" />
+              Verified NUBAN
+            </span>
+          ) : (
+            <a
+              href="/dashboard/kyc"
+              className="rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 px-2.5 py-0.5 text-xs font-semibold transition"
+            >
+              Verify in KYC Tab →
+            </a>
+          )}
+        </div>
         <p className="mb-4 text-xs text-slate-500">
-          For cash/transfer payments, customers will see these details to make
-          payment
+          Manage your payout account. To increase payout limits and complete regulatory identity verification, visit the{" "}
+          <a href="/dashboard/kyc" className="text-sky-600 font-semibold hover:underline">
+            Verification Tab
+          </a>
+          .
         </p>
         <div className="space-y-4">
           <div>
