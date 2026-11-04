@@ -109,6 +109,17 @@ export interface AdminVendorRow {
   createdAt: string;
   monthlyPayouts: number;
   verificationsCount: number;
+  pendingCAC?: {
+    id: string;
+    rcNumber: string;
+    companyName: string;
+    bankAccountName?: string;
+    bankName?: string;
+    isCorporateAccount?: boolean;
+    nameMatchScore?: number;
+    submittedAt: string;
+    cacPortalUrl: string;
+  } | null;
 }
 
 export async function getVendorsForReview(params: {
@@ -164,7 +175,24 @@ export async function getVendorsForReview(params: {
       ), 0) AS monthly_payouts,
       (
         SELECT COUNT(*) FROM kyc_verifications kv WHERE kv.vendor_id = u.id
-      ) AS verifications_count
+      ) AS verifications_count,
+      (
+        SELECT json_build_object(
+          'id', kv.id,
+          'rcNumber', kv.id_number_masked,
+          'companyName', kv.resolved_name,
+          'bankAccountName', (kv.metadata->>'bankAccountName'),
+          'bankName', (kv.metadata->>'bankName'),
+          'isCorporateAccount', (kv.metadata->>'isCorporateAccount')::boolean,
+          'nameMatchScore', kv.name_match_score,
+          'submittedAt', kv.created_at,
+          'cacPortalUrl', 'https://search.cac.gov.ng'
+        )
+        FROM kyc_verifications kv
+        WHERE kv.vendor_id = u.id AND kv.status = 'pending' AND kv.id_type = 'cac'
+        ORDER BY kv.created_at DESC
+        LIMIT 1
+      ) AS pending_cac
     FROM users u
     ${whereClause}
     ${searchClause}
@@ -186,6 +214,7 @@ export async function getVendorsForReview(params: {
     createdAt: r.created_at,
     monthlyPayouts: Number(r.monthly_payouts),
     verificationsCount: Number(r.verifications_count),
+    pendingCAC: r.pending_cac || null,
   }));
 
   return { vendors, total: Number(countResult[0]?.total || 0) };
@@ -413,5 +442,126 @@ export async function adminResolveFraudAlert(
   } catch (error: any) {
     console.error('adminResolveFraudAlert error:', error);
     return { success: false, error: error?.message || 'Failed to resolve alert' };
+  }
+}
+
+/**
+ * Admin approves a pending CAC submission after verifying on search.cac.gov.ng (Zero API fees).
+ * Automatically upgrades the vendor to Business Tier.
+ */
+export async function adminApproveCACVerification(
+  adminId: string,
+  verificationId: string,
+  notes?: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const verRes = await sql`
+      SELECT id, vendor_id, id_number_masked, resolved_name, metadata
+      FROM kyc_verifications
+      WHERE id = ${verificationId} AND status = 'pending'
+      LIMIT 1
+    `;
+    if (!verRes.length) {
+      return { success: false, error: 'Pending CAC submission not found' };
+    }
+    const ver = verRes[0];
+
+    // 1. Update verification record to verified
+    await sql`
+      UPDATE kyc_verifications
+      SET
+        status = 'verified',
+        verified_at = CURRENT_TIMESTAMP,
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{adminApproval}',
+          ${JSON.stringify({ adminId, notes, approvedAt: new Date().toISOString() })}::jsonb
+        )
+      WHERE id = ${verificationId}
+    `;
+
+    // 2. Upgrade vendor to Business tier
+    await sql`
+      UPDATE users
+      SET
+        kyc_tier = 'business',
+        kyc_status = 'verified'
+      WHERE id = ${ver.vendor_id}
+    `;
+
+    // 3. Log fraud/compliance audit event
+    await logFraudEvent(ver.vendor_id, 'admin_cac_approved', 'low', {
+      adminId,
+      verificationId,
+      rcNumber: ver.id_number_masked,
+      companyName: ver.resolved_name,
+      notes,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('adminApproveCACVerification error:', error);
+    return { success: false, error: error?.message || 'Failed to approve CAC verification' };
+  }
+}
+
+/**
+ * Admin rejects a pending CAC submission with a reason for the vendor.
+ */
+export async function adminRejectCACVerification(
+  adminId: string,
+  verificationId: string,
+  reason: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!reason || !reason.trim()) {
+    return { success: false, error: 'Rejection reason is required' };
+  }
+
+  try {
+    const verRes = await sql`
+      SELECT id, vendor_id, id_number_masked, resolved_name
+      FROM kyc_verifications
+      WHERE id = ${verificationId} AND status = 'pending'
+      LIMIT 1
+    `;
+    if (!verRes.length) {
+      return { success: false, error: 'Pending CAC submission not found' };
+    }
+    const ver = verRes[0];
+
+    // 1. Update verification to rejected
+    await sql`
+      UPDATE kyc_verifications
+      SET
+        status = 'rejected',
+        rejection_reason = ${reason.trim()},
+        metadata = jsonb_set(
+          COALESCE(metadata, '{}'::jsonb),
+          '{adminRejection}',
+          ${JSON.stringify({ adminId, reason: reason.trim(), rejectedAt: new Date().toISOString() })}::jsonb
+        )
+      WHERE id = ${verificationId}
+    `;
+
+    // 2. Restore vendor status (keeps current tier like starter or pro)
+    await sql`
+      UPDATE users
+      SET kyc_status = CASE WHEN bank_verified = TRUE THEN 'verified' ELSE 'unverified' END
+      WHERE id = ${ver.vendor_id}
+    `;
+
+    // 3. Log compliance event
+    await logFraudEvent(ver.vendor_id, 'admin_cac_rejected', 'medium', {
+      adminId,
+      verificationId,
+      rcNumber: ver.id_number_masked,
+      companyName: ver.resolved_name,
+      reason: reason.trim(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('adminRejectCACVerification error:', error);
+    return { success: false, error: error?.message || 'Failed to reject CAC verification' };
   }
 }

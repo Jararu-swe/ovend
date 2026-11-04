@@ -5,6 +5,8 @@ import {
   adminSetVendorKYCTier,
   adminSuspendVendor,
   adminResolveFraudAlert,
+  adminApproveCACVerification,
+  adminRejectCACVerification,
   getVendorVerifications,
 } from '@/app/lib/kyc-admin';
 import { getVendorKYCProfile } from '@/app/lib/kyc';
@@ -70,6 +72,36 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: result.error }, { status: 400 });
         }
         return NextResponse.json({ success: true, message: 'Alert resolved' });
+      }
+
+      case 'approve_cac': {
+        const { verificationId, notes } = body;
+        if (!verificationId) {
+          return NextResponse.json({ error: 'verificationId is required' }, { status: 400 });
+        }
+        const result = await adminApproveCACVerification(userId, verificationId, notes);
+        if (!result.success) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+        return NextResponse.json({
+          success: true,
+          message: 'CAC verification approved! Vendor upgraded to Business Tier.',
+        });
+      }
+
+      case 'reject_cac': {
+        const { verificationId, reason } = body;
+        if (!verificationId || !reason) {
+          return NextResponse.json(
+            { error: 'verificationId and rejection reason are required' },
+            { status: 400 },
+          );
+        }
+        const result = await adminRejectCACVerification(userId, verificationId, reason);
+        if (!result.success) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+        return NextResponse.json({ success: true, message: 'CAC submission rejected' });
       }
 
       case 'get_vendor_detail': {

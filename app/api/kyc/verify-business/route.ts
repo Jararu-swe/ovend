@@ -32,7 +32,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Business Tier KYB verification successful! Your store is now verified for high-volume enterprise payouts.`,
+      pending: Boolean(result.pending),
+      message: result.message || 'Business verification submitted for compliance review',
     });
   } catch (error: any) {
     console.error('Error in /api/kyc/verify-business:', error);

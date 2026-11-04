@@ -1,5 +1,6 @@
 import { sql } from '@/app/lib/db';
 import { resolveBankAccount } from '@/app/lib/paystack';
+import { getKYCProvider } from '@/app/lib/kyc-provider';
 import crypto from 'node:crypto';
 
 export type KYCTier = 'starter' | 'pro' | 'business';
@@ -460,34 +461,70 @@ export async function verifyProTierIdentity(
       };
     }
 
-    // Call Paystack BVN match API if BVN and live mode
-    const secretKey = process.env.PAYSTACK_SECRET_KEY;
+    // Call live KYC provider (Prembly or Sandbox)
+    const provider = getKYCProvider();
     let verifiedName = user.account_name || user.name;
     let matchScore = 100;
 
-    if (secretKey && !secretKey.startsWith('sk_test_') && idType === 'bvn') {
-      try {
-        const response = await fetch(`https://api.paystack.co/bvn/match`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${secretKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            bvn: cleanId,
-            account_number: user.account_number,
-            bank_code: user.bank_code,
-          }),
-        });
-        const data = await response.json();
-        if (!response.ok || !data?.status || !data?.data?.is_blacklisted === false) {
+    if (idType === 'bvn') {
+      const bvnRes = await provider.verifyBVN({
+        bvn: cleanId,
+        accountNumber: user.account_number,
+        bankCode: user.bank_code,
+        dob,
+      });
+
+      if (!bvnRes.ok) {
+        return {
+          success: false,
+          error: bvnRes.error || 'BVN verification failed with national database',
+        };
+      }
+
+      if (bvnRes.fullName) {
+        verifiedName = bvnRes.fullName;
+        const match = compareNames(user.name, bvnRes.fullName);
+        matchScore = match.score;
+        if (!match.isMatch) {
+          await logFraudEvent(vendorId, 'bvn_name_mismatch', 'high', {
+            registeredName: user.name,
+            bvnFullName: bvnRes.fullName,
+            matchScore: match.score,
+          });
           return {
             success: false,
-            error: data?.message || 'BVN verification failed with regulatory database',
+            error: `Name on BVN record ("${bvnRes.fullName}") does not match your registered name ("${user.name}").`,
           };
         }
-      } catch (err: any) {
-        console.warn('Paystack BVN check failed, fallback to format validation:', err);
+      }
+    } else if (idType === 'nin') {
+      const ninRes = await provider.verifyNIN({
+        nin: cleanId,
+        dob,
+      });
+
+      if (!ninRes.ok) {
+        return {
+          success: false,
+          error: ninRes.error || 'NIN verification failed with national database',
+        };
+      }
+
+      if (ninRes.fullName) {
+        verifiedName = ninRes.fullName;
+        const match = compareNames(user.name, ninRes.fullName);
+        matchScore = match.score;
+        if (!match.isMatch) {
+          await logFraudEvent(vendorId, 'nin_name_mismatch', 'high', {
+            registeredName: user.name,
+            ninFullName: ninRes.fullName,
+            matchScore: match.score,
+          });
+          return {
+            success: false,
+            error: `Name on NIN record ("${ninRes.fullName}") does not match your registered name ("${user.name}").`,
+          };
+        }
       }
     }
 
@@ -517,13 +554,32 @@ export async function verifyProTierIdentity(
 }
 
 /**
+ * Checks if a bank account name reflects a registered corporate entity
+ * (e.g. contains LTD, LIMITED, VENTURES, ENTERPRISE, PLC, GLOBAL, SERVICES).
+ */
+export function isCorporateAccountName(accountName: string): boolean {
+  if (!accountName) return false;
+  const corporateKeywords = [
+    'ltd', 'limited', 'ventures', 'enterprise', 'enterprises',
+    'global', 'nig', 'nigeria', 'services', 'plc', 'stores',
+    'holdings', 'logistics', 'tech', 'technologies', 'consult',
+    'consulting', 'farms', 'agro', 'solutions', 'concept', 'concepts',
+    'corp', 'corporation', 'industries', 'group', 'integrated',
+  ];
+  const words = accountName.toLowerCase().split(/[\s/.,_-]+/);
+  return words.some((w) => corporateKeywords.includes(w));
+}
+
+/**
  * Verifies CAC Business Registration for Business Tier upgrade.
+ * Submits for zero-fee administrative compliance review cross-checked
+ * against official CAC records (search.cac.gov.ng) and corporate bank accounts.
  */
 export async function verifyBusinessTierRegistration(
   vendorId: string,
   cacNumber: string,
   companyName: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; pending?: boolean; message?: string; error?: string }> {
   try {
     const cleanCac = cacNumber.trim().toUpperCase();
     if (cleanCac.length < 5) {
@@ -548,37 +604,73 @@ export async function verifyBusinessTierRegistration(
       };
     }
 
-    // Check similarity between company name and corporate account name
+    // Check if an existing pending CAC verification already exists
+    const existingPending = await sql`
+      SELECT id FROM kyc_verifications
+      WHERE vendor_id = ${vendorId} AND id_type = 'cac' AND status = 'pending'
+      LIMIT 1
+    `;
+    if (existingPending.length > 0) {
+      return {
+        success: true,
+        pending: true,
+        message: 'Your CAC verification is already submitted and pending compliance review.',
+      };
+    }
+
+    const isCorp = isCorporateAccountName(user.account_name || '');
     const match = compareNames(cleanCompany, user.account_name || '');
+    const cacHash = hashIdentifier(cleanCac);
+
     if (!match.isMatch && user.account_name) {
       console.warn(`CAC company name "${cleanCompany}" differs from bank account name "${user.account_name}"`);
     }
 
-    const cacHash = hashIdentifier(cleanCac);
+    const metadata = {
+      rcNumber: cleanCac,
+      companyName: cleanCompany,
+      bankName: user.bank_name,
+      bankAccountName: user.account_name,
+      isCorporateAccount: isCorp,
+      nameMatchScore: match.score,
+      cacSearchUrl: 'https://search.cac.gov.ng',
+      submittedAt: new Date().toISOString(),
+    };
 
-    // Update vendor to Business tier
-    await sql`
-      UPDATE users
-      SET 
-        kyc_tier = 'business',
-        kyc_status = 'verified'
-      WHERE id = ${vendorId}
-    `;
-
-    // Record CAC verification
+    // Record pending CAC verification for admin compliance review
     await sql`
       INSERT INTO kyc_verifications (
-        vendor_id, tier, status, id_type, id_number_masked, id_hash, resolved_name, name_match_score, verified_at, metadata
+        vendor_id, tier, status, id_type, id_number_masked, id_hash, resolved_name, name_match_score, metadata
       ) VALUES (
-        ${vendorId}, 'business', 'verified', 'cac', ${cleanCac}, ${cacHash}, ${cleanCompany}, ${match.score}, CURRENT_TIMESTAMP,
-        ${JSON.stringify({ companyName: cleanCompany, cacNumber: cleanCac })}
+        ${vendorId}, 'business', 'pending', 'cac', ${cleanCac}, ${cacHash}, ${cleanCompany}, ${match.score},
+        ${JSON.stringify(metadata)}
       )
     `;
 
-    return { success: true };
+    // Mark vendor status as pending review
+    await sql`
+      UPDATE users
+      SET kyc_status = 'pending'
+      WHERE id = ${vendorId}
+    `;
+
+    // Audit log
+    await logFraudEvent(vendorId, 'cac_submitted_for_review', 'low', {
+      rcNumber: cleanCac,
+      companyName: cleanCompany,
+      bankAccountName: user.account_name,
+      isCorporateAccount: isCorp,
+      matchScore: match.score,
+    });
+
+    return {
+      success: true,
+      pending: true,
+      message: `CAC Registration for "${cleanCompany}" (${cleanCac}) submitted for compliance review. You can monitor the status on your dashboard.`,
+    };
   } catch (error: any) {
     console.error('Error verifying business registration:', error);
-    return { success: false, error: error?.message || 'Failed to verify business registration' };
+    return { success: false, error: error?.message || 'Failed to submit business registration' };
   }
 }
 

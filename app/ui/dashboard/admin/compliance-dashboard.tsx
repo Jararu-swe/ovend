@@ -16,9 +16,11 @@ import {
   NoSymbolIcon,
   FunnelIcon,
   BanknotesIcon,
-  BuildingLibraryIcon,
   ClockIcon,
   ChartBarIcon,
+  ArrowTopRightOnSquareIcon,
+  BuildingOffice2Icon,
+  BuildingLibraryIcon,
 } from '@heroicons/react/24/outline';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -51,6 +53,17 @@ interface AdminVendorRow {
   createdAt: string;
   monthlyPayouts: number;
   verificationsCount: number;
+  pendingCAC?: {
+    id: string;
+    rcNumber: string;
+    companyName: string;
+    bankAccountName?: string;
+    bankName?: string;
+    isCorporateAccount?: boolean;
+    nameMatchScore?: number;
+    submittedAt: string;
+    cacPortalUrl: string;
+  } | null;
 }
 
 interface FraudLogEntry {
@@ -110,6 +123,24 @@ export default function ComplianceDashboard() {
   const [actionReason, setActionReason] = useState('');
   const [isActioning, setIsActioning] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // CAC Compliance Review Modal (Zero API Fee Workflow via search.cac.gov.ng)
+  const [cacReviewModal, setCacReviewModal] = useState<{
+    vendorId: string;
+    vendorName: string;
+    verificationId: string;
+    rcNumber: string;
+    companyName: string;
+    bankAccountName?: string;
+    bankName?: string;
+    nameMatchScore?: number;
+    isCorporateAccount?: boolean;
+    cacPortalUrl?: string;
+  } | null>(null);
+  const [cacApproveNotes, setCacApproveNotes] = useState('');
+  const [cacRejectReason, setCacRejectReason] = useState('');
+  const [isCacProcessing, setIsCacProcessing] = useState(false);
+  const [cacActionMessage, setCacActionMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -256,6 +287,72 @@ export default function ComplianceDashboard() {
       }
     } catch (err) {
       console.error('Failed to resolve alert:', err);
+    }
+  };
+
+  const handleApproveCAC = async (verificationId: string) => {
+    setIsCacProcessing(true);
+    setCacActionMessage(null);
+    try {
+      const res = await fetch('/api/admin/compliance/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve_cac',
+          verificationId,
+          notes: cacApproveNotes.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to approve CAC');
+      setCacActionMessage({ text: data.message || 'CAC approved! Vendor upgraded to Business Tier.', type: 'success' });
+      setTimeout(() => {
+        setCacReviewModal(null);
+        setCacApproveNotes('');
+        setCacActionMessage(null);
+        loadVendors();
+        loadSummary();
+        if (selectedVendor) openVendorDetail(selectedVendor.profile.vendorId);
+      }, 1200);
+    } catch (err: any) {
+      setCacActionMessage({ text: err.message, type: 'error' });
+    } finally {
+      setIsCacProcessing(false);
+    }
+  };
+
+  const handleRejectCAC = async (verificationId: string) => {
+    if (!cacRejectReason.trim()) {
+      setCacActionMessage({ text: 'Please provide a rejection reason.', type: 'error' });
+      return;
+    }
+    setIsCacProcessing(true);
+    setCacActionMessage(null);
+    try {
+      const res = await fetch('/api/admin/compliance/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reject_cac',
+          verificationId,
+          reason: cacRejectReason.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to reject CAC');
+      setCacActionMessage({ text: data.message || 'CAC verification rejected.', type: 'success' });
+      setTimeout(() => {
+        setCacReviewModal(null);
+        setCacRejectReason('');
+        setCacActionMessage(null);
+        loadVendors();
+        loadSummary();
+        if (selectedVendor) openVendorDetail(selectedVendor.profile.vendorId);
+      }, 1200);
+    } catch (err: any) {
+      setCacActionMessage({ text: err.message, type: 'error' });
+    } finally {
+      setIsCacProcessing(false);
     }
   };
 
@@ -508,9 +605,16 @@ export default function ComplianceDashboard() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${statusBadge(v.kycStatus)}`}>
-                            {v.kycStatus}
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${statusBadge(v.kycStatus)}`}>
+                              {v.kycStatus}
+                            </span>
+                            {v.pendingCAC && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 text-purple-800 px-2 py-0.5 text-[9px] font-bold">
+                                <BuildingOffice2Icon className="h-3 w-3" /> CAC Pending
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           {v.bankVerified ? (
@@ -539,6 +643,26 @@ export default function ComplianceDashboard() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
+                            {v.pendingCAC && (
+                              <button
+                                onClick={() => setCacReviewModal({
+                                  vendorId: v.id,
+                                  vendorName: v.name,
+                                  verificationId: v.pendingCAC!.id,
+                                  rcNumber: v.pendingCAC!.rcNumber,
+                                  companyName: v.pendingCAC!.companyName,
+                                  bankAccountName: v.accountName || undefined,
+                                  bankName: v.bankName || undefined,
+                                  nameMatchScore: v.pendingCAC!.nameMatchScore,
+                                  isCorporateAccount: v.pendingCAC!.isCorporateAccount,
+                                })}
+                                title="Review CAC Registration"
+                                className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 text-[10px] font-bold flex items-center gap-1 transition shadow-sm"
+                              >
+                                <BuildingOffice2Icon className="h-3.5 w-3.5" />
+                                Verify CAC
+                              </button>
+                            )}
                             <button
                               onClick={() => openVendorDetail(v.id)}
                               title="View Detail"
@@ -854,6 +978,78 @@ export default function ComplianceDashboard() {
                   </div>
                 </div>
 
+                {/* Pending CAC Review Callout Box */}
+                {(() => {
+                  const pendingCac = selectedVendor.verifications?.find(
+                    (v: any) => v.idType === 'cac' && v.status === 'pending'
+                  );
+                  if (!pendingCac) return null;
+                  const meta = pendingCac.metadata || {};
+                  return (
+                    <div className="rounded-xl border border-purple-200 bg-purple-50/70 p-4 text-xs">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <BuildingOffice2Icon className="h-5 w-5 text-purple-600" />
+                          <p className="font-bold text-purple-950">Pending CAC Corporate KYB Review</p>
+                        </div>
+                        <span className="rounded-full bg-purple-200/80 text-purple-900 px-2 py-0.5 text-[10px] font-bold">
+                          Under Review
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-slate-700 mb-3">
+                        <div>
+                          <p className="text-slate-400">CAC RC / BN Number</p>
+                          <p className="font-mono font-bold text-slate-900">{pendingCac.idNumberMasked}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400">Company Name</p>
+                          <p className="font-semibold text-slate-900">{pendingCac.resolvedName}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400">Bank Account</p>
+                          <p>{meta.bankName || selectedVendor.profile.bankName} — {meta.bankAccountName || selectedVendor.profile.accountName}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400">Corporate Account Check</p>
+                          <p className={meta.isCorporateAccount ? 'text-emerald-700 font-semibold' : 'text-amber-700'}>
+                            {meta.isCorporateAccount ? '✓ Corporate Account detected' : '⚠ Individual / Unverified naming'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-purple-200/60">
+                        <a
+                          href="https://search.cac.gov.ng"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 text-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-800 transition"
+                        >
+                          <span>Verify on search.cac.gov.ng</span>
+                          <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                          onClick={() => {
+                            setShowVendorModal(false);
+                            setCacReviewModal({
+                              vendorId: selectedVendor.profile.vendorId,
+                              vendorName: selectedVendor.profile.vendorName,
+                              verificationId: pendingCac.id,
+                              rcNumber: pendingCac.idNumberMasked,
+                              companyName: pendingCac.resolvedName,
+                              bankAccountName: meta.bankAccountName || selectedVendor.profile.accountName,
+                              bankName: meta.bankName || selectedVendor.profile.bankName,
+                              nameMatchScore: pendingCac.nameMatchScore,
+                              isCorporateAccount: meta.isCorporateAccount,
+                            });
+                          }}
+                          className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 text-xs font-semibold transition"
+                        >
+                          Review & Approve / Reject
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Verification History */}
                 {selectedVendor.verifications?.length > 0 && (
                   <div>
@@ -998,6 +1194,166 @@ export default function ComplianceDashboard() {
                   ? 'Suspend Vendor'
                   : 'Update Tier'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CAC Compliance Review Modal (Zero API Cost Workflow) ── */}
+      {cacReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl animate-in fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BuildingOffice2Icon className="h-6 w-6 text-purple-600" />
+                <h3 className="text-base font-bold text-slate-900">Verify CAC Business Registration</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setCacReviewModal(null);
+                  setCacActionMessage(null);
+                  setCacRejectReason('');
+                  setCacApproveNotes('');
+                }}
+                className="text-slate-400 hover:text-slate-600 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-4">
+              Cross-check the submitted registration number on the official Corporate Affairs Commission public portal at{' '}
+              <a
+                href="https://search.cac.gov.ng"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-600 font-semibold underline inline-flex items-center gap-0.5"
+              >
+                search.cac.gov.ng <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+              </a>{' '}
+              with zero API fees.
+            </p>
+
+            {cacActionMessage && (
+              <div
+                className={`mb-4 rounded-xl p-3 text-xs font-medium ${
+                  cacActionMessage.type === 'success'
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border border-red-200 bg-red-50 text-red-800'
+                }`}
+              >
+                {cacActionMessage.text}
+              </div>
+            )}
+
+            {/* Submission Details Card */}
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs space-y-2 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-medium">Vendor:</span>
+                <span className="font-semibold text-slate-900">{cacReviewModal.vendorName}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-medium">CAC RC / BN Number:</span>
+                <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 text-sm">
+                  {cacReviewModal.rcNumber}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-medium">Registered Company:</span>
+                <span className="font-bold text-slate-900">{cacReviewModal.companyName}</span>
+              </div>
+              {cacReviewModal.bankAccountName && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-medium">Corporate Bank Account:</span>
+                  <span className="font-medium text-slate-800">
+                    {cacReviewModal.bankName ? `${cacReviewModal.bankName} - ` : ''}
+                    {cacReviewModal.bankAccountName}
+                  </span>
+                </div>
+              )}
+              {cacReviewModal.nameMatchScore !== undefined && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 font-medium">Name Similarity Score:</span>
+                  <span className={`font-bold ${cacReviewModal.nameMatchScore >= 75 ? 'text-emerald-700' : 'text-amber-600'}`}>
+                    {cacReviewModal.nameMatchScore}%
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Direct Verification Link Action */}
+            <div className="mb-4 rounded-xl bg-purple-50/80 border border-purple-100 p-3 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-purple-950">Official CAC Portal</p>
+                <p className="text-[11px] text-purple-700">Search for &ldquo;{cacReviewModal.rcNumber}&rdquo; to verify active status</p>
+              </div>
+              <a
+                href="https://search.cac.gov.ng"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-purple-700 transition shadow-sm"
+              >
+                <span>Open CAC Portal</span>
+                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+              </a>
+            </div>
+
+            {/* Notes / Reason */}
+            <div className="space-y-3 mb-5 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Approval Notes (Optional):
+                </label>
+                <input
+                  type="text"
+                  value={cacApproveNotes}
+                  onChange={(e) => setCacApproveNotes(e.target.value)}
+                  placeholder="e.g. Verified active on CAC search portal"
+                  disabled={isCacProcessing}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Rejection Reason (Required only if rejecting):
+                </label>
+                <input
+                  type="text"
+                  value={cacRejectReason}
+                  onChange={(e) => setCacRejectReason(e.target.value)}
+                  placeholder="e.g. Company status shows inactive / RC number not found"
+                  disabled={isCacProcessing}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 outline-none focus:border-red-500"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                onClick={() => handleRejectCAC(cacReviewModal.verificationId)}
+                disabled={isCacProcessing || !cacRejectReason.trim()}
+                className="rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 disabled:opacity-40 px-3.5 py-2 text-xs font-semibold transition"
+              >
+                {isCacProcessing ? '...' : 'Reject Submission'}
+              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCacReviewModal(null)}
+                  className="rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => handleApproveCAC(cacReviewModal.verificationId)}
+                  disabled={isCacProcessing}
+                  className="rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 text-white px-4 py-2 text-xs font-semibold transition shadow-sm"
+                >
+                  {isCacProcessing ? 'Processing...' : 'Approve & Upgrade to Business Tier'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
