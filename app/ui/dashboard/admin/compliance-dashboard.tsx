@@ -22,6 +22,7 @@ import {
   BuildingOffice2Icon,
   BuildingLibraryIcon,
 } from '@heroicons/react/24/outline';
+import { formatComplianceLog } from '../kyc/log-formatter';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -775,61 +776,73 @@ export default function ComplianceDashboard() {
                 <p className="text-xs text-slate-400 mt-1">All clear for the selected filters.</p>
               </div>
             ) : (
-              fraudLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className={`rounded-2xl border bg-white p-5 shadow-sm transition ${
-                    log.resolved ? 'opacity-60 border-slate-100' : 'border-slate-200'
-                  }`}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${severityColor(log.severity)}`}>
-                          {log.severity}
-                        </span>
-                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                          {log.eventType.replace(/_/g, ' ')}
-                        </span>
-                        {log.resolved && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold">
-                            <CheckCircleIcon className="h-3 w-3" /> Resolved
+              fraudLogs.map((log) => {
+                const formatted = formatComplianceLog(log.eventType, log.severity, log.details);
+                return (
+                  <div
+                    key={log.id}
+                    className={`rounded-2xl border bg-white p-5 shadow-sm transition ${
+                      log.resolved ? 'opacity-60 border-slate-100' : 'border-slate-200'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${severityColor(log.severity)}`}>
+                            {log.severity}
                           </span>
-                        )}
-                      </div>
-
-                      {log.vendorName && (
-                        <p className="text-xs text-slate-600 mb-1">
-                          Vendor: <span className="font-semibold">{log.vendorName}</span>
-                          {log.vendorEmail && (
-                            <span className="text-slate-400 ml-1">({log.vendorEmail})</span>
+                          <span className="text-xs font-bold text-slate-900">
+                            {formatted.title}
+                          </span>
+                          {log.resolved && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold">
+                              <CheckCircleIcon className="h-3 w-3" /> Resolved
+                            </span>
                           )}
-                        </p>
-                      )}
-
-                      {log.details && (
-                        <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-2.5 text-[11px] text-slate-600 font-mono break-all max-h-20 overflow-y-auto">
-                          {JSON.stringify(log.details, null, 2)}
                         </div>
-                      )}
 
-                      <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
-                        <span>{new Date(log.createdAt).toLocaleString()}</span>
-                        {log.ipAddress && <span>IP: {log.ipAddress}</span>}
+                        {log.vendorName && (
+                          <p className="text-xs text-slate-600 mb-1">
+                            Vendor: <span className="font-semibold text-slate-800">{log.vendorName}</span>
+                            {log.vendorEmail && (
+                              <span className="text-slate-400 ml-1">({log.vendorEmail})</span>
+                            )}
+                          </p>
+                        )}
+
+                        <p className="mt-1 text-xs text-slate-700 leading-relaxed">
+                          {formatted.summary}
+                        </p>
+
+                        {formatted.details && formatted.details.length > 0 && (
+                          <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 rounded-xl bg-slate-50 border border-slate-100 p-3 text-[11px]">
+                            {formatted.details.map((item, idx) => (
+                              <div key={idx}>
+                                <span className="text-slate-400 block font-medium">{item.label}</span>
+                                <span className="text-slate-800 font-semibold">{item.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-3 mt-2.5 text-[11px] text-slate-400">
+                          <span>{new Date(log.createdAt).toLocaleString()}</span>
+                          {log.ipAddress && <span>IP: {log.ipAddress}</span>}
+                        </div>
                       </div>
-                    </div>
 
-                    {!log.resolved && (
-                      <button
-                        onClick={() => resolveAlert(log.id)}
-                        className="shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-semibold transition"
-                      >
-                        Resolve
-                      </button>
-                    )}
+                      {!log.resolved && (
+                        <button
+                          onClick={() => resolveAlert(log.id)}
+                          className="shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-semibold transition"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

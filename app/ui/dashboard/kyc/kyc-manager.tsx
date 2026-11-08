@@ -13,6 +13,7 @@ import {
   LockClosedIcon,
 } from '@heroicons/react/24/outline';
 import type { VendorKYCProfile, KYCTier } from '@/app/lib/kyc';
+import { formatComplianceLog } from './log-formatter';
 
 interface BankOption {
   id: number;
@@ -48,6 +49,8 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
   const [businessError, setBusinessError] = useState<string | null>(null);
   const [businessSuccess, setBusinessSuccess] = useState<string | null>(null);
   const [showBusinessModal, setShowBusinessModal] = useState(false);
+
+
 
   // Fetch banks from API
   useEffect(() => {
@@ -587,40 +590,58 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
             Automated alerts triggered by account activities, name matches, and regulatory rules.
           </p>
 
-          <div className="space-y-2.5">
-            {profile.alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-amber-200/60 bg-white p-3 text-xs"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-900 uppercase">
-                      {alert.event_type.replace(/_/g, ' ')}
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                        alert.severity === 'critical'
-                          ? 'bg-red-100 text-red-800'
-                          : alert.severity === 'high'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {alert.severity}
+          <div className="space-y-3">
+            {profile.alerts.map((alert) => {
+              const formatted = formatComplianceLog(alert.event_type, alert.severity, alert.details);
+              const badgeClasses =
+                formatted.badge.variant === 'danger'
+                  ? 'bg-rose-100 text-rose-800 border-rose-200'
+                  : formatted.badge.variant === 'warning'
+                  ? 'bg-amber-100 text-amber-900 border-amber-200'
+                  : formatted.badge.variant === 'success'
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                  : formatted.badge.variant === 'info'
+                  ? 'bg-sky-100 text-sky-800 border-sky-200'
+                  : 'bg-slate-100 text-slate-700 border-slate-200';
+
+              return (
+                <div
+                  key={alert.id}
+                  className="rounded-xl border border-amber-200/60 bg-white p-3.5 text-xs shadow-sm"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1.5 border-b border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-900">
+                        {formatted.title}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold border uppercase ${badgeClasses}`}
+                      >
+                        {formatted.badge.label}
+                      </span>
+                    </div>
+                    <span className="text-slate-400 text-[11px] shrink-0">
+                      {alert.created_at ? new Date(alert.created_at).toLocaleString() : ''}
                     </span>
                   </div>
-                  {alert.details && (
-                    <p className="mt-1 text-slate-500 font-mono text-[11px]">
-                      {JSON.stringify(alert.details)}
-                    </p>
+
+                  <p className="mt-2 text-slate-700 leading-relaxed">
+                    {formatted.summary}
+                  </p>
+
+                  {formatted.details && formatted.details.length > 0 && (
+                    <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 rounded-lg bg-slate-50 p-2.5 border border-slate-100 text-[11px]">
+                      {formatted.details.map((item, idx) => (
+                        <div key={idx}>
+                          <span className="text-slate-400 block font-medium">{item.label}</span>
+                          <span className="text-slate-800 font-semibold">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-                <span className="text-slate-400 text-[11px] shrink-0">
-                  {alert.created_at ? new Date(alert.created_at).toLocaleString() : ''}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

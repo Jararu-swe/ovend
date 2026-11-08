@@ -42,7 +42,7 @@ export default async function SideNav() {
         <VendleLogo />
         <div className="hidden md:block ml-1">
           <p className="text-[10px] text-slate-400 font-medium -mt-0.5">
-            {teamPermissions ? 'Team Dashboard' : 'Vendor Dashboard'}
+            {isAdmin ? 'Platform Admin' : teamPermissions ? 'Team Dashboard' : 'Vendor Dashboard'}
           </p>
         </div>
       </Link>

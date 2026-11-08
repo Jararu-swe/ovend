@@ -11,6 +11,8 @@ import {
 } from "@/app/lib/guide-triggers";
 import { getVendorSubscription } from "@/app/lib/subscriptions";
 import { auth } from "@/auth";
+import { isAdminUser } from "@/app/lib/kyc-admin";
+import { redirect } from "next/navigation";
 import CopyLinkButton from "@/app/ui/dashboard/copy-link";
 import LearningHubSection from "@/app/ui/dashboard/learning-hub-section";
 import ContextualGuideBanner from "@/app/ui/dashboard/contextual-guide-banner";
@@ -29,6 +31,12 @@ export default async function Page() {
 
   if (!userId) {
     return null;
+  }
+
+  // If logged-in user is platform administrator, route directly to compliance & fraud portal
+  const isAdmin = await isAdminUser(userId);
+  if (isAdmin) {
+    redirect('/dashboard/admin/compliance');
   }
 
   const [stats, user, weeklyAnalytics, recommendedGuides, newGuideCount, subscription, topProducts] =
