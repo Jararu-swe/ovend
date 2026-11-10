@@ -164,7 +164,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   // Suspended vendors should not generate metadata
-  if (vendor.kyc_status === 'rejected') {
+  if (vendor.account_status === 'suspended') {
     return {
       title: 'Store Not Found',
     };
@@ -230,8 +230,8 @@ export default async function StorePage(props: Props) {
     notFound();
   }
 
-  // Check if vendor account is suspended (kyc_status = 'rejected')
-  if (vendor.kyc_status === 'rejected') {
+  // Check if vendor account is suspended
+  if (vendor.account_status === 'suspended') {
     notFound();
   }
 

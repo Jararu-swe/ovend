@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   // Suspended vendor - hide products
-  if (vendor.kyc_status === 'rejected') {
+  if (vendor.account_status === 'suspended') {
     return {
       title: 'Product Not Found',
     };
@@ -180,7 +180,7 @@ export default async function ProductPage({ params }: Props) {
   }
 
   // Suspended vendor stores should not be accessible
-  if (vendor.kyc_status === 'rejected') {
+  if (vendor.account_status === 'suspended') {
     notFound();
   }
 

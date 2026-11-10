@@ -54,6 +54,7 @@ interface AdminVendorRow {
   createdAt: string;
   monthlyPayouts: number;
   verificationsCount: number;
+  accountStatus: string;
   pendingCAC?: {
     id: string;
     rcNumber: string;
@@ -97,7 +98,7 @@ export default function ComplianceDashboard() {
 
   // Vendors
   const [vendors, setVendors] = useState<AdminVendorRow[]>([]);
-  const [vendorFilter, setVendorFilter] = useState<'all' | 'unverified' | 'flagged' | 'pending'>('all');
+  const [vendorFilter, setVendorFilter] = useState<'all' | 'unverified' | 'flagged' | 'pending' | 'suspended'>('all');
   const [vendorSearch, setVendorSearch] = useState('');
   const [vendorPage, setVendorPage] = useState(1);
   const [vendorTotal, setVendorTotal] = useState(0);
@@ -116,7 +117,7 @@ export default function ComplianceDashboard() {
 
   // Action Modal
   const [actionModal, setActionModal] = useState<{
-    type: 'set_tier' | 'suspend' | null;
+    type: 'set_tier' | 'suspend' | 'unsuspend' | null;
     vendorId: string;
     vendorName: string;
   } | null>(null);
@@ -245,7 +246,7 @@ export default function ComplianceDashboard() {
       if (actionModal.type === 'set_tier') {
         body.tier = actionTier;
         body.reason = actionReason;
-      } else if (actionModal.type === 'suspend') {
+      } else if (actionModal.type === 'suspend' || actionModal.type === 'unsuspend') {
         body.reason = actionReason;
       }
 
@@ -374,6 +375,7 @@ export default function ComplianceDashboard() {
       unverified: 'bg-amber-100 text-amber-800',
       pending: 'bg-sky-100 text-sky-800',
       rejected: 'bg-red-100 text-red-800',
+      suspended: 'bg-red-100 text-red-800',
     };
     return styles[status] || 'bg-slate-100 text-slate-700';
   };
@@ -547,7 +549,7 @@ export default function ComplianceDashboard() {
               </div>
               <div className="flex items-center gap-2">
                 <FunnelIcon className="h-4 w-4 text-slate-400" />
-                {(['all', 'unverified', 'flagged', 'pending'] as const).map((f) => (
+                {(['all', 'unverified', 'flagged', 'pending', 'suspended'] as const).map((f) => (
                   <button
                     key={f}
                     onClick={() => {
@@ -610,6 +612,11 @@ export default function ComplianceDashboard() {
                             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold capitalize ${statusBadge(v.kycStatus)}`}>
                               {v.kycStatus}
                             </span>
+                            {v.accountStatus === 'suspended' && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-800 px-2 py-0.5 text-[9px] font-bold">
+                                <NoSymbolIcon className="h-3 w-3" /> Suspended
+                              </span>
+                            )}
                             {v.pendingCAC && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 text-purple-800 px-2 py-0.5 text-[9px] font-bold">
                                 <BuildingOffice2Icon className="h-3 w-3" /> CAC Pending
@@ -678,13 +685,23 @@ export default function ComplianceDashboard() {
                             >
                               <ShieldCheckIcon className="h-4 w-4" />
                             </button>
-                            <button
-                              onClick={() => setActionModal({ type: 'suspend', vendorId: v.id, vendorName: v.name })}
-                              title="Suspend"
-                              className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
-                            >
-                              <NoSymbolIcon className="h-4 w-4" />
-                            </button>
+                            {v.accountStatus === 'suspended' ? (
+                              <button
+                                onClick={() => setActionModal({ type: 'unsuspend', vendorId: v.id, vendorName: v.name })}
+                                title="Unsuspend"
+                                className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition"
+                              >
+                                <CheckCircleIcon className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setActionModal({ type: 'suspend', vendorId: v.id, vendorName: v.name })}
+                                title="Suspend"
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                              >
+                                <NoSymbolIcon className="h-4 w-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1113,7 +1130,11 @@ export default function ComplianceDashboard() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-slate-900">
-                {actionModal.type === 'set_tier' ? 'Override KYC Tier' : 'Suspend Vendor'}
+                {actionModal.type === 'set_tier'
+                  ? 'Override KYC Tier'
+                  : actionModal.type === 'suspend'
+                  ? 'Suspend Vendor'
+                  : 'Unsuspend Vendor'}
               </h3>
               <button
                 onClick={() => {
@@ -1130,6 +1151,29 @@ export default function ComplianceDashboard() {
             <p className="text-xs text-slate-500 mb-4">
               Vendor: <span className="font-semibold text-slate-800">{actionModal.vendorName}</span>
             </p>
+
+            {actionModal.type === 'suspend' && (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                <p className="font-semibold mb-1">⚠️ This will:</p>
+                <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                  <li>Take the vendor&apos;s store offline (404 for visitors)</li>
+                  <li>Hide the store from the Explore page &amp; sitemap</li>
+                  <li>Prevent public orders</li>
+                </ul>
+                <p className="mt-1.5 text-[11px]">The vendor&apos;s KYC tier and verification data will remain intact.</p>
+              </div>
+            )}
+
+            {actionModal.type === 'unsuspend' && (
+              <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+                <p className="font-semibold mb-1">✅ This will:</p>
+                <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                  <li>Restore the vendor&apos;s store to public visibility</li>
+                  <li>Show the vendor on Explore page &amp; sitemap</li>
+                  <li>Allow customers to place orders again</li>
+                </ul>
+              </div>
+            )}
 
             {actionModal.type === 'set_tier' && (
               <div className="mb-4">
@@ -1162,6 +1206,8 @@ export default function ComplianceDashboard() {
                 placeholder={
                   actionModal.type === 'suspend'
                     ? 'Reason for suspension (e.g. fraudulent activity detected)...'
+                    : actionModal.type === 'unsuspend'
+                    ? 'Reason for unsuspension (e.g. account review complete, verified identity)...'
                     : 'Reason for tier override (e.g. manual document review passed)...'
                 }
                 rows={3}
@@ -1198,6 +1244,8 @@ export default function ComplianceDashboard() {
                 className={`rounded-xl px-4 py-2 text-xs font-semibold text-white transition disabled:bg-slate-300 ${
                   actionModal.type === 'suspend'
                     ? 'bg-red-600 hover:bg-red-700'
+                    : actionModal.type === 'unsuspend'
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
                     : 'bg-slate-900 hover:bg-slate-800'
                 }`}
               >
@@ -1205,6 +1253,8 @@ export default function ComplianceDashboard() {
                   ? 'Processing...'
                   : actionModal.type === 'suspend'
                   ? 'Suspend Vendor'
+                  : actionModal.type === 'unsuspend'
+                  ? 'Unsuspend Vendor'
                   : 'Update Tier'}
               </button>
             </div>

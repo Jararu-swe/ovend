@@ -4,6 +4,7 @@ import {
   isAdminUser,
   adminSetVendorKYCTier,
   adminSuspendVendor,
+  adminUnsuspendVendor,
   adminResolveFraudAlert,
   adminApproveCACVerification,
   adminRejectCACVerification,
@@ -60,6 +61,21 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: result.error }, { status: 400 });
         }
         return NextResponse.json({ success: true, message: 'Vendor suspended' });
+      }
+
+      case 'unsuspend': {
+        const { vendorId, reason } = body;
+        if (!vendorId || !reason) {
+          return NextResponse.json(
+            { error: 'vendorId and reason are required' },
+            { status: 400 },
+          );
+        }
+        const result = await adminUnsuspendVendor(userId, vendorId, reason);
+        if (!result.success) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+        return NextResponse.json({ success: true, message: 'Vendor unsuspended successfully' });
       }
 
       case 'resolve_alert': {

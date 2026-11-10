@@ -147,11 +147,21 @@ export function formatComplianceLog(eventType: string, severity: string, rawDeta
 
     case 'admin_suspension':
       return {
-        title: 'Account Payouts Suspended',
+        title: 'Account Suspended',
         badge: { label: 'Suspended', variant: 'danger' },
-        summary: `Payout privileges suspended by compliance officer: ${details.reason || 'Compliance review pending'}.`,
+        summary: `Vendor account & storefront suspended by compliance officer: ${details.reason || 'Compliance review pending'}.`,
         details: [
           { label: 'Suspension Reason', value: details.reason || 'Compliance violation' },
+        ],
+      };
+
+    case 'admin_unsuspension':
+      return {
+        title: 'Account Unsuspended',
+        badge: { label: 'Active', variant: 'success' },
+        summary: `Vendor account & storefront restored by compliance officer: ${details.reason || 'Account reviewed and reactivated'}.`,
+        details: [
+          { label: 'Resolution Reason', value: details.reason || 'Reactivated by admin' },
         ],
       };
 

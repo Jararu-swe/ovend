@@ -102,6 +102,7 @@ export interface AdminVendorRow {
   storeName: string;
   kycTier: string;
   kycStatus: string;
+  accountStatus: string;
   bankVerified: boolean;
   bankName: string | null;
   accountName: string | null;
@@ -123,14 +124,15 @@ export interface AdminVendorRow {
 }
 
 export async function getVendorsForReview(params: {
-  filter?: 'all' | 'unverified' | 'flagged' | 'pending';
+  filter?: 'all' | 'unverified' | 'flagged' | 'pending' | 'suspended';
   search?: string;
   page?: number;
   pageSize?: number;
 }): Promise<{ vendors: AdminVendorRow[]; total: number }> {
-  // Ensure created_at exists on users table to avoid schema mismatch
+  // Ensure created_at and account_status exist on users table to avoid schema mismatch
   try {
     await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`);
+    await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) DEFAULT 'active'`);
   } catch (e) {
     // Ignore if permission or already exists
   }
@@ -147,6 +149,8 @@ export async function getVendorsForReview(params: {
     whereClause = sql`WHERE u.role = 'vendor' AND u.id IN (SELECT DISTINCT vendor_id FROM fraud_audit_logs WHERE resolved = FALSE)`;
   } else if (filter === 'pending') {
     whereClause = sql`WHERE u.role = 'vendor' AND u.id IN (SELECT DISTINCT vendor_id FROM kyc_verifications WHERE status = 'pending')`;
+  } else if (filter === 'suspended') {
+    whereClause = sql`WHERE u.role = 'vendor' AND u.account_status = 'suspended'`;
   }
 
   // Build the search condition
@@ -176,6 +180,7 @@ export async function getVendorsForReview(params: {
       u.account_name,
       u.bank_name_match_score,
       u.created_at,
+      COALESCE(u.account_status, 'active') AS account_status,
       COALESCE((
         SELECT SUM(requested_amount) FROM payouts p
         WHERE p.vendor_id = u.id AND p.status != 'failed' AND p.requested_at >= ${startOfMonth}
@@ -214,6 +219,7 @@ export async function getVendorsForReview(params: {
     storeName: r.store_name || '',
     kycTier: r.kyc_tier,
     kycStatus: r.kyc_status,
+    accountStatus: r.account_status || 'active',
     bankVerified: Boolean(r.bank_verified),
     bankName: r.bank_name || null,
     accountName: r.account_name || null,
@@ -405,7 +411,7 @@ export async function adminSuspendVendor(
   try {
     await sql`
       UPDATE users
-      SET kyc_status = 'rejected', bank_verified = FALSE
+      SET account_status = 'suspended'
       WHERE id = ${vendorId}
     `;
 
@@ -427,6 +433,46 @@ export async function adminSuspendVendor(
   } catch (error: any) {
     console.error('adminSuspendVendor error:', error);
     return { success: false, error: error?.message || 'Failed to suspend vendor' };
+  }
+}
+
+/**
+ * Admin unsuspends a previously suspended vendor, restoring their store visibility.
+ */
+export async function adminUnsuspendVendor(
+  adminId: string,
+  vendorId: string,
+  reason: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!reason || !reason.trim()) {
+    return { success: false, error: 'Reason is required for unsuspension' };
+  }
+
+  try {
+    await sql`
+      UPDATE users
+      SET account_status = 'active'
+      WHERE id = ${vendorId}
+    `;
+
+    await sql`
+      INSERT INTO kyc_verifications (
+        vendor_id, tier, status, id_type, rejection_reason, metadata
+      ) VALUES (
+        ${vendorId}, 'starter', 'verified', 'admin_unsuspension', ${reason},
+        ${JSON.stringify({ adminId, reason, action: 'unsuspension' })}
+      )
+    `;
+
+    await logFraudEvent(vendorId, 'admin_unsuspension', 'medium', {
+      adminId,
+      reason,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('adminUnsuspendVendor error:', error);
+    return { success: false, error: error?.message || 'Failed to unsuspend vendor' };
   }
 }
 
