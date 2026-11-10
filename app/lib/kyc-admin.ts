@@ -474,16 +474,29 @@ export async function adminApproveCACVerification(
     const ver = verRes[0];
 
     // 1. Update verification record to verified
+    let currentMetadata = ver.metadata;
+    if (typeof currentMetadata === 'string') {
+      try {
+        currentMetadata = JSON.parse(currentMetadata);
+      } catch {
+        currentMetadata = {};
+      }
+    }
+    if (!currentMetadata || typeof currentMetadata !== 'object') {
+      currentMetadata = {};
+    }
+
+    const updatedMetadata = {
+      ...currentMetadata,
+      adminApproval: { adminId, notes, approvedAt: new Date().toISOString() },
+    };
+
     await sql`
       UPDATE kyc_verifications
       SET
         status = 'verified',
         verified_at = CURRENT_TIMESTAMP,
-        metadata = jsonb_set(
-          COALESCE(metadata, '{}'::jsonb),
-          '{adminApproval}',
-          ${JSON.stringify({ adminId, notes, approvedAt: new Date().toISOString() })}::jsonb
-        )
+        metadata = ${JSON.stringify(updatedMetadata)}::jsonb
       WHERE id = ${verificationId}
     `;
 
@@ -537,16 +550,29 @@ export async function adminRejectCACVerification(
     const ver = verRes[0];
 
     // 1. Update verification to rejected
+    let currentMetadata = ver.metadata;
+    if (typeof currentMetadata === 'string') {
+      try {
+        currentMetadata = JSON.parse(currentMetadata);
+      } catch {
+        currentMetadata = {};
+      }
+    }
+    if (!currentMetadata || typeof currentMetadata !== 'object') {
+      currentMetadata = {};
+    }
+
+    const updatedMetadata = {
+      ...currentMetadata,
+      adminRejection: { adminId, reason: reason.trim(), rejectedAt: new Date().toISOString() },
+    };
+
     await sql`
       UPDATE kyc_verifications
       SET
         status = 'rejected',
         rejection_reason = ${reason.trim()},
-        metadata = jsonb_set(
-          COALESCE(metadata, '{}'::jsonb),
-          '{adminRejection}',
-          ${JSON.stringify({ adminId, reason: reason.trim(), rejectedAt: new Date().toISOString() })}::jsonb
-        )
+        metadata = ${JSON.stringify(updatedMetadata)}::jsonb
       WHERE id = ${verificationId}
     `;
 
