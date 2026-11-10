@@ -199,6 +199,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               role: string;
               subscription_status: string | null;
               subscription_expires_at: string | null;
+              account_status?: string | null;
             }[]
           >`
             SELECT id, name, email, password, role, subscription_status, subscription_expires_at, account_status
