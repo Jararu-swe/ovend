@@ -38,8 +38,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const userName = user.name || 'User';
 
           const [existingUser] = await sql`
-            SELECT id, whatsapp_number FROM users WHERE email = ${userEmail} LIMIT 1
+            SELECT id, whatsapp_number, account_status FROM users WHERE email = ${userEmail} LIMIT 1
           `;
+
+          if (existingUser?.account_status === 'deleted') {
+            return false;
+          }
 
           if (!existingUser) {
             const passwordStr = crypto.randomUUID();
@@ -197,13 +201,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               subscription_expires_at: string | null;
             }[]
           >`
-            SELECT id, name, email, password, role, subscription_status, subscription_expires_at
+            SELECT id, name, email, password, role, subscription_status, subscription_expires_at, account_status
             FROM users
             WHERE email = ${email}
             LIMIT 1
           `;
 
           if (!user) return null;
+          if (user.account_status === 'deleted') return null;
 
           const passwordsMatch = await bcrypt.compare(password, user.password);
 

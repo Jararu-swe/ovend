@@ -53,7 +53,7 @@ export type User = {
   bank_name_match_score?: number | null;
   kyc_tier?: 'starter' | 'pro' | 'business' | string | null;
   kyc_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | string | null;
-  account_status?: 'active' | 'suspended' | string | null;
+  account_status?: 'active' | 'suspended' | 'deleted' | string | null;
 };
 
 export type Customer = {

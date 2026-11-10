@@ -38,7 +38,7 @@ export default function DeleteStoreCard() {
         <div className="flex-1">
           <h2 className="text-base font-semibold text-red-900">Danger Zone</h2>
           <p className="mt-1 text-sm text-red-700/70">
-            Deleting your store is permanent. This will delete all your products, orders, settings, and images. This action cannot be undone.
+            Deleting your store is permanent. This will take your store offline, delete your product catalog, theme, and settings. Note: If you have an outstanding balance or pending orders, you must withdraw and clear all funds before deleting.
           </p>
           
           <div className="mt-6">

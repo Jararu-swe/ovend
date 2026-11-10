@@ -24,6 +24,7 @@ import bcrypt from "bcryptjs";
 import { triggerGuideForEvent } from "@/app/lib/guide-triggers";
 import { requireFeature } from "@/app/lib/feature-gate";
 import { ensureTeamSchema } from "@/app/lib/team";
+import { fetchVendorBalanceBreakdown } from "@/app/lib/payouts";
 
 async function requireActiveVendorSubscription() {
   const session = await auth();
@@ -1650,8 +1651,32 @@ export async function deleteStore() {
 
   const vendorId = session.user.id;
 
+  // 1. Financial check: Ensure vendor has no pending or available balance
+  const balanceBreakdown = await fetchVendorBalanceBreakdown(vendorId);
+  const totalOutstandingKobo = Math.round(
+    ((balanceBreakdown.availableBalance || 0) + (balanceBreakdown.escrowPendingBalance || 0)) * 100
+  );
+
+  if (totalOutstandingKobo > 0) {
+    const formattedAvailable = (balanceBreakdown.availableBalance || 0).toLocaleString();
+    const formattedEscrow = (balanceBreakdown.escrowPendingBalance || 0).toLocaleString();
+    throw new Error(
+      `Cannot delete store with outstanding funds. You currently have ₦${formattedAvailable} available and ₦${formattedEscrow} pending clearance. Please request a payout and allow all pending orders to settle before deleting your account.`
+    );
+  }
+
+  // 2. Check for pending in-flight payout requests
+  const pendingPayouts = await sql<{ id: string }[]>`
+    SELECT id FROM payouts WHERE vendor_id = ${vendorId} AND status = 'pending' LIMIT 1
+  `;
+  if (pendingPayouts.length > 0) {
+    throw new Error(
+      "You have a payout transfer currently being processed. Please wait for the payout to complete before deleting your store."
+    );
+  }
+
   try {
-    // 1. Fetch all products to delete images from Cloudinary
+    // 3. Fetch all products to delete images from Cloudinary
     const products =
       await sql`SELECT image_url, gallery_images FROM products WHERE vendor_id = ${vendorId}`;
     for (const product of products) {
@@ -1669,7 +1694,7 @@ export async function deleteStore() {
       }
     }
 
-    // 2. Fetch theme to delete logo
+    // 4. Fetch theme to delete logo
     const [theme] =
       await sql`SELECT logo_url FROM store_theme WHERE vendor_id = ${vendorId}`;
     if (theme?.logo_url) {
@@ -1680,10 +1705,9 @@ export async function deleteStore() {
       }
     }
 
-    // 3. Delete everything associated with the vendor
-    // Note: We use a transaction to ensure all or nothing
+    // 5. Clean up store catalog & preferences, but preserve historical transactions (orders/payouts) for financial compliance
     await sql.begin(async (sql) => {
-      // Optional tables (may not exist in older DBs) - delete best-effort.
+      // Optional tables (delete best-effort)
       try {
         await sql`DELETE FROM vendor_subscription_payments WHERE vendor_id = ${vendorId}`;
       } catch (e) {
@@ -1696,16 +1720,34 @@ export async function deleteStore() {
         console.error("Delete team_members error:", e);
       }
 
-      await sql`DELETE FROM products WHERE vendor_id = ${vendorId}`;
-      await sql`DELETE FROM orders WHERE vendor_id = ${vendorId}`;
-      await sql`DELETE FROM store_theme WHERE vendor_id = ${vendorId}`;
-      await sql`DELETE FROM store_analytics WHERE vendor_id = ${vendorId}`;
       try {
         await sql`DELETE FROM discount_codes WHERE vendor_id = ${vendorId}`;
       } catch (e) {
         console.error("Delete discount_codes error:", e);
       }
-      await sql`DELETE FROM users WHERE id = ${vendorId}`;
+
+      await sql`DELETE FROM products WHERE vendor_id = ${vendorId}`;
+      await sql`DELETE FROM store_theme WHERE vendor_id = ${vendorId}`;
+      await sql`DELETE FROM store_analytics WHERE vendor_id = ${vendorId}`;
+
+      // Soft delete user record: free up store_slug and scrub personal/bank data while preserving foreign key integrity for audit/orders
+      const timestamp = Date.now();
+      await sql`
+        UPDATE users
+        SET
+          account_status = 'deleted',
+          store_slug = ${`deleted_${vendorId.slice(0, 8)}_${timestamp}`},
+          store_name = 'Deleted Store',
+          store_description = NULL,
+          password = '',
+          whatsapp_number = NULL,
+          bank_name = NULL,
+          account_number = NULL,
+          account_name = NULL,
+          bank_verified = FALSE,
+          accepting_orders = FALSE
+        WHERE id = ${vendorId}
+      `;
     });
   } catch (error: any) {
     console.error("Database Error during store deletion:", error);
