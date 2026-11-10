@@ -163,6 +163,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  // Suspended vendors should not generate metadata
+  if (vendor.kyc_status === 'rejected') {
+    return {
+      title: 'Store Not Found',
+    };
+  }
+
   const storeUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://vendle.app'}/s/${slug}`;
   const [theme, products] = await Promise.all([
     getOrCreateVendorTheme(vendor.id),
@@ -220,6 +227,11 @@ export default async function StorePage(props: Props) {
   const vendor = await fetchVendorBySlug(slug);
 
   if (!vendor) {
+    notFound();
+  }
+
+  // Check if vendor account is suspended (kyc_status = 'rejected')
+  if (vendor.kyc_status === 'rejected') {
     notFound();
   }
 

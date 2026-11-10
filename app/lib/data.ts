@@ -457,7 +457,8 @@ export async function fetchVendorBySlug(slug: string) {
         pickup_longitude,
         pickup_address_details,
         location_state,
-        category
+        category,
+        kyc_status
       FROM users
       WHERE store_slug = ${slug}
       LIMIT 1
@@ -866,6 +867,7 @@ export async function fetchAllPublicStores(
       LEFT JOIN products p_count ON p_count.vendor_id = u.id AND p_count.status = 'active'
       WHERE u.store_name IS NOT NULL
         AND u.store_name != ''
+        AND (u.kyc_status IS NULL OR u.kyc_status != 'rejected')
         -- Inclusive Search: Name, Category, Owner, or Products
         AND (
           u.store_name ILIKE ${searchFilter} 
@@ -951,6 +953,7 @@ export async function fetchAllPublicStoreSlugs(): Promise<
       LEFT JOIN store_theme st ON st.vendor_id = u.id
       WHERE u.store_name IS NOT NULL
         AND u.store_name != ''
+        AND (u.kyc_status IS NULL OR u.kyc_status != 'rejected')
         AND EXISTS (
           SELECT 1 FROM products p
           WHERE p.vendor_id = u.id AND p.status = 'active'

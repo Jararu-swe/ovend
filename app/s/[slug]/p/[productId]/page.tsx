@@ -61,6 +61,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  // Suspended vendor - hide products
+  if (vendor.kyc_status === 'rejected') {
+    return {
+      title: 'Product Not Found',
+    };
+  }
+
   // Validate product exists and belongs to vendor
   if (!product || product.vendor_id !== vendor.id) {
     return {
@@ -169,6 +176,11 @@ export default async function ProductPage({ params }: Props) {
 
   // Validate vendor exists
   if (!vendor) {
+    notFound();
+  }
+
+  // Suspended vendor stores should not be accessible
+  if (vendor.kyc_status === 'rejected') {
     notFound();
   }
 
