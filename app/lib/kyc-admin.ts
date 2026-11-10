@@ -128,6 +128,13 @@ export async function getVendorsForReview(params: {
   page?: number;
   pageSize?: number;
 }): Promise<{ vendors: AdminVendorRow[]; total: number }> {
+  // Ensure created_at exists on users table to avoid schema mismatch
+  try {
+    await sql.unsafe(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`);
+  } catch (e) {
+    // Ignore if permission or already exists
+  }
+
   const { filter = 'all', search = '', page = 1, pageSize = 20 } = params;
   const offset = (page - 1) * pageSize;
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
