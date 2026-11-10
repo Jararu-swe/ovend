@@ -102,6 +102,9 @@ export async function ensureStoreColumns() {
           `ALTER TABLE users ADD COLUMN IF NOT EXISTS sound_volume INTEGER NOT NULL DEFAULT 50`,
         );
         await sql.unsafe(
+          `ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) DEFAULT 'active'`,
+        );
+        await sql.unsafe(
           `CREATE INDEX IF NOT EXISTS idx_users_offers_pickup ON users (offers_pickup) WHERE offers_pickup = true`,
         );
       } catch (e) {
