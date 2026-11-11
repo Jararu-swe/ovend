@@ -462,7 +462,10 @@ export async function fetchVendorBySlug(slug: string) {
         location_state,
         category,
         kyc_status,
-        account_status
+        account_status,
+        subscription_tier,
+        subscription_status,
+        subscription_expires_at
       FROM users
       WHERE store_slug = ${slug}
       LIMIT 1

@@ -198,13 +198,22 @@ export async function getVendorSubscription(vendorId: string): Promise<VendorSub
   if (!users[0]) return null;
   
   const user = users[0];
-  const tier = (user.subscription_tier || 'starter') as SubscriptionTier;
-  const plan = await getSubscriptionPlan(tier);
-  
-  if (!plan) return null;
-  
   const now = new Date();
   const expiresAt = user.subscription_expires_at ? new Date(user.subscription_expires_at) : null;
+  
+  // Auto-fallback to starter when trial or paid period has expired without renewal
+  const isTrial = user.subscription_status === 'trial';
+  const isTrialExpired = isTrial && expiresAt && expiresAt.getTime() < now.getTime();
+  const isPaidExpired = (user.subscription_status === 'inactive' || user.subscription_status === 'cancelled') && (!expiresAt || expiresAt.getTime() < now.getTime());
+  
+  // If trial or paid plan expired, vendor smoothly defaults to free 'starter' tier
+  const effectiveTier: SubscriptionTier = (isTrialExpired || (isPaidExpired && user.subscription_tier !== 'starter'))
+    ? 'starter'
+    : ((user.subscription_tier || 'starter') as SubscriptionTier);
+
+  const plan = await getSubscriptionPlan(effectiveTier);
+  
+  if (!plan) return null;
   
   // Calculate grace period remaining days for past_due status
   let graceDaysRemaining: number | null = null;
@@ -214,21 +223,23 @@ export async function getVendorSubscription(vendorId: string): Promise<VendorSub
   }
   
   // Calculate trial period remaining days for trial status
-  const isTrial = user.subscription_status === 'trial';
   let trialDaysRemaining: number | null = null;
   if (isTrial && expiresAt) {
     trialDaysRemaining = Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
   }
   
+  // Determine effective subscription status
+  const effectiveStatus: SubscriptionStatus = isTrialExpired ? 'inactive' : (user.subscription_status as SubscriptionStatus);
+
   return {
-    tier: tier,
-    status: user.subscription_status as SubscriptionStatus,
+    tier: effectiveTier,
+    status: effectiveStatus,
     expires_at: user.subscription_expires_at,
     last_payment_reference: user.subscription_last_payment_reference,
     updated_at: user.subscription_updated_at,
     plan,
     grace_days_remaining: graceDaysRemaining,
-    is_trial: isTrial,
+    is_trial: isTrial && !isTrialExpired,
     trial_days_remaining: trialDaysRemaining,
     scheduled_tier_change: user.scheduled_tier_change as SubscriptionTier | null,
     scheduled_tier_change_at: user.scheduled_tier_change_at

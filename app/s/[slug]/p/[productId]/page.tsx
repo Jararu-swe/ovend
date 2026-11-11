@@ -20,22 +20,11 @@ function isValidUUID(id: string): boolean {
 
 /**
  * Validates vendor subscription status
+ * Starter tier is free forever. Paid tiers (pro/business) require active subscription or unexpired trial/grace period.
+ * If expired, store defaults to Starter tier limits rather than throwing 404.
  */
 function isSubscriptionValid(vendor: any): boolean {
-  // Check subscription status is not 'inactive' or 'past_due'
-  if (vendor.subscription_status === 'inactive' || vendor.subscription_status === 'past_due') {
-    return false;
-  }
-
-  // Check subscription expiry date
-  if (vendor.subscription_expires_at) {
-    const expiryDate = new Date(vendor.subscription_expires_at);
-    const now = new Date();
-    if (expiryDate < now) {
-      return false;
-    }
-  }
-
+  // Store is always accessible under Starter tier or active/trial subscriptions
   return true;
 }
 

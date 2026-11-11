@@ -236,17 +236,19 @@ export default async function StorePage(props: Props) {
   }
 
   // Check if vendor's subscription is active
+  // Starter tier is free forever. Paid tiers (pro/business) require active subscription or unexpired trial/grace period.
+  const tier = vendor.subscription_tier || 'starter';
   const subscriptionStatus = vendor.subscription_status;
   const subscriptionExpiresAt = vendor.subscription_expires_at 
     ? new Date(vendor.subscription_expires_at) 
     : null;
   
-  // Redirect to not found if subscription is expired or inactive
-  const isExpired = subscriptionStatus === 'inactive' || subscriptionStatus === 'past_due';
-  const hasExpired = subscriptionExpiresAt && subscriptionExpiresAt.getTime() < Date.now();
-  
-  if (isExpired || hasExpired) {
-    notFound();
+  if (tier !== 'starter') {
+    const isExpired = subscriptionStatus === 'inactive' || subscriptionStatus === 'past_due' || subscriptionStatus === 'cancelled';
+    const hasExpired = subscriptionExpiresAt && subscriptionExpiresAt.getTime() < Date.now();
+    
+    // If trial or paid subscription expired without renewing, vendor defaults to starter limits
+    // Their store remains accessible under the free starter tier rather than going 404
   }
 
   const products = await fetchProducts(vendor.id);

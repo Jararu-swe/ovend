@@ -34,21 +34,9 @@ async function requireActiveVendorSubscription() {
   }
 
   await ensureVendorSubscriptionSchema();
-  const [row] = await sql<{ subscription_expires_at: string | null }[]>`
-    SELECT subscription_expires_at
-    FROM users
-    WHERE id = ${session.user.id}
-    LIMIT 1
-  `;
-
-  const expiresAt = row?.subscription_expires_at
-    ? new Date(row.subscription_expires_at)
-    : null;
-  const active = !!expiresAt && expiresAt.getTime() > Date.now();
-  if (!active) {
-    throw new Error("Subscription required. Please pay ₦3,000 to continue.");
-  }
-
+  // Vendors are always allowed basic dashboard access on the free Starter tier.
+  // Paid feature gating (e.g. team_members, custom_domain, advanced analytics)
+  // is checked individually via requireFeature() and getProductLimit().
   return { vendorId: session.user.id };
 }
 
