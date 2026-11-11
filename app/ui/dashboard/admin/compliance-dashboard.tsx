@@ -369,6 +369,15 @@ export default function ComplianceDashboard() {
     return styles[tier] || 'bg-slate-50 text-slate-700 border-slate-200';
   };
 
+  const tierLabel = (tier: string) => {
+    const labels: Record<string, string> = {
+      starter: 'Bank Verified',
+      pro: 'ID Verified',
+      business: 'Registered Business',
+    };
+    return labels[tier] || tier;
+  };
+
   const statusBadge = (status: string) => {
     const styles: Record<string, string> = {
       verified: 'bg-emerald-100 text-emerald-800',
@@ -468,27 +477,27 @@ export default function ComplianceDashboard() {
                 />
               </div>
 
-              {/* Tier Distribution */}
+              {/* Verification Level Distribution */}
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <ChartBarIcon className="h-5 w-5 text-slate-700" />
-                  <h3 className="text-base font-bold text-slate-900">KYC Tier Distribution</h3>
+                  <h3 className="text-base font-bold text-slate-900">Verification Level Distribution</h3>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <TierCard
-                    tier="Starter"
+                    tier="Bank Verified"
                     count={summary.starterTierCount}
                     total={summary.totalVendors}
                     color="emerald"
                   />
                   <TierCard
-                    tier="Pro"
+                    tier="ID Verified"
                     count={summary.proTierCount}
                     total={summary.totalVendors}
                     color="sky"
                   />
                   <TierCard
-                    tier="Business"
+                    tier="Registered Business"
                     count={summary.businessTierCount}
                     total={summary.totalVendors}
                     color="purple"
@@ -576,7 +585,7 @@ export default function ComplianceDashboard() {
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/70">
                     <th className="px-4 py-3 font-semibold text-slate-500">Vendor</th>
-                    <th className="px-4 py-3 font-semibold text-slate-500">KYC Tier</th>
+                    <th className="px-4 py-3 font-semibold text-slate-500">Verification Level</th>
                     <th className="px-4 py-3 font-semibold text-slate-500">Status</th>
                     <th className="px-4 py-3 font-semibold text-slate-500">Bank</th>
                     <th className="px-4 py-3 font-semibold text-slate-500">Name Match</th>
@@ -603,8 +612,8 @@ export default function ComplianceDashboard() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${tierBadge(v.kycTier)}`}>
-                            {v.kycTier}
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${tierBadge(v.kycTier)}`}>
+                            {tierLabel(v.kycTier)}
                           </span>
                         </td>
                         <td className="px-4 py-3">
@@ -928,9 +937,9 @@ export default function ComplianceDashboard() {
                     <p className="text-slate-900">{selectedVendor.profile.storeName || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-slate-400 font-medium">KYC Tier</p>
-                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${tierBadge(selectedVendor.profile.kycTier)}`}>
-                      {selectedVendor.profile.kycTier}
+                    <p className="text-slate-400 font-medium">Verification Level</p>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${tierBadge(selectedVendor.profile.kycTier)}`}>
+                      {tierLabel(selectedVendor.profile.kycTier)}
                     </span>
                   </div>
                   <div>
@@ -1131,7 +1140,7 @@ export default function ComplianceDashboard() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-slate-900">
                 {actionModal.type === 'set_tier'
-                  ? 'Override KYC Tier'
+                  ? 'Override Verification Level'
                   : actionModal.type === 'suspend'
                   ? 'Suspend Vendor'
                   : 'Unsuspend Vendor'}
@@ -1177,19 +1186,23 @@ export default function ComplianceDashboard() {
 
             {actionModal.type === 'set_tier' && (
               <div className="mb-4">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">New Tier</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">New Verification Level</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['starter', 'pro', 'business'] as const).map((t) => (
+                  {[
+                    { key: 'starter', label: 'Bank Verified' },
+                    { key: 'pro', label: 'ID Verified' },
+                    { key: 'business', label: 'Registered Business' },
+                  ].map((t) => (
                     <button
-                      key={t}
-                      onClick={() => setActionTier(t)}
-                      className={`rounded-xl py-2 text-xs font-semibold border capitalize transition ${
-                        actionTier === t
+                      key={t.key}
+                      onClick={() => setActionTier(t.key as any)}
+                      className={`rounded-xl py-2 px-1 text-center text-[11px] font-semibold border transition ${
+                        actionTier === t.key
                           ? 'border-slate-900 bg-slate-900 text-white'
                           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                       }`}
                     >
-                      {t}
+                      {t.label}
                     </button>
                   ))}
                 </div>

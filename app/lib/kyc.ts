@@ -19,7 +19,7 @@ export interface KYCTierConfig {
 export const KYC_TIERS: Record<KYCTier, KYCTierConfig> = {
   starter: {
     tier: 'starter',
-    name: 'Starter Tier',
+    name: 'Bank Verified',
     maxPayoutPerRequestNaira: 50_000,
     maxMonthlyPayoutNaira: 200_000,
     settlementDays: 3,
@@ -32,26 +32,26 @@ export const KYC_TIERS: Record<KYCTier, KYCTierConfig> = {
   },
   pro: {
     tier: 'pro',
-    name: 'Pro Tier',
+    name: 'ID Verified',
     maxPayoutPerRequestNaira: 500_000,
     maxMonthlyPayoutNaira: 2_000_000,
     settlementDays: 1,
     badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
     requirements: [
-      'All Starter tier requirements',
+      'All Bank Verified requirements',
       'BVN (Bank Verification Number) or NIN identity match',
       'NDPA-compliant secure identity verification',
     ],
   },
   business: {
     tier: 'business',
-    name: 'Business Tier',
+    name: 'Registered Business',
     maxPayoutPerRequestNaira: 10_000_000,
     maxMonthlyPayoutNaira: 50_000_000,
     settlementDays: 0,
     badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
     requirements: [
-      'All Pro tier requirements',
+      'All ID Verified requirements',
       'CAC (Corporate Affairs Commission) Business Registration',
       'Corporate NUBAN Bank Account matching business registration',
     ],
@@ -736,10 +736,10 @@ export async function canRequestPayout(
       tier: kycTier,
     });
     const formattedLimit = `₦${tierConfig.maxPayoutPerRequestNaira.toLocaleString()}`;
-    const nextTier = kycTier === 'starter' ? 'Pro' : 'Business';
+    const nextTier = kycTier === 'starter' ? 'ID Verified' : 'Registered Business';
     return {
       allowed: false,
-      reason: `Requested amount exceeds the ${tierConfig.name} single payout limit of ${formattedLimit}. Upgrade to ${nextTier} tier in Verification to unlock higher limits.`,
+      reason: `Requested amount exceeds the ${tierConfig.name} single payout limit of ${formattedLimit}. Complete ${nextTier} in Verification to unlock higher limits.`,
       tier: kycTier,
       limits: tierConfig,
     };

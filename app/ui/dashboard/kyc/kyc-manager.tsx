@@ -216,15 +216,15 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-slate-900">KYC & Identity Verification</h2>
+                <h2 className="text-xl font-bold text-slate-900">Identity & Payout Verification</h2>
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize border ${profile.tierConfig.badgeColor}`}
                 >
-                  {profile.kycTier} Tier
+                  {profile.tierConfig.name}
                 </span>
               </div>
               <p className="mt-1 text-sm text-slate-500">
-                Nigerian regulatory KYC & anti-fraud compliance (CBN, NIBSS, NDPA 2023).
+                Verify your identity to increase single payout limits and accelerate settlement times.
               </p>
             </div>
           </div>
@@ -289,9 +289,9 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
         </div>
       </div>
 
-      {/* ── Tier Progression Cards ────────────────────────────── */}
+      {/* ── Verification Level Progression Cards ────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Tier 1: Starter */}
+        {/* Level 1: Bank Verified */}
         <div
           className={`rounded-2xl border p-5 transition-all ${
             isStarter
@@ -302,7 +302,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <BuildingLibraryIcon className="h-5 w-5 text-emerald-600" />
-              <h3 className="font-bold text-slate-900">Starter Tier</h3>
+              <h3 className="font-bold text-slate-900">Bank Verified</h3>
             </div>
             {profile.bankVerified ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-xs font-semibold">
@@ -333,7 +333,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
           </div>
         </div>
 
-        {/* Tier 2: Pro */}
+        {/* Level 2: ID Verified */}
         <div
           className={`rounded-2xl border p-5 transition-all ${
             isPro
@@ -344,7 +344,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <IdentificationIcon className="h-5 w-5 text-sky-600" />
-              <h3 className="font-bold text-slate-900">Pro Tier</h3>
+              <h3 className="font-bold text-slate-900">ID Verified</h3>
             </div>
             {isPro || isBusiness ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 text-sky-800 px-2 py-0.5 text-xs font-semibold">
@@ -356,7 +356,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
                 onClick={() => setShowProModal(true)}
                 className="rounded-full bg-sky-600 hover:bg-sky-700 text-white px-2.5 py-0.5 text-xs font-semibold transition"
               >
-                Upgrade to Pro
+                Verify ID (BVN/NIN)
               </button>
             )}
           </div>
@@ -379,7 +379,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
           </div>
         </div>
 
-        {/* Tier 3: Business */}
+        {/* Level 3: Registered Business */}
         <div
           className={`rounded-2xl border p-5 transition-all ${
             isBusiness
@@ -390,7 +390,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <BuildingOffice2Icon className="h-5 w-5 text-purple-600" />
-              <h3 className="font-bold text-slate-900">Business Tier</h3>
+              <h3 className="font-bold text-slate-900">Registered Business</h3>
             </div>
             {isBusiness ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 text-purple-800 px-2 py-0.5 text-xs font-semibold">
@@ -402,7 +402,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
                 onClick={() => setShowBusinessModal(true)}
                 className="rounded-full bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-0.5 text-xs font-semibold transition"
               >
-                Upgrade Business
+                Register Business (CAC)
               </button>
             )}
           </div>
@@ -653,7 +653,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <IdentificationIcon className="h-6 w-6 text-sky-600" />
-                <h3 className="text-base font-bold text-slate-900">Upgrade to Pro Tier</h3>
+                <h3 className="text-base font-bold text-slate-900">Verify Identity (BVN / NIN)</h3>
               </div>
               <button
                 type="button"
@@ -771,7 +771,7 @@ export default function KYCManager({ initialProfile }: { initialProfile: VendorK
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <BuildingOffice2Icon className="h-6 w-6 text-purple-600" />
-                <h3 className="text-base font-bold text-slate-900">Upgrade to Business Tier (KYB)</h3>
+                <h3 className="text-base font-bold text-slate-900">Register Business (CAC Review)</h3>
               </div>
               <button
                 type="button"
