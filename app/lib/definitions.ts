@@ -32,6 +32,7 @@ export type User = {
   sound_enabled?: boolean | null;
   sound_volume?: number | null;
   // Subscription
+  subscription_tier?: 'starter' | 'pro' | 'business' | string | null;
   subscription_status?: 'active' | 'past_due' | 'inactive' | 'trial' | string | null;
   subscription_expires_at?: string | null;
   subscription_last_payment_reference?: string | null;
